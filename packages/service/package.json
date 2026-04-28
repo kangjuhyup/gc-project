@@ -1,0 +1,39 @@
+{
+  "name": "@gc-project/service",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "nest start --watch",
+    "start": "node dist/main.js",
+    "build": "nest build",
+    "test": "vitest run",
+    "lint": "echo \"No service lint configured\""
+  },
+  "dependencies": {
+    "@kangjuhyup/rvlog": "0.1.1",
+    "@kangjuhyup/rvlog-nest": "0.1.1",
+    "@mikro-orm/core": "^6.5.0",
+    "@mikro-orm/nestjs": "^6.1.0",
+    "@mikro-orm/postgresql": "^6.5.0",
+    "@nestjs/common": "11.1.19",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "11.1.19",
+    "@nestjs/platform-express": "11.1.19",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "ioredis": "^5.8.2",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "11.0.21",
+    "@types/node": "25.6.0",
+    "ts-node": "10.9.2",
+    "tsconfig-paths": "4.2.0",
+    "typescript": "6.0.3",
+    "vitest": "^4.0.17"
+  }
+}
