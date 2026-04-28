@@ -1,0 +1,10 @@
+export type { MemberRepositoryPort } from './member.repository.port';
+export type { MovieRepositoryPort } from './movie.repository.port';
+export type { RepositoryPort } from './repository.port';
+export type { ReservationEventRepositoryPort } from './reservation-event.repository.port';
+export type { ReservationRepositoryPort } from './reservation.repository.port';
+export type { ReservationSeatRepositoryPort } from './reservation-seat.repository.port';
+export type { ScreenRepositoryPort } from './screen.repository.port';
+export type { ScreeningRepositoryPort } from './screening.repository.port';
+export type { SeatHoldRepositoryPort } from './seat-hold.repository.port';
+export type { SeatRepositoryPort } from './seat.repository.port';
