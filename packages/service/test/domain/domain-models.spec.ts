@@ -181,6 +181,8 @@ describe('domain persistence models', () => {
     const theater = TheaterModel.of({
       name: 'GC 시네마 강남',
       address: '서울특별시 강남구 테헤란로 427',
+      latitude: 37.5065,
+      longitude: 127.053,
     });
 
     const screen = ScreenModel.of({
@@ -198,6 +200,8 @@ describe('domain persistence models', () => {
 
     expect(theater.name).toBe('GC 시네마 강남');
     expect(theater.address).toBe('서울특별시 강남구 테헤란로 427');
+    expect(theater.latitude).toBe(37.5065);
+    expect(theater.longitude).toBe(127.053);
     expect(screen.theaterId).toBe('1');
     expect(screen.name).toBe('IMAX');
     expect(screen.totalSeats).toBe(100);

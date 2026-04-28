@@ -126,6 +126,8 @@ describe('PersistenceMapper', () => {
     theaterEntity.id = '1';
     theaterEntity.name = 'GC 시네마 강남';
     theaterEntity.address = '서울특별시 강남구 테헤란로 427';
+    theaterEntity.latitude = 37.5065;
+    theaterEntity.longitude = 127.053;
     theaterEntity.createdAt = createdAt;
 
     const theaterModel = PersistenceMapper.theaterToDomain(theaterEntity);
@@ -142,6 +144,8 @@ describe('PersistenceMapper', () => {
     expect(theaterModel).toBeInstanceOf(TheaterModel);
     expect(mappedTheater.id).toBe('1');
     expect(mappedTheater.name).toBe('GC 시네마 강남');
+    expect(mappedTheater.latitude).toBe(37.5065);
+    expect(mappedTheater.longitude).toBe(127.053);
     expect(screenEntity.theater.id).toBe('1');
     expect(mappedScreen.theaterId).toBe('1');
     expect(mappedScreen.name).toBe('IMAX');
