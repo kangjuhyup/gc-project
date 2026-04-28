@@ -1,3 +1,5 @@
+import { resolveMockApi } from './mockApi';
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -22,6 +24,17 @@ export async function apiClient<TResponse>(
 ): Promise<TResponse> {
   const correlationId = crypto.randomUUID();
   const accessToken = sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  const method = options.method?.toUpperCase() ?? 'GET';
+  const mockResponse = await resolveMockApi({
+    body: options.body,
+    method,
+    path,
+  });
+
+  if (mockResponse) {
+    return mockResponse.data as TResponse;
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
