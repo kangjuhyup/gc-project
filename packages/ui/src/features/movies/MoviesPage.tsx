@@ -1,8 +1,7 @@
-import { Search, Ticket, UserRound } from 'lucide-react';
+import { Search, Ticket } from 'lucide-react';
 import { useMemo, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/features/auth/AuthProvider';
 import { useMovies } from './movieHooks';
 import {
   demoMovies,
@@ -13,7 +12,6 @@ import {
 
 export function MoviesPage() {
   const [keyword, setKeyword] = useState('');
-  const { member } = useAuth();
   const moviesQuery = useMovies(keyword);
   const movies = moviesQuery.data?.items.length ? moviesQuery.data.items : demoMovies;
   const filteredMovies = useMemo(() => filterMoviesForKeyword(movies, keyword), [keyword, movies]);
@@ -29,10 +27,6 @@ export function MoviesPage() {
         <div>
           <p className="eyebrow">Now Showing</p>
           <h2 id="movie-page-title">영화 타임라인</h2>
-        </div>
-        <div className="member-chip" aria-label="로그인 회원">
-          <UserRound size={18} aria-hidden="true" />
-          <span>{member?.nickname || member?.name || '회원'}</span>
         </div>
       </header>
 
