@@ -15,7 +15,7 @@ import type {
 import { PhoneVerificationModel } from '../../../src/domain';
 
 describe('phone verification command handlers', () => {
-  it('issues a phone verification code', async () => {
+  it('휴대전화 인증 요청 시 인증 코드를 발급한다', async () => {
     const now = new Date('2026-04-28T00:00:00.000Z');
     const clock = { now: vi.fn(() => now) } satisfies ClockPort;
     const generator = { generate: vi.fn(() => '123456') } satisfies VerificationCodeGeneratorPort;
@@ -34,7 +34,7 @@ describe('phone verification command handlers', () => {
     expect(result.expiresAt).toEqual(new Date('2026-04-28T00:05:00.000Z'));
   });
 
-  it('confirms a pending phone verification', async () => {
+  it('대기 중인 휴대전화 인증을 올바른 코드로 완료한다', async () => {
     const createdAt = new Date('2026-04-28T00:00:00.000Z');
     const now = new Date('2026-04-28T00:01:00.000Z');
     const clock = { now: vi.fn(() => now) } satisfies ClockPort;

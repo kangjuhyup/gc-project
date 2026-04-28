@@ -19,7 +19,7 @@ function command(): SignupMemberCommand {
 }
 
 describe('SignupMemberCommandHandler', () => {
-  it('rejects duplicated user id', async () => {
+  it('중복된 회원 아이디로 가입하면 거부한다', async () => {
     const memberRepository = {
       existsByUserId: vi.fn().mockResolvedValue(true),
       findByPhoneNumber: vi.fn(),
@@ -40,7 +40,7 @@ describe('SignupMemberCommandHandler', () => {
     expect(memberRepository.save).not.toHaveBeenCalled();
   });
 
-  it('rejects duplicated phone number', async () => {
+  it('중복된 휴대전화번호로 가입하면 거부한다', async () => {
     const memberRepository = {
       existsByUserId: vi.fn().mockResolvedValue(false),
       findByPhoneNumber: vi.fn().mockResolvedValue({}),
@@ -61,7 +61,7 @@ describe('SignupMemberCommandHandler', () => {
     expect(memberRepository.save).not.toHaveBeenCalled();
   });
 
-  it('rejects signup without verified phone verification', async () => {
+  it('인증 완료된 휴대전화 인증이 없으면 회원가입을 거부한다', async () => {
     const memberRepository = {
       existsByUserId: vi.fn().mockResolvedValue(false),
       findByPhoneNumber: vi.fn().mockResolvedValue(undefined),
@@ -79,7 +79,7 @@ describe('SignupMemberCommandHandler', () => {
     await expect(handler.execute(command())).rejects.toThrow('PHONE_VERIFICATION_REQUIRED');
   });
 
-  it('saves a member after user id and phone verification checks', async () => {
+  it('회원 아이디와 휴대전화 인증 검증을 통과하면 회원을 저장한다', async () => {
     const verifiedAt = new Date('2026-04-28T00:01:00.000Z');
     const verification = PhoneVerificationModel.of({
       phoneNumber: '01000000000',

@@ -42,6 +42,22 @@ Prefer domain tests first as the TDD entry point. Do not mock domain logic; exer
 - Keep command/query handler tests at the application boundary by mocking ports, not infrastructure implementations.
 - Keep integration/E2E tests for provider endpoints, persistence wiring, and cross-layer key flows.
 
+## Korean Test Descriptions
+
+- Every test case must include a Korean behavior description in the test name or an adjacent test comment.
+- Prefer Korean `it(...)` descriptions that state the expected behavior from the user's perspective.
+- Keep descriptions specific: include the condition, action, and expected result when that improves readability.
+- Avoid vague names such as `works`, `success`, `failure`, or implementation-only names without a Korean explanation.
+- If a technical English term is clearer, keep it inside the Korean sentence.
+
+Example:
+
+```typescript
+it('이미 인증된 휴대전화번호로 회원가입하면 회원을 생성한다', () => {
+  // ...
+});
+```
+
 ## Coverage Rules
 
 - Security-critical domain code must have at least 90% coverage.
@@ -80,6 +96,7 @@ Keep generated data deterministic:
 - Follow the existing test framework, fixture factories, page objects, mocks, naming, and assertion style.
 - Keep tests deterministic: avoid real time, random data, network dependency, hidden shared state, and order coupling unless controlled by fixtures.
 - Assert observable behavior and meaningful state changes instead of implementation details.
+- Write Korean behavior descriptions for every test case so the intent is understandable during review.
 - For backend work, write domain tests first, then command handler tests, query handler tests, and integration/E2E tests as needed.
 - Build reusable backend test fixtures with `fishery` when multiple tests need the same shape.
 - Generate realistic but controlled scalar values with `@faker-js/faker`; seed or override values when assertions depend on them.
@@ -108,6 +125,7 @@ Keep generated data deterministic:
 - [ ] Projection idempotency tests exist when projections/events/read models change.
 - [ ] Security tests include redirect URI, PKCE, and relevant auth/OIDC invariants.
 - [ ] Unit tests do not require NestJS module loading.
+- [ ] Every test case has a Korean behavior description in the test name or adjacent comment.
 - [ ] External services are mocked.
 - [ ] Domain logic is not mocked.
 - [ ] Test data uses `@faker-js/faker`, `fishery`, or `fast-check` where generated values or factories are useful.

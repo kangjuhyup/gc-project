@@ -4,7 +4,7 @@ import { CheckUserIdAvailabilityQueryHandler } from '../../../src/application/qu
 import type { MemberQueryPort } from '../../../src/application/query/ports';
 
 describe('CheckUserIdAvailabilityQueryHandler', () => {
-  it('returns unavailable when user id already exists', async () => {
+  it('회원 아이디가 이미 존재하면 사용 불가능으로 응답한다', async () => {
     const memberQuery = {
       existsByUserId: vi.fn().mockResolvedValue(true),
     } satisfies MemberQueryPort;
@@ -15,7 +15,7 @@ describe('CheckUserIdAvailabilityQueryHandler', () => {
     expect(result.available).toBe(false);
   });
 
-  it('returns available when user id does not exist', async () => {
+  it('회원 아이디가 존재하지 않으면 사용 가능으로 응답한다', async () => {
     const memberQuery = {
       existsByUserId: vi.fn().mockResolvedValue(false),
     } satisfies MemberQueryPort;

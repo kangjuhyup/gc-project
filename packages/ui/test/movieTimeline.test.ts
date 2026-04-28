@@ -46,12 +46,12 @@ const movies: MovieSummary[] = [
 ];
 
 describe('movie timeline', () => {
-  it('filters movies by keyword', () => {
+  it('키워드로 영화 목록을 필터링한다', () => {
     expect(filterMoviesForKeyword(movies, 'sf')).toHaveLength(1);
     expect(filterMoviesForKeyword(movies, '미스터리')[0]?.title).toBe('파묘');
   });
 
-  it('groups movies by next screening date in timeline order', () => {
+  it('다음 상영일 기준으로 영화를 타임라인 순서로 그룹화한다', () => {
     const groups = groupMoviesByTimeline(movies);
 
     expect(groups).toHaveLength(2);

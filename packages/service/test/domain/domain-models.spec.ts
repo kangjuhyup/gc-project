@@ -15,7 +15,7 @@ import {
 } from '../../src/domain';
 
 describe('domain persistence models', () => {
-  it('creates a member model from persistence props', () => {
+  it('회원 persistence 속성으로 회원 도메인 모델을 생성한다', () => {
     const birthDate = new Date('1990-01-01T00:00:00.000Z');
 
     const member = MemberModel.of({
@@ -35,7 +35,7 @@ describe('domain persistence models', () => {
     expect(member.status).toBe('ACTIVE');
   });
 
-  it('registers a member with default active status', () => {
+  it('회원가입 시 기본 상태를 ACTIVE로 설정한다', () => {
     const birthDate = new Date('1990-01-01T00:00:00.000Z');
 
     const member = MemberModel.register({
@@ -50,7 +50,7 @@ describe('domain persistence models', () => {
     expect(member.status).toBe('ACTIVE');
   });
 
-  it('throws domain error for invalid member user id', () => {
+  it('유효하지 않은 회원 아이디로 가입하면 도메인 에러를 던진다', () => {
     expect(() =>
       MemberModel.register({
         userId: '1',
@@ -62,7 +62,7 @@ describe('domain persistence models', () => {
     ).toThrow(new DomainError(DomainErrorCode.INVALID_USER_ID));
   });
 
-  it('creates movie and screening models from persistence props', () => {
+  it('영화와 상영 persistence 속성으로 도메인 모델을 생성한다', () => {
     const releaseDate = new Date('2026-04-28T00:00:00.000Z');
     const startAt = new Date('2026-04-28T09:00:00.000Z');
     const endAt = new Date('2026-04-28T11:00:00.000Z');
@@ -97,7 +97,7 @@ describe('domain persistence models', () => {
     expect(screening.price).toBe(12000);
   });
 
-  it('creates screen and seat models from persistence props', () => {
+  it('상영관과 좌석 persistence 속성으로 도메인 모델을 생성한다', () => {
     const screen = ScreenModel.of({
       name: 'IMAX',
       totalSeats: 100,
@@ -118,7 +118,7 @@ describe('domain persistence models', () => {
     expect(seat.seatType).toBe('NORMAL');
   });
 
-  it('creates reservation models from persistence props', () => {
+  it('예약 관련 persistence 속성으로 도메인 모델을 생성한다', () => {
     const canceledAt = new Date('2026-04-28T12:00:00.000Z');
 
     const reservation = ReservationModel.of({
@@ -156,7 +156,7 @@ describe('domain persistence models', () => {
     expect(reservationEvent.description).toBe('user request');
   });
 
-  it('creates seat hold model from persistence props', () => {
+  it('좌석 선점 persistence 속성으로 도메인 모델을 생성한다', () => {
     const expiresAt = new Date('2026-04-28T09:05:00.000Z');
 
     const seatHold = SeatHoldModel.of({
@@ -176,7 +176,7 @@ describe('domain persistence models', () => {
     expect(seatHold.expiresAt).toBe(expiresAt);
   });
 
-  it('issues and confirms a phone verification', () => {
+  it('휴대전화 인증을 발급한 뒤 올바른 코드로 인증을 완료한다', () => {
     const createdAt = new Date('2026-04-28T00:00:00.000Z');
     const now = new Date('2026-04-28T00:01:00.000Z');
     const verification = PhoneVerificationModel.issue({
@@ -196,7 +196,7 @@ describe('domain persistence models', () => {
     expect(confirmed.verifiedAt).toBe(now);
   });
 
-  it('rejects expired phone verification confirmation', () => {
+  it('만료된 휴대전화 인증 코드를 확인하면 도메인 에러를 던진다', () => {
     const createdAt = new Date('2026-04-28T00:00:00.000Z');
     const verification = PhoneVerificationModel.issue({
       phoneNumber: '01000000000',

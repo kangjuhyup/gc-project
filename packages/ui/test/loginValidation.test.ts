@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { validateLoginForm } from '@/features/login/loginValidation';
 
 describe('loginValidation', () => {
-  it('returns no errors for valid credentials', () => {
+  it('유효한 로그인 정보면 검증 에러를 반환하지 않는다', () => {
     expect(
       validateLoginForm({
         memberId: 'movie_user',
@@ -11,7 +11,7 @@ describe('loginValidation', () => {
     ).toEqual({});
   });
 
-  it('requires member id and password', () => {
+  it('회원 아이디와 비밀번호가 비어 있으면 필수 입력 에러를 반환한다', () => {
     expect(
       validateLoginForm({
         memberId: '',
@@ -23,7 +23,7 @@ describe('loginValidation', () => {
     });
   });
 
-  it('validates member id format', () => {
+  it('회원 아이디 형식이 맞지 않으면 형식 에러를 반환한다', () => {
     expect(
       validateLoginForm({
         memberId: 'ab',

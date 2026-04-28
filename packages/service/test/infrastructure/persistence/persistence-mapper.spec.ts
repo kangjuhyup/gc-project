@@ -9,7 +9,7 @@ import { SeatEntity } from '../../../src/infrastructure/persistence/entities/sea
 import { PersistenceMapper } from '../../../src/infrastructure/persistence/mappers';
 
 describe('PersistenceMapper', () => {
-  it('maps member entity to domain and back to entity', () => {
+  it('회원 entity를 도메인으로 변환한 뒤 다시 entity로 변환한다', () => {
     const createdAt = new Date('2026-04-28T00:00:00.000Z');
     const updatedAt = new Date('2026-04-28T01:00:00.000Z');
     const birthDate = new Date('1990-01-01T00:00:00.000Z');
@@ -39,7 +39,7 @@ describe('PersistenceMapper', () => {
     expect(mappedEntity.status).toBe('ACTIVE');
   });
 
-  it('maps reservation model to entity references and back to domain ids', () => {
+  it('예약 모델을 entity 참조로 변환한 뒤 도메인 id로 복원한다', () => {
     const createdAt = new Date('2026-04-28T02:00:00.000Z');
     const model = ReservationModel.of({
       reservationNumber: 'R20260428001',
@@ -62,7 +62,7 @@ describe('PersistenceMapper', () => {
     expect(mappedModel.status).toBe('CONFIRMED');
   });
 
-  it('maps phone verification model to entity and back to domain', () => {
+  it('휴대전화 인증 모델을 entity로 변환한 뒤 다시 도메인으로 변환한다', () => {
     const createdAt = new Date('2026-04-28T00:00:00.000Z');
     const updatedAt = new Date('2026-04-28T00:01:00.000Z');
     const expiresAt = new Date('2026-04-28T00:05:00.000Z');
@@ -86,7 +86,7 @@ describe('PersistenceMapper', () => {
     expect(mappedModel.verifiedAt).toBe(updatedAt);
   });
 
-  it('maps seat hold entity with optional reservation to domain', () => {
+  it('선택적 예약 참조가 있는 좌석 선점 entity를 도메인으로 변환한다', () => {
     const createdAt = new Date('2026-04-28T03:00:00.000Z');
     const updatedAt = new Date('2026-04-28T03:01:00.000Z');
     const expiresAt = new Date('2026-04-28T03:05:00.000Z');
@@ -114,7 +114,7 @@ describe('PersistenceMapper', () => {
     expect(model.updatedAt).toBe(updatedAt);
   });
 
-  it('maps seat hold model to entity references', () => {
+  it('좌석 선점 모델을 entity 참조로 변환한다', () => {
     const createdAt = new Date('2026-04-28T03:00:00.000Z');
     const updatedAt = new Date('2026-04-28T03:01:00.000Z');
     const expiresAt = new Date('2026-04-28T03:05:00.000Z');

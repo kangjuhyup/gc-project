@@ -10,7 +10,7 @@ describe('apiClient', () => {
     clearStoredAccessToken();
   });
 
-  it('attaches access token and correlation id to requests', async () => {
+  it('요청에 access token과 correlation id를 첨부한다', async () => {
     setStoredAccessToken('token-1');
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
@@ -36,7 +36,7 @@ describe('apiClient', () => {
     );
   });
 
-  it('dispatches auth error events for unauthorized responses', async () => {
+  it('인증 실패 응답을 받으면 auth error 이벤트를 발생시킨다', async () => {
     const listener = vi.fn();
     window.addEventListener('gc-project:auth-error', listener);
     vi.stubGlobal(
@@ -53,7 +53,7 @@ describe('apiClient', () => {
     window.removeEventListener('gc-project:auth-error', listener);
   });
 
-  it('skips auth redirect event when requested', async () => {
+  it('요청 옵션이 지정되면 auth redirect 이벤트를 생략한다', async () => {
     const listener = vi.fn();
     window.addEventListener('gc-project:auth-error', listener);
     vi.stubGlobal(

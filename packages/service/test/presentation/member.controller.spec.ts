@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { MemberController } from '../../src/presentation/http';
 
 describe('MemberController', () => {
-  it('delegates user id availability check to query handler', async () => {
+  it('회원 아이디 중복검사를 query handler에 위임한다', async () => {
     const queryHandler = { execute: vi.fn().mockResolvedValue({ available: true }) };
     const controller = new MemberController(
       queryHandler as never,
@@ -17,7 +17,7 @@ describe('MemberController', () => {
     expect(result).toEqual({ available: true });
   });
 
-  it('delegates signup to command handler', async () => {
+  it('회원가입 요청을 command handler에 위임한다', async () => {
     const signupHandler = { execute: vi.fn().mockResolvedValue({ memberId: '1', userId: 'member_01' }) };
     const controller = new MemberController(
       { execute: vi.fn() } as never,

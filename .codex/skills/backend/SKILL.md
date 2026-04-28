@@ -94,6 +94,7 @@ export class CreateUserDto {
 - When operating as a backend agent, do not treat the backend implementation as complete until the QA agent has written the relevant test coverage or explicitly reported why it could not.
 - Include a concise QA handoff note with changed files, changed behavior, affected contracts, risk areas, and any architecture constraints the tests should verify.
 - If the user explicitly asks the backend agent to write tests directly, still follow the QA skill rules for test order, isolation, test data libraries, coverage, and regression execution.
+- Ensure every test case includes a Korean behavior description in the test name or an adjacent test comment.
 
 ## Checklist
 
@@ -107,4 +108,5 @@ export class CreateUserDto {
 - [ ] `infrastructure`: contain persistence/cache/crypto/provider glue and port adapter implementations.
 - [ ] `presentation`: keep controllers as HTTP entry points that delegate to application handlers only.
 - [ ] QA handoff was made after backend production code changes.
+- [ ] Test cases include Korean behavior descriptions when tests are added or updated.
 - [ ] QA coverage result, regression result, or unresolved QA blocker was reported before completion.

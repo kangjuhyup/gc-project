@@ -11,7 +11,7 @@ function next(error: Error) {
 }
 
 describe('ApplicationErrorInterceptor', () => {
-  it('maps duplicated user id to conflict', async () => {
+  it('중복 회원 아이디 에러를 conflict 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
@@ -19,7 +19,7 @@ describe('ApplicationErrorInterceptor', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it('maps phone verification errors to bad request', async () => {
+  it('휴대전화 인증 에러를 bad request 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
@@ -27,7 +27,7 @@ describe('ApplicationErrorInterceptor', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('maps domain errors to bad request by code', async () => {
+  it('도메인 에러를 코드 기준으로 bad request 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
@@ -37,7 +37,7 @@ describe('ApplicationErrorInterceptor', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('maps unknown errors to internal server error', async () => {
+  it('알 수 없는 에러를 internal server error 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
