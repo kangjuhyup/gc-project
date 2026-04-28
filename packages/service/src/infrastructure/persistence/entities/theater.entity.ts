@@ -13,6 +13,12 @@ export class TheaterEntity {
   @Property({ length: 255 })
   address!: string;
 
+  @Property({ columnType: 'double precision', nullable: true })
+  latitude?: number;
+
+  @Property({ columnType: 'double precision', nullable: true })
+  longitude?: number;
+
   @Property({ columnType: 'timestamptz', defaultRaw: 'now()' })
   createdAt: Date = new Date();
 

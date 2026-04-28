@@ -68,6 +68,8 @@ erDiagram
         bigint id PK
         varchar name
         varchar address
+        double latitude
+        double longitude
     }
 
     SCREEN {
@@ -189,6 +191,8 @@ CREATE INDEX idx_movie_image_movie_type_order
 | id | BIGSERIAL | PK | 극장 ID |
 | name | VARCHAR(100) | UNIQUE, NOT NULL | 극장명 |
 | address | VARCHAR(255) | NOT NULL | 극장 주소 |
+| latitude | DOUBLE PRECISION | | 위도 |
+| longitude | DOUBLE PRECISION | | 경도 |
 | created_at | TIMESTAMPTZ | NOT NULL DEFAULT now() | 등록일시 |
 
 ### 3.5 screen (상영관)

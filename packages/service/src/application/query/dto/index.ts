@@ -4,6 +4,7 @@ export { CheckUserIdAvailabilityQuery } from './check-user-id-availability.query
 export { CheckUserIdAvailabilityResultDto } from './check-user-id-availability-result.dto';
 export { HealthStatusDto } from './health-status.dto';
 export { ListMoviesQuery } from './list-movies.query';
+export { ListTheatersQuery } from './list-theaters.query';
 export {
   MovieListResultDto,
   MovieScreeningSummaryDto,
@@ -11,3 +12,4 @@ export {
   MovieTheaterSummaryDto,
 } from './movie-list-result.dto';
 export { SearchAddressesQuery } from './search-addresses.query';
+export { TheaterListResultDto, TheaterSummaryDto } from './theater-list-result.dto';

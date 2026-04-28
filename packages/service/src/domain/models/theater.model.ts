@@ -3,6 +3,8 @@ import { PersistenceModel } from '@domain/shared';
 export interface TheaterPersistenceProps {
   readonly name: string;
   readonly address: string;
+  readonly latitude?: number;
+  readonly longitude?: number;
 }
 
 export class TheaterModel extends PersistenceModel<string, TheaterPersistenceProps> {
@@ -20,5 +22,13 @@ export class TheaterModel extends PersistenceModel<string, TheaterPersistencePro
 
   get address(): string {
     return this.etc.address;
+  }
+
+  get latitude(): number | undefined {
+    return this.etc.latitude;
+  }
+
+  get longitude(): number | undefined {
+    return this.etc.longitude;
   }
 }

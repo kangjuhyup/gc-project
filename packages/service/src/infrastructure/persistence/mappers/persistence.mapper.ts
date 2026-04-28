@@ -166,6 +166,8 @@ export class PersistenceMapper {
     return TheaterModel.of({
       name: entity.name,
       address: entity.address,
+      latitude: entity.latitude,
+      longitude: entity.longitude,
     }).setPersistence(entity.id, entity.createdAt, entity.createdAt);
   }
 
@@ -173,6 +175,8 @@ export class PersistenceMapper {
     const entity = assignId(new TheaterEntity(), currentId(model.id));
     entity.name = model.name;
     entity.address = model.address;
+    entity.latitude = model.latitude;
+    entity.longitude = model.longitude;
     if (model.createdAt !== undefined) {
       entity.createdAt = model.createdAt;
     }

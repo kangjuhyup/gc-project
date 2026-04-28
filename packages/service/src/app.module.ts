@@ -30,15 +30,18 @@ import {
   CheckUserIdAvailabilityQueryHandler,
   GetHealthQueryHandler,
   ListMoviesQueryHandler,
+  ListTheatersQueryHandler,
   SearchAddressesQueryHandler,
 } from '@application/query/handlers';
 import {
   ADDRESS_SEARCH,
   MEMBER_QUERY,
   MOVIE_QUERY,
+  THEATER_QUERY,
   type AddressSearchPort,
   type MemberQueryPort,
   type MovieQueryPort,
+  type TheaterQueryPort,
 } from '@application/query/ports';
 import {
   NumericVerificationCodeGenerator,
@@ -49,7 +52,7 @@ import {
 import { NestLogEventPublisher } from '@infrastructure/logging';
 import { PersistenceModule } from '@infrastructure/persistence';
 import { JusoAddressSearchAdapter } from '@infrastructure/public-api';
-import { AddressController, HealthController, MemberController, MovieController } from '@presentation/http';
+import { AddressController, HealthController, MemberController, MovieController, TheaterController } from '@presentation/http';
 
 @Module({
   imports: [
@@ -67,7 +70,7 @@ import { AddressController, HealthController, MemberController, MovieController 
       },
     }),
   ],
-  controllers: [HealthController, MemberController, AddressController, MovieController],
+  controllers: [HealthController, MemberController, AddressController, MovieController, TheaterController],
   providers: [
     GetHealthQueryHandler,
     SystemClock,
@@ -114,6 +117,11 @@ import { AddressController, HealthController, MemberController, MovieController 
       provide: ListMoviesQueryHandler,
       useFactory: (movieQuery: MovieQueryPort) => new ListMoviesQueryHandler(movieQuery),
       inject: [MOVIE_QUERY],
+    },
+    {
+      provide: ListTheatersQueryHandler,
+      useFactory: (theaterQuery: TheaterQueryPort) => new ListTheatersQueryHandler(theaterQuery),
+      inject: [THEATER_QUERY],
     },
     {
       provide: RequestPhoneVerificationCommandHandler,
