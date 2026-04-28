@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { lastValueFrom, throwError } from 'rxjs';
 import { DomainError, DomainErrorCode } from '@domain';
@@ -25,6 +31,38 @@ describe('ApplicationErrorInterceptor', () => {
     await expect(
       lastValueFrom(interceptor.intercept({} as never, next(new Error('PHONE_VERIFICATION_REQUIRED')) as never)),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('로그인 실패 에러를 bad request 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('INVALID_LOGIN_CREDENTIALS')) as never)),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('기존 비밀번호 불일치 에러를 bad request 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('CURRENT_PASSWORD_MISMATCH')) as never)),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('잠긴 회원 에러를 forbidden 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('MEMBER_LOCKED')) as never)),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('회원 없음 에러를 not found 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('MEMBER_NOT_FOUND')) as never)),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('도메인 에러를 코드 기준으로 bad request 예외로 변환한다', async () => {

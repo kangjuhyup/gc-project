@@ -12,6 +12,9 @@ export class MemberEntity {
   @Property({ length: 30 })
   userId!: string;
 
+  @Property({ length: 255 })
+  passwordHash!: string;
+
   @Property({ length: 50 })
   name!: string;
 
@@ -26,6 +29,12 @@ export class MemberEntity {
 
   @Property({ length: 20 })
   status!: string;
+
+  @Property({ default: 0 })
+  failedLoginCount: number = 0;
+
+  @Property({ columnType: 'timestamptz', nullable: true })
+  lockedAt?: Date;
 
   @Property({ columnType: 'timestamptz', defaultRaw: 'now()' })
   createdAt: Date = new Date();

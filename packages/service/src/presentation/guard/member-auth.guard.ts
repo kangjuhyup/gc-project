@@ -9,11 +9,13 @@ import {
   AUTHORIZATION_VERIFIER,
   type AuthorizationVerifierPort,
 } from '@application/query/ports';
+import type { AuthenticatedUserDto } from '@application/query/dto';
 
-interface HttpRequestWithAuthorizationHeader {
+export interface HttpRequestWithAuthenticatedUser {
   headers: {
     authorization?: string | string[];
   };
+  user?: AuthenticatedUserDto;
 }
 
 @Injectable()
@@ -24,7 +26,7 @@ export class MemberAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<HttpRequestWithAuthorizationHeader>();
+    const request = context.switchToHttp().getRequest<HttpRequestWithAuthenticatedUser>();
     const authorization = request.headers.authorization;
 
     if (authorization === undefined || Array.isArray(authorization) || authorization.trim().length === 0) {
@@ -32,7 +34,7 @@ export class MemberAuthGuard implements CanActivate {
     }
 
     try {
-      await this.authorizationVerifier.verify(authorization);
+      request.user = await this.authorizationVerifier.verify(authorization);
       return true;
     } catch {
       throw new UnauthorizedException('AUTHORIZATION_INVALID');

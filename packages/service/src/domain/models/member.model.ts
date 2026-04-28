@@ -4,11 +4,14 @@ import { DomainError, DomainErrorCode } from '@domain/errors';
 
 export interface MemberPersistenceProps {
   readonly userId: string;
+  readonly passwordHash: string;
   readonly name: string;
   readonly birthDate: Date;
   readonly phoneNumber: string;
   readonly address: string;
   readonly status: MemberStatusType;
+  readonly failedLoginCount: number;
+  readonly lockedAt?: Date;
 }
 
 export class MemberModel extends PersistenceModel<string, MemberPersistenceProps> {
@@ -22,6 +25,7 @@ export class MemberModel extends PersistenceModel<string, MemberPersistenceProps
 
   static register(params: {
     userId: string;
+    passwordHash: string;
     name: string;
     birthDate: Date;
     phoneNumber: string;
@@ -29,6 +33,10 @@ export class MemberModel extends PersistenceModel<string, MemberPersistenceProps
   }): MemberModel {
     if (!/^[a-z][a-z0-9_]{3,19}$/.test(params.userId)) {
       throw new DomainError(DomainErrorCode.INVALID_USER_ID);
+    }
+
+    if (params.passwordHash.trim().length === 0) {
+      throw new DomainError(DomainErrorCode.INVALID_PASSWORD_HASH);
     }
 
     if (params.name.trim().length === 0) {
@@ -45,16 +53,74 @@ export class MemberModel extends PersistenceModel<string, MemberPersistenceProps
 
     return new MemberModel({
       userId: params.userId,
+      passwordHash: params.passwordHash,
       name: params.name,
       birthDate: params.birthDate,
       phoneNumber: params.phoneNumber,
       address: params.address,
       status: MemberStatus.ACTIVE,
+      failedLoginCount: 0,
     });
+  }
+
+  recordLoginFailure(now: Date): MemberModel {
+    const failedLoginCount = this.etc.failedLoginCount + 1;
+    const locked = failedLoginCount >= 5;
+    return new MemberModel({
+      ...this.etc,
+      failedLoginCount,
+      status: locked ? MemberStatus.LOCKED : this.etc.status,
+      lockedAt: locked ? now : this.etc.lockedAt,
+    }).setPersistence(this.id, this.createdAt, now);
+  }
+
+  recordLoginSuccess(now: Date): MemberModel {
+    return new MemberModel({
+      ...this.etc,
+      failedLoginCount: 0,
+    }).setPersistence(this.id, this.createdAt, now);
+  }
+
+  unlock(now: Date): MemberModel {
+    return new MemberModel({
+      ...this.etc,
+      status: MemberStatus.ACTIVE,
+      failedLoginCount: 0,
+      lockedAt: undefined,
+    }).setPersistence(this.id, this.createdAt, now);
+  }
+
+  issueTemporaryPassword(params: { passwordHash: string; now: Date }): MemberModel {
+    if (params.passwordHash.trim().length === 0) {
+      throw new DomainError(DomainErrorCode.INVALID_PASSWORD_HASH);
+    }
+
+    return new MemberModel({
+      ...this.etc,
+      passwordHash: params.passwordHash,
+      status: MemberStatus.ACTIVE,
+      failedLoginCount: 0,
+      lockedAt: undefined,
+    }).setPersistence(this.id, this.createdAt, params.now);
+  }
+
+  changePassword(params: { passwordHash: string; now: Date }): MemberModel {
+    if (params.passwordHash.trim().length === 0) {
+      throw new DomainError(DomainErrorCode.INVALID_PASSWORD_HASH);
+    }
+
+    return new MemberModel({
+      ...this.etc,
+      passwordHash: params.passwordHash,
+    }).setPersistence(this.id, this.createdAt, params.now);
   }
 
   get userId(): string {
     return this.etc.userId;
+  }
+
+  get passwordHash(): string {
+    return this.etc.passwordHash;
   }
 
   get name(): string {
@@ -75,5 +141,13 @@ export class MemberModel extends PersistenceModel<string, MemberPersistenceProps
 
   get status(): MemberStatusType {
     return this.etc.status;
+  }
+
+  get failedLoginCount(): number {
+    return this.etc.failedLoginCount;
+  }
+
+  get lockedAt(): Date | undefined {
+    return this.etc.lockedAt;
   }
 }

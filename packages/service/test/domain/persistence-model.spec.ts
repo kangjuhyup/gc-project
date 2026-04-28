@@ -7,10 +7,14 @@ describe('PersistenceModel', () => {
     const updatedAt = new Date('2026-04-28T01:00:00.000Z');
 
     const member = MemberModel.of({
-      email: 'member@example.com',
-      password: 'hashed-password',
+      userId: 'member_01',
+      passwordHash: 'hashed-password',
       name: 'Member',
+      birthDate: new Date('1990-01-01T00:00:00.000Z'),
+      phoneNumber: '01000000000',
+      address: 'Seoul',
       status: 'ACTIVE',
+      failedLoginCount: 0,
     }).setPersistence('1', createdAt, updatedAt);
 
     expect(member.id).toBe('1');

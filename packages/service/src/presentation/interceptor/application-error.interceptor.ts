@@ -3,9 +3,11 @@ import {
   CallHandler,
   ConflictException,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NestInterceptor,
+  NotFoundException,
 } from '@nestjs/common';
 import { Observable, catchError, throwError } from 'rxjs';
 import { DomainError } from '@domain';
@@ -16,6 +18,8 @@ const conflictErrors = new Set([
 ]);
 
 const badRequestErrors = new Set([
+  'CURRENT_PASSWORD_MISMATCH',
+  'INVALID_LOGIN_CREDENTIALS',
   'INVALID_ADDRESS',
   'INVALID_MEMBER_NAME',
   'INVALID_PHONE_NUMBER',
@@ -28,6 +32,14 @@ const badRequestErrors = new Set([
   'PHONE_VERIFICATION_REQUIRED',
 ]);
 
+const forbiddenErrors = new Set([
+  'MEMBER_LOCKED',
+]);
+
+const notFoundErrors = new Set([
+  'MEMBER_NOT_FOUND',
+]);
+
 @Injectable()
 export class ApplicationErrorInterceptor implements NestInterceptor {
   intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -36,7 +48,9 @@ export class ApplicationErrorInterceptor implements NestInterceptor {
     );
   }
 
-  private map(error: Error): BadRequestException | ConflictException | InternalServerErrorException {
+  private map(
+    error: Error,
+  ): BadRequestException | ConflictException | ForbiddenException | InternalServerErrorException | NotFoundException {
     const code = error instanceof DomainError ? error.code : error.message;
 
     if (conflictErrors.has(code)) {
@@ -45,6 +59,14 @@ export class ApplicationErrorInterceptor implements NestInterceptor {
 
     if (badRequestErrors.has(code)) {
       return new BadRequestException(code);
+    }
+
+    if (forbiddenErrors.has(code)) {
+      return new ForbiddenException(code);
+    }
+
+    if (notFoundErrors.has(code)) {
+      return new NotFoundException(code);
     }
 
     return new InternalServerErrorException('INTERNAL_SERVER_ERROR');

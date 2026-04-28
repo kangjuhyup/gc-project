@@ -20,11 +20,13 @@ describe('domain persistence models', () => {
 
     const member = MemberModel.of({
       userId: 'member_01',
+      passwordHash: 'hashed-password',
       name: 'Member',
       birthDate,
       phoneNumber: '01000000000',
       address: 'Seoul',
       status: 'ACTIVE',
+      failedLoginCount: 0,
     });
 
     expect(member.userId).toBe('member_01');
@@ -40,6 +42,7 @@ describe('domain persistence models', () => {
 
     const member = MemberModel.register({
       userId: 'member_01',
+      passwordHash: 'hashed-password',
       name: 'Member',
       birthDate,
       phoneNumber: '01000000000',
@@ -54,12 +57,78 @@ describe('domain persistence models', () => {
     expect(() =>
       MemberModel.register({
         userId: '1',
+        passwordHash: 'hashed-password',
         name: 'Member',
         birthDate: new Date('1990-01-01T00:00:00.000Z'),
         phoneNumber: '01000000000',
         address: 'Seoul',
       }),
     ).toThrow(new DomainError(DomainErrorCode.INVALID_USER_ID));
+  });
+
+  it('로그인 실패가 5회 누적되면 회원 상태를 LOCKED로 변경한다', () => {
+    const createdAt = new Date('2026-04-28T00:00:00.000Z');
+    const now = new Date('2026-04-28T00:05:00.000Z');
+    const member = MemberModel.of({
+      userId: 'member_01',
+      passwordHash: 'hashed-password',
+      name: 'Member',
+      birthDate: new Date('1990-01-01T00:00:00.000Z'),
+      phoneNumber: '01000000000',
+      address: 'Seoul',
+      status: 'ACTIVE',
+      failedLoginCount: 4,
+    }).setPersistence('member-1', createdAt, createdAt);
+
+    const locked = member.recordLoginFailure(now);
+
+    expect(locked.status).toBe('LOCKED');
+    expect(locked.failedLoginCount).toBe(5);
+    expect(locked.lockedAt).toBe(now);
+  });
+
+  it('임시비밀번호를 발급하면 비밀번호 해시를 교체하고 잠금을 해제한다', () => {
+    const createdAt = new Date('2026-04-28T00:00:00.000Z');
+    const now = new Date('2026-04-28T00:05:00.000Z');
+    const member = MemberModel.of({
+      userId: 'member_01',
+      passwordHash: 'old-hash',
+      name: 'Member',
+      birthDate: new Date('1990-01-01T00:00:00.000Z'),
+      phoneNumber: '01000000000',
+      address: 'Seoul',
+      status: 'LOCKED',
+      failedLoginCount: 5,
+      lockedAt: createdAt,
+    }).setPersistence('member-1', createdAt, createdAt);
+
+    const unlocked = member.issueTemporaryPassword({ passwordHash: 'new-hash', now });
+
+    expect(unlocked.passwordHash).toBe('new-hash');
+    expect(unlocked.status).toBe('ACTIVE');
+    expect(unlocked.failedLoginCount).toBe(0);
+    expect(unlocked.lockedAt).toBeUndefined();
+  });
+
+  it('비밀번호를 변경하면 비밀번호 해시만 신규 해시로 교체한다', () => {
+    const createdAt = new Date('2026-04-28T00:00:00.000Z');
+    const now = new Date('2026-04-28T00:05:00.000Z');
+    const member = MemberModel.of({
+      userId: 'member_01',
+      passwordHash: 'old-hash',
+      name: 'Member',
+      birthDate: new Date('1990-01-01T00:00:00.000Z'),
+      phoneNumber: '01000000000',
+      address: 'Seoul',
+      status: 'ACTIVE',
+      failedLoginCount: 2,
+    }).setPersistence('member-1', createdAt, createdAt);
+
+    const changed = member.changePassword({ passwordHash: 'new-hash', now });
+
+    expect(changed.passwordHash).toBe('new-hash');
+    expect(changed.status).toBe('ACTIVE');
+    expect(changed.failedLoginCount).toBe(2);
   });
 
   it('영화와 상영 persistence 속성으로 도메인 모델을 생성한다', () => {

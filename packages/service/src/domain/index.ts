@@ -1,4 +1,10 @@
 export type { DomainEvent } from './events';
+export {
+  LoginFailedLogEvent,
+  LoginSucceededLogEvent,
+  MemberPasswordChangedLogEvent,
+  MemberSignedUpLogEvent,
+} from './events';
 export { DomainError, DomainErrorCode } from './errors';
 export {
   MemberStatus,

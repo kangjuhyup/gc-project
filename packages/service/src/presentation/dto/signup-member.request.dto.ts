@@ -6,6 +6,11 @@ export class SignupMemberRequestDto {
   readonly userId!: string;
 
   @IsString()
+  @MinLength(8)
+  @MaxLength(72)
+  readonly password!: string;
+
+  @IsString()
   @MinLength(1)
   @MaxLength(50)
   readonly name!: string;
@@ -27,6 +32,7 @@ export class SignupMemberRequestDto {
 
   private constructor(params: {
     userId: string;
+    password: string;
     name: string;
     birthDate: string;
     phoneNumber: string;
@@ -38,6 +44,7 @@ export class SignupMemberRequestDto {
 
   static of(params: {
     userId: string;
+    password: string;
     name: string;
     birthDate: string;
     phoneNumber: string;

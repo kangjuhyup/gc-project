@@ -50,22 +50,28 @@ export class PersistenceMapper {
   static memberToDomain(entity: MemberEntity): MemberModel {
     return MemberModel.of({
       userId: entity.userId,
+      passwordHash: entity.passwordHash,
       name: entity.name,
       birthDate: entity.birthDate,
       phoneNumber: entity.phoneNumber,
       address: entity.address,
       status: entity.status as MemberStatusType,
+      failedLoginCount: entity.failedLoginCount,
+      lockedAt: entity.lockedAt,
     }).setPersistence(entity.id, entity.createdAt, entity.updatedAt);
   }
 
   static memberToEntity(model: MemberModel): MemberEntity {
     const entity = assignId(new MemberEntity(), currentId(model.id));
     entity.userId = model.userId;
+    entity.passwordHash = model.passwordHash;
     entity.name = model.name;
     entity.birthDate = model.birthDate;
     entity.phoneNumber = model.phoneNumber;
     entity.address = model.address;
     entity.status = model.status;
+    entity.failedLoginCount = model.failedLoginCount;
+    entity.lockedAt = model.lockedAt;
     if (model.createdAt !== undefined) {
       entity.createdAt = model.createdAt;
     }

@@ -3,6 +3,8 @@ import { PhoneVerificationModel } from '@domain';
 import { SignupMemberCommand } from '@application/commands/dto';
 import { SignupMemberCommandHandler } from '@application/commands/handlers';
 import type {
+  ClockPort,
+  LogEventPublisherPort,
   MemberRepositoryPort,
   PhoneVerificationRepositoryPort,
 } from '@application/commands/ports';
@@ -10,6 +12,7 @@ import type {
 function command(): SignupMemberCommand {
   return SignupMemberCommand.of({
     userId: 'member_01',
+    password: 'password123!',
     name: 'Member',
     birthDate: new Date('1990-01-01T00:00:00.000Z'),
     phoneNumber: '01000000000',
@@ -32,7 +35,16 @@ describe('SignupMemberCommandHandler', () => {
       save: vi.fn(),
       findVerifiedByPhoneNumber: vi.fn(),
     } satisfies PhoneVerificationRepositoryPort;
-    const handler = new SignupMemberCommandHandler(memberRepository, phoneVerificationRepository);
+    const passwordHasher = { hash: vi.fn().mockResolvedValue('hashed-password'), verify: vi.fn() };
+    const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:02:00.000Z')) } satisfies ClockPort;
+    const handler = new SignupMemberCommandHandler(
+      memberRepository,
+      phoneVerificationRepository,
+      passwordHasher,
+      logEventPublisher,
+      clock,
+    );
 
     await expect(handler.execute(command())).rejects.toThrow('USER_ID_ALREADY_EXISTS');
 
@@ -53,7 +65,16 @@ describe('SignupMemberCommandHandler', () => {
       save: vi.fn(),
       findVerifiedByPhoneNumber: vi.fn(),
     } satisfies PhoneVerificationRepositoryPort;
-    const handler = new SignupMemberCommandHandler(memberRepository, phoneVerificationRepository);
+    const passwordHasher = { hash: vi.fn().mockResolvedValue('hashed-password'), verify: vi.fn() };
+    const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:02:00.000Z')) } satisfies ClockPort;
+    const handler = new SignupMemberCommandHandler(
+      memberRepository,
+      phoneVerificationRepository,
+      passwordHasher,
+      logEventPublisher,
+      clock,
+    );
 
     await expect(handler.execute(command())).rejects.toThrow('PHONE_NUMBER_ALREADY_EXISTS');
 
@@ -74,7 +95,16 @@ describe('SignupMemberCommandHandler', () => {
       save: vi.fn(),
       findVerifiedByPhoneNumber: vi.fn(),
     } satisfies PhoneVerificationRepositoryPort;
-    const handler = new SignupMemberCommandHandler(memberRepository, phoneVerificationRepository);
+    const passwordHasher = { hash: vi.fn().mockResolvedValue('hashed-password'), verify: vi.fn() };
+    const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:02:00.000Z')) } satisfies ClockPort;
+    const handler = new SignupMemberCommandHandler(
+      memberRepository,
+      phoneVerificationRepository,
+      passwordHasher,
+      logEventPublisher,
+      clock,
+    );
 
     await expect(handler.execute(command())).rejects.toThrow('PHONE_VERIFICATION_REQUIRED');
   });
@@ -100,11 +130,28 @@ describe('SignupMemberCommandHandler', () => {
       save: vi.fn(),
       findVerifiedByPhoneNumber: vi.fn(),
     } satisfies PhoneVerificationRepositoryPort;
-    const handler = new SignupMemberCommandHandler(memberRepository, phoneVerificationRepository);
+    const passwordHasher = { hash: vi.fn().mockResolvedValue('hashed-password'), verify: vi.fn() };
+    const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:02:00.000Z')) } satisfies ClockPort;
+    const handler = new SignupMemberCommandHandler(
+      memberRepository,
+      phoneVerificationRepository,
+      passwordHasher,
+      logEventPublisher,
+      clock,
+    );
 
     const result = await handler.execute(command());
 
     expect(memberRepository.save).toHaveBeenCalledOnce();
+    expect(passwordHasher.hash).toHaveBeenCalledWith('password123!');
+    expect(logEventPublisher.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        memberId: 'member-1',
+        userId: 'member_01',
+        occurredAt: new Date('2026-04-28T00:02:00.000Z'),
+      }),
+    );
     expect(result.memberId).toBe('member-1');
     expect(result.userId).toBe('member_01');
   });

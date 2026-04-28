@@ -16,11 +16,13 @@ describe('PersistenceMapper', () => {
     const entity = new MemberEntity();
     entity.id = '1';
     entity.userId = 'member_01';
+    entity.passwordHash = 'hashed-password';
     entity.name = 'Member';
     entity.birthDate = birthDate;
     entity.phoneNumber = '01000000000';
     entity.address = 'Seoul';
     entity.status = 'ACTIVE';
+    entity.failedLoginCount = 2;
     entity.createdAt = createdAt;
     entity.updatedAt = updatedAt;
 
@@ -35,8 +37,10 @@ describe('PersistenceMapper', () => {
     expect(model.updatedAt).toBe(updatedAt);
     expect(mappedEntity.id).toBe('1');
     expect(mappedEntity.userId).toBe('member_01');
+    expect(mappedEntity.passwordHash).toBe('hashed-password');
     expect(mappedEntity.phoneNumber).toBe('01000000000');
     expect(mappedEntity.status).toBe('ACTIVE');
+    expect(mappedEntity.failedLoginCount).toBe(2);
   });
 
   it('예약 모델을 entity 참조로 변환한 뒤 도메인 id로 복원한다', () => {

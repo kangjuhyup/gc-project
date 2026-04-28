@@ -1,7 +1,10 @@
-import { MemberModel } from '@domain';
+import { MemberModel, MemberSignedUpLogEvent } from '@domain';
 import { SignupMemberCommand, SignupMemberResultDto } from '../dto';
 import type {
+  ClockPort,
+  LogEventPublisherPort,
   MemberRepositoryPort,
+  PasswordHasherPort,
   PhoneVerificationRepositoryPort,
 } from '../ports';
 
@@ -9,6 +12,9 @@ export class SignupMemberCommandHandler {
   constructor(
     private readonly memberRepository: MemberRepositoryPort,
     private readonly phoneVerificationRepository: PhoneVerificationRepositoryPort,
+    private readonly passwordHasher: PasswordHasherPort,
+    private readonly logEventPublisher: LogEventPublisherPort,
+    private readonly clock: ClockPort,
   ) {}
 
   async execute(command: SignupMemberCommand): Promise<SignupMemberResultDto> {
@@ -30,8 +36,11 @@ export class SignupMemberCommandHandler {
       throw new Error('PHONE_VERIFICATION_REQUIRED');
     }
 
+    const passwordHash = await this.passwordHasher.hash(command.password);
+
     const member = MemberModel.register({
       userId: command.userId,
+      passwordHash,
       name: command.name,
       birthDate: command.birthDate,
       phoneNumber: command.phoneNumber,
@@ -39,6 +48,13 @@ export class SignupMemberCommandHandler {
     });
 
     const saved = await this.memberRepository.save(member);
+    await this.logEventPublisher.publish(
+      MemberSignedUpLogEvent.of({
+        memberId: saved.id,
+        userId: saved.userId,
+        occurredAt: this.clock.now(),
+      }),
+    );
 
     return SignupMemberResultDto.of({
       memberId: saved.id,

@@ -1,6 +1,7 @@
 export class SignupMemberCommand {
   private constructor(
     readonly userId: string,
+    readonly password: string,
     readonly name: string,
     readonly birthDate: Date,
     readonly phoneNumber: string,
@@ -10,6 +11,7 @@ export class SignupMemberCommand {
 
   static of(params: {
     userId: string;
+    password: string;
     name: string;
     birthDate: Date;
     phoneNumber: string;
@@ -18,6 +20,7 @@ export class SignupMemberCommand {
   }): SignupMemberCommand {
     return new SignupMemberCommand(
       params.userId,
+      params.password,
       params.name,
       params.birthDate,
       params.phoneNumber,
