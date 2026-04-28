@@ -1,0 +1,181 @@
+services:
+  postgres-master:
+    image: bitnami/postgresql:17
+    container_name: gc-postgres-master
+    environment:
+      POSTGRESQL_REPLICATION_MODE: master
+      POSTGRESQL_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator_password}
+      POSTGRESQL_USERNAME: ${POSTGRES_USER:-gc_user}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD:-gc_password}
+      POSTGRESQL_DATABASE: ${POSTGRES_DB:-gc_project}
+    ports:
+      - "${POSTGRES_MASTER_PORT:-5432}:5432"
+    volumes:
+      - postgres_master_data:/bitnami/postgresql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-gc_user} -d ${POSTGRES_DB:-gc_project}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gc-network
+
+  postgres-replica:
+    image: bitnami/postgresql:17
+    container_name: gc-postgres-replica
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+    environment:
+      POSTGRESQL_REPLICATION_MODE: slave
+      POSTGRESQL_MASTER_HOST: postgres-master
+      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+      POSTGRESQL_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator_password}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD:-gc_password}
+    ports:
+      - "${POSTGRES_REPLICA_PORT:-5433}:5432"
+    volumes:
+      - postgres_replica_data:/bitnami/postgresql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-gc_user} -d ${POSTGRES_DB:-gc_project}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gc-network
+
+  redis-master:
+    image: bitnami/redis:8.2
+    container_name: gc-redis-master
+    environment:
+      REDIS_REPLICATION_MODE: master
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-gc_redis_password}
+    ports:
+      - "${REDIS_MASTER_PORT:-6379}:6379"
+    volumes:
+      - redis_master_data:/bitnami/redis/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli -a ${REDIS_PASSWORD:-gc_redis_password} ping | grep PONG",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gc-network
+
+  redis-replica:
+    image: bitnami/redis:8.2
+    container_name: gc-redis-replica
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    environment:
+      REDIS_REPLICATION_MODE: slave
+      REDIS_MASTER_HOST: redis-master
+      REDIS_MASTER_PORT_NUMBER: 6379
+      REDIS_MASTER_PASSWORD: ${REDIS_PASSWORD:-gc_redis_password}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-gc_redis_password}
+    ports:
+      - "${REDIS_REPLICA_PORT:-6380}:6379"
+    volumes:
+      - redis_replica_data:/bitnami/redis/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli -a ${REDIS_PASSWORD:-gc_redis_password} ping | grep PONG",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gc-network
+
+  redis-sentinel-1:
+    image: bitnami/redis-sentinel:8.2
+    container_name: gc-redis-sentinel-1
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-replica:
+        condition: service_healthy
+    environment:
+      REDIS_MASTER_SET: ${REDIS_SENTINEL_MASTER_SET:-mymaster}
+      REDIS_MASTER_HOST: redis-master
+      REDIS_MASTER_PORT_NUMBER: 6379
+      REDIS_MASTER_PASSWORD: ${REDIS_PASSWORD:-gc_redis_password}
+      REDIS_SENTINEL_PASSWORD: ${REDIS_SENTINEL_PASSWORD:-gc_sentinel_password}
+      REDIS_SENTINEL_QUORUM: 2
+      REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS: 5000
+      REDIS_SENTINEL_FAILOVER_TIMEOUT: 10000
+    ports:
+      - "${REDIS_SENTINEL_1_PORT:-26379}:26379"
+    networks:
+      - gc-network
+
+  redis-sentinel-2:
+    image: bitnami/redis-sentinel:8.2
+    container_name: gc-redis-sentinel-2
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-replica:
+        condition: service_healthy
+    environment:
+      REDIS_MASTER_SET: ${REDIS_SENTINEL_MASTER_SET:-mymaster}
+      REDIS_MASTER_HOST: redis-master
+      REDIS_MASTER_PORT_NUMBER: 6379
+      REDIS_MASTER_PASSWORD: ${REDIS_PASSWORD:-gc_redis_password}
+      REDIS_SENTINEL_PASSWORD: ${REDIS_SENTINEL_PASSWORD:-gc_sentinel_password}
+      REDIS_SENTINEL_QUORUM: 2
+      REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS: 5000
+      REDIS_SENTINEL_FAILOVER_TIMEOUT: 10000
+    ports:
+      - "${REDIS_SENTINEL_2_PORT:-26380}:26379"
+    networks:
+      - gc-network
+
+  redis-sentinel-3:
+    image: bitnami/redis-sentinel:8.2
+    container_name: gc-redis-sentinel-3
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-replica:
+        condition: service_healthy
+    environment:
+      REDIS_MASTER_SET: ${REDIS_SENTINEL_MASTER_SET:-mymaster}
+      REDIS_MASTER_HOST: redis-master
+      REDIS_MASTER_PORT_NUMBER: 6379
+      REDIS_MASTER_PASSWORD: ${REDIS_PASSWORD:-gc_redis_password}
+      REDIS_SENTINEL_PASSWORD: ${REDIS_SENTINEL_PASSWORD:-gc_sentinel_password}
+      REDIS_SENTINEL_QUORUM: 2
+      REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS: 5000
+      REDIS_SENTINEL_FAILOVER_TIMEOUT: 10000
+    ports:
+      - "${REDIS_SENTINEL_3_PORT:-26381}:26379"
+    networks:
+      - gc-network
+
+volumes:
+  postgres_master_data:
+  postgres_replica_data:
+  redis_master_data:
+  redis_replica_data:
+
+networks:
+  gc-network:
+    driver: bridge
