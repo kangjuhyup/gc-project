@@ -1,5 +1,11 @@
+export { CLOCK } from './clock.port';
+export { MEMBER_REPOSITORY } from './member.repository.port';
+export { PHONE_VERIFICATION_REPOSITORY } from './phone-verification.repository.port';
+export { VERIFICATION_CODE_GENERATOR } from './verification-code-generator.port';
+export type { ClockPort } from './clock.port';
 export type { MemberRepositoryPort } from './member.repository.port';
 export type { MovieRepositoryPort } from './movie.repository.port';
+export type { PhoneVerificationRepositoryPort } from './phone-verification.repository.port';
 export type { RepositoryPort } from './repository.port';
 export type { ReservationEventRepositoryPort } from './reservation-event.repository.port';
 export type { ReservationRepositoryPort } from './reservation.repository.port';
@@ -8,3 +14,4 @@ export type { ScreenRepositoryPort } from './screen.repository.port';
 export type { ScreeningRepositoryPort } from './screening.repository.port';
 export type { SeatHoldRepositoryPort } from './seat-hold.repository.port';
 export type { SeatRepositoryPort } from './seat.repository.port';
+export type { VerificationCodeGeneratorPort } from './verification-code-generator.port';
