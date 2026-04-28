@@ -1,5 +1,6 @@
 import { demoMovies, filterMoviesForKeyword } from '@/features/movies/movieTimeline';
 import type { LoginResponse } from '@/features/login/loginApi';
+import type { PaymentRequest, PaymentResponse } from '@/features/payment/paymentApi';
 import type { ScreeningSeatMapResponse, SeatSummary } from '@/features/seats/seatApi';
 import type {
   AddressSearchResponse,
@@ -80,6 +81,19 @@ export async function resolveMockApi({
 
     return toMockResponse({
       memberId: payload.memberId ?? 'mock_member',
+    });
+  }
+
+  if (method === 'POST' && pathname === '/reservations') {
+    const payload = await readJsonBody<PaymentRequest>(body);
+
+    return toMockResponse<PaymentResponse>({
+      reservationNumber: `R${new Date().getFullYear()}${String(payload.screeningId).padStart(
+        4,
+        '0',
+      )}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+      status: 'CONFIRMED',
+      paidAt: new Date().toISOString(),
     });
   }
 

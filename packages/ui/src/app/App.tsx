@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/login/LoginPage';
 import { MoviesPage } from '@/features/movies/MoviesPage';
+import { PaymentPage } from '@/features/payment/PaymentPage';
 import { SeatSelectionPage } from '@/features/seats/SeatSelectionPage';
 import { SignupPage } from '@/features/signup/SignupPage';
 
@@ -60,6 +61,14 @@ export default function App() {
           element={
             <RequireAuth>
               <SeatSelectionPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/movies/:movieId/screenings/:screeningId/payment"
+          element={
+            <RequireAuth>
+              <PaymentPage />
             </RequireAuth>
           }
         />

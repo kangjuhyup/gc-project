@@ -7,7 +7,7 @@ import { getSelectedSeats, toggleSeatSelection } from './seatSelection';
 import { useScreeningSeats } from './seatHooks';
 
 export function SeatSelectionPage() {
-  const { screeningId } = useParams();
+  const { movieId, screeningId } = useParams();
   const parsedScreeningId = Number(screeningId);
   const validScreeningId = Number.isFinite(parsedScreeningId) ? parsedScreeningId : null;
   const seatsQuery = useScreeningSeats(validScreeningId);
@@ -127,10 +127,35 @@ export function SeatSelectionPage() {
                 <dd>{totalPrice.toLocaleString()}원</dd>
               </div>
             </dl>
-            <Button disabled={!selectedSeats.length} type="button">
-              <CreditCard size={17} aria-hidden="true" />
-              결제 진행
-            </Button>
+            {selectedSeats.length ? (
+              <Button asChild>
+                <Link
+                  state={{
+                    movieTitle: seatsQuery.data.screening.movieTitle,
+                    screenName: seatsQuery.data.screening.screenName,
+                    screeningId: seatsQuery.data.screening.id,
+                    screeningStartAt: seatsQuery.data.screening.startAt,
+                    seats: selectedSeats.map((seat) => ({
+                      id: seat.id,
+                      label: seat.label,
+                    })),
+                    totalPrice,
+                  }}
+                  to={`/movies/${movieId ?? '1'}/screenings/${seatsQuery.data.screening.id}/payment`}
+                  viewTransition
+                >
+                  <CreditCard size={17} aria-hidden="true" />
+                  결제 진행
+                </Link>
+              </Button>
+            ) : (
+              <Button disabled type="button">
+                <>
+                  <CreditCard size={17} aria-hidden="true" />
+                  결제 진행
+                </>
+              </Button>
+            )}
           </aside>
         </div>
       ) : null}
