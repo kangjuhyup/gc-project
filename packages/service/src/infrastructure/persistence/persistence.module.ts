@@ -3,6 +3,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import {
   MEMBER_QUERY,
+  MOVIE_QUERY,
 } from '@application/query/ports';
 import {
   MEMBER_REPOSITORY,
@@ -11,6 +12,7 @@ import {
 import { persistenceEntities } from './entities';
 import {
   MikroOrmMemberRepository,
+  MikroOrmMovieQueryRepository,
   MikroOrmPhoneVerificationRepository,
 } from './repositories';
 
@@ -29,6 +31,7 @@ import {
   ],
   providers: [
     MikroOrmMemberRepository,
+    MikroOrmMovieQueryRepository,
     MikroOrmPhoneVerificationRepository,
     {
       provide: MEMBER_REPOSITORY,
@@ -39,6 +42,10 @@ import {
       useExisting: MikroOrmMemberRepository,
     },
     {
+      provide: MOVIE_QUERY,
+      useExisting: MikroOrmMovieQueryRepository,
+    },
+    {
       provide: PHONE_VERIFICATION_REPOSITORY,
       useExisting: MikroOrmPhoneVerificationRepository,
     },
@@ -47,6 +54,7 @@ import {
     MikroOrmModule,
     MEMBER_REPOSITORY,
     MEMBER_QUERY,
+    MOVIE_QUERY,
     PHONE_VERIFICATION_REPOSITORY,
   ],
 })
