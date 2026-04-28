@@ -1,6 +1,6 @@
 import { PersistenceModel } from '../shared';
-
-export type MemberStatus = 'ACTIVE' | 'DORMANT' | 'WITHDRAWN';
+import { MemberStatus, type MemberStatusType } from '../property';
+import { DomainError, DomainErrorCode } from '../errors';
 
 export interface MemberPersistenceProps {
   readonly userId: string;
@@ -8,7 +8,7 @@ export interface MemberPersistenceProps {
   readonly birthDate: Date;
   readonly phoneNumber: string;
   readonly address: string;
-  readonly status: MemberStatus;
+  readonly status: MemberStatusType;
 }
 
 export class MemberModel extends PersistenceModel<string, MemberPersistenceProps> {
@@ -28,19 +28,19 @@ export class MemberModel extends PersistenceModel<string, MemberPersistenceProps
     address: string;
   }): MemberModel {
     if (!/^[a-z][a-z0-9_]{3,19}$/.test(params.userId)) {
-      throw new Error('INVALID_USER_ID');
+      throw new DomainError(DomainErrorCode.INVALID_USER_ID);
     }
 
     if (params.name.trim().length === 0) {
-      throw new Error('INVALID_MEMBER_NAME');
+      throw new DomainError(DomainErrorCode.INVALID_MEMBER_NAME);
     }
 
     if (!/^\d{10,11}$/.test(params.phoneNumber)) {
-      throw new Error('INVALID_PHONE_NUMBER');
+      throw new DomainError(DomainErrorCode.INVALID_PHONE_NUMBER);
     }
 
     if (params.address.trim().length === 0) {
-      throw new Error('INVALID_ADDRESS');
+      throw new DomainError(DomainErrorCode.INVALID_ADDRESS);
     }
 
     return new MemberModel({
@@ -49,7 +49,7 @@ export class MemberModel extends PersistenceModel<string, MemberPersistenceProps
       birthDate: params.birthDate,
       phoneNumber: params.phoneNumber,
       address: params.address,
-      status: 'ACTIVE',
+      status: MemberStatus.ACTIVE,
     });
   }
 
@@ -73,7 +73,7 @@ export class MemberModel extends PersistenceModel<string, MemberPersistenceProps
     return this.etc.address;
   }
 
-  get status(): MemberStatus {
+  get status(): MemberStatusType {
     return this.etc.status;
   }
 }

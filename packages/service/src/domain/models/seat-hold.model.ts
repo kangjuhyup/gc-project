@@ -1,13 +1,12 @@
 import { PersistenceModel } from '../shared';
-
-export type SeatHoldStatus = 'HELD' | 'CONFIRMED' | 'EXPIRED' | 'RELEASED';
+import type { SeatHoldStatusType } from '../property';
 
 export interface SeatHoldPersistenceProps {
   readonly screeningId: string;
   readonly seatId: string;
   readonly memberId: string;
   readonly reservationId?: string;
-  readonly status: SeatHoldStatus;
+  readonly status: SeatHoldStatusType;
   readonly expiresAt: Date;
 }
 
@@ -36,7 +35,7 @@ export class SeatHoldModel extends PersistenceModel<string, SeatHoldPersistenceP
     return this.etc.reservationId;
   }
 
-  get status(): SeatHoldStatus {
+  get status(): SeatHoldStatusType {
     return this.etc.status;
   }
 

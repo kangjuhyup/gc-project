@@ -1,12 +1,11 @@
 import { PersistenceModel } from '../shared';
-
-export type SeatType = 'NORMAL' | 'COUPLE' | 'DISABLED';
+import type { SeatTypeType } from '../property';
 
 export interface SeatPersistenceProps {
   readonly screenId: string;
   readonly seatRow: string;
   readonly seatCol: number;
-  readonly seatType?: SeatType;
+  readonly seatType?: SeatTypeType;
 }
 
 export class SeatModel extends PersistenceModel<string, SeatPersistenceProps> {
@@ -30,7 +29,7 @@ export class SeatModel extends PersistenceModel<string, SeatPersistenceProps> {
     return this.etc.seatCol;
   }
 
-  get seatType(): SeatType | undefined {
+  get seatType(): SeatTypeType | undefined {
     return this.etc.seatType;
   }
 }

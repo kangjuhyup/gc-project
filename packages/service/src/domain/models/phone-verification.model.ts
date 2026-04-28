@@ -1,11 +1,11 @@
 import { PersistenceModel } from '../shared';
-
-export type PhoneVerificationStatus = 'PENDING' | 'VERIFIED' | 'EXPIRED';
+import { PhoneVerificationStatus, type PhoneVerificationStatusType } from '../property';
+import { DomainError, DomainErrorCode } from '../errors';
 
 export interface PhoneVerificationPersistenceProps {
   readonly phoneNumber: string;
   readonly code: string;
-  readonly status: PhoneVerificationStatus;
+  readonly status: PhoneVerificationStatusType;
   readonly expiresAt: Date;
   readonly verifiedAt?: Date;
 }
@@ -21,37 +21,37 @@ export class PhoneVerificationModel extends PersistenceModel<string, PhoneVerifi
 
   static issue(params: { phoneNumber: string; code: string; expiresAt: Date }): PhoneVerificationModel {
     if (!/^\d{10,11}$/.test(params.phoneNumber)) {
-      throw new Error('INVALID_PHONE_NUMBER');
+      throw new DomainError(DomainErrorCode.INVALID_PHONE_NUMBER);
     }
 
     if (!/^\d{6}$/.test(params.code)) {
-      throw new Error('INVALID_VERIFICATION_CODE');
+      throw new DomainError(DomainErrorCode.INVALID_VERIFICATION_CODE);
     }
 
     return new PhoneVerificationModel({
       phoneNumber: params.phoneNumber,
       code: params.code,
-      status: 'PENDING',
+      status: PhoneVerificationStatus.PENDING,
       expiresAt: params.expiresAt,
     });
   }
 
   confirm(params: { phoneNumber: string; code: string; now: Date }): PhoneVerificationModel {
-    if (this.etc.status !== 'PENDING') {
-      throw new Error('PHONE_VERIFICATION_NOT_PENDING');
+    if (this.etc.status !== PhoneVerificationStatus.PENDING) {
+      throw new DomainError(DomainErrorCode.PHONE_VERIFICATION_NOT_PENDING);
     }
 
     if (this.etc.expiresAt.getTime() <= params.now.getTime()) {
-      throw new Error('PHONE_VERIFICATION_EXPIRED');
+      throw new DomainError(DomainErrorCode.PHONE_VERIFICATION_EXPIRED);
     }
 
     if (this.etc.phoneNumber !== params.phoneNumber || this.etc.code !== params.code) {
-      throw new Error('PHONE_VERIFICATION_CODE_MISMATCH');
+      throw new DomainError(DomainErrorCode.PHONE_VERIFICATION_CODE_MISMATCH);
     }
 
     return new PhoneVerificationModel({
       ...this.etc,
-      status: 'VERIFIED',
+      status: PhoneVerificationStatus.VERIFIED,
       verifiedAt: params.now,
     }).setPersistence(this.id, this.createdAt, params.now);
   }
@@ -64,7 +64,7 @@ export class PhoneVerificationModel extends PersistenceModel<string, PhoneVerifi
     return this.etc.code;
   }
 
-  get status(): PhoneVerificationStatus {
+  get status(): PhoneVerificationStatusType {
     return this.etc.status;
   }
 

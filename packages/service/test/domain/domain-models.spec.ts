@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DomainError,
+  DomainErrorCode,
   MemberModel,
   MovieModel,
+  PhoneVerificationModel,
   ReservationEventModel,
   ReservationModel,
   ReservationSeatModel,
@@ -45,6 +48,18 @@ describe('domain persistence models', () => {
 
     expect(member.userId).toBe('member_01');
     expect(member.status).toBe('ACTIVE');
+  });
+
+  it('throws domain error for invalid member user id', () => {
+    expect(() =>
+      MemberModel.register({
+        userId: '1',
+        name: 'Member',
+        birthDate: new Date('1990-01-01T00:00:00.000Z'),
+        phoneNumber: '01000000000',
+        address: 'Seoul',
+      }),
+    ).toThrow(new DomainError(DomainErrorCode.INVALID_USER_ID));
   });
 
   it('creates movie and screening models from persistence props', () => {
@@ -159,5 +174,42 @@ describe('domain persistence models', () => {
     expect(seatHold.reservationId).toBe('4');
     expect(seatHold.status).toBe('HELD');
     expect(seatHold.expiresAt).toBe(expiresAt);
+  });
+
+  it('issues and confirms a phone verification', () => {
+    const createdAt = new Date('2026-04-28T00:00:00.000Z');
+    const now = new Date('2026-04-28T00:01:00.000Z');
+    const verification = PhoneVerificationModel.issue({
+      phoneNumber: '01000000000',
+      code: '123456',
+      expiresAt: new Date('2026-04-28T00:05:00.000Z'),
+    }).setPersistence('verification-1', createdAt, createdAt);
+
+    const confirmed = verification.confirm({
+      phoneNumber: '01000000000',
+      code: '123456',
+      now,
+    });
+
+    expect(confirmed.id).toBe('verification-1');
+    expect(confirmed.status).toBe('VERIFIED');
+    expect(confirmed.verifiedAt).toBe(now);
+  });
+
+  it('rejects expired phone verification confirmation', () => {
+    const createdAt = new Date('2026-04-28T00:00:00.000Z');
+    const verification = PhoneVerificationModel.issue({
+      phoneNumber: '01000000000',
+      code: '123456',
+      expiresAt: new Date('2026-04-28T00:05:00.000Z'),
+    }).setPersistence('verification-1', createdAt, createdAt);
+
+    expect(() =>
+      verification.confirm({
+        phoneNumber: '01000000000',
+        code: '123456',
+        now: new Date('2026-04-28T00:05:00.000Z'),
+      }),
+    ).toThrow(new DomainError(DomainErrorCode.PHONE_VERIFICATION_EXPIRED));
   });
 });

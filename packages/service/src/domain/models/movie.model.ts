@@ -1,13 +1,12 @@
 import { PersistenceModel } from '../shared';
-
-export type MovieRating = 'ALL' | '12' | '15' | '19';
+import type { MovieRatingType } from '../property';
 
 export interface MoviePersistenceProps {
   readonly title: string;
   readonly director?: string;
   readonly genre?: string;
   readonly runningTime: number;
-  readonly rating?: MovieRating;
+  readonly rating?: MovieRatingType;
   readonly releaseDate?: Date;
   readonly posterUrl?: string;
   readonly description?: string;
@@ -38,7 +37,7 @@ export class MovieModel extends PersistenceModel<string, MoviePersistenceProps> 
     return this.etc.runningTime;
   }
 
-  get rating(): MovieRating | undefined {
+  get rating(): MovieRatingType | undefined {
     return this.etc.rating;
   }
 

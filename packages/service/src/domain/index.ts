@@ -1,4 +1,14 @@
 export type { DomainEvent } from './events';
+export { DomainError, DomainErrorCode } from './errors';
+export {
+  MemberStatus,
+  MovieRating,
+  PhoneVerificationStatus,
+  ReservationEventType,
+  ReservationStatus,
+  SeatHoldStatus,
+  SeatType,
+} from './property';
 export { PersistenceModel } from './shared';
 export {
   MemberModel,
@@ -12,22 +22,25 @@ export {
   SeatHoldModel,
   SeatModel,
 } from './models';
+export type { DomainErrorCodeType } from './errors';
 export type {
   MemberPersistenceProps,
-  MemberStatus,
   MoviePersistenceProps,
-  MovieRating,
   PhoneVerificationPersistenceProps,
-  PhoneVerificationStatus,
   ReservationEventPersistenceProps,
-  ReservationEventType,
   ReservationPersistenceProps,
   ReservationSeatPersistenceProps,
-  ReservationStatus,
   ScreenPersistenceProps,
   ScreeningPersistenceProps,
   SeatHoldPersistenceProps,
-  SeatHoldStatus,
   SeatPersistenceProps,
-  SeatType,
 } from './models';
+export type {
+  MemberStatusType,
+  MovieRatingType,
+  PhoneVerificationStatusType,
+  ReservationEventTypeType,
+  ReservationStatusType,
+  SeatHoldStatusType,
+  SeatTypeType,
+} from './property';

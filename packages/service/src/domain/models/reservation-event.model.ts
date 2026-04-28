@@ -1,10 +1,9 @@
 import { PersistenceModel } from '../shared';
-
-export type ReservationEventType = 'CREATED' | 'CONFIRMED' | 'CANCELED' | 'EXPIRED';
+import type { ReservationEventTypeType } from '../property';
 
 export interface ReservationEventPersistenceProps {
   readonly reservationId: string;
-  readonly eventType: ReservationEventType;
+  readonly eventType: ReservationEventTypeType;
   readonly description?: string;
 }
 
@@ -21,7 +20,7 @@ export class ReservationEventModel extends PersistenceModel<string, ReservationE
     return this.etc.reservationId;
   }
 
-  get eventType(): ReservationEventType {
+  get eventType(): ReservationEventTypeType {
     return this.etc.eventType;
   }
 

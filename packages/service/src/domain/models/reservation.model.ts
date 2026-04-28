@@ -1,12 +1,11 @@
 import { PersistenceModel } from '../shared';
-
-export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'EXPIRED';
+import type { ReservationStatusType } from '../property';
 
 export interface ReservationPersistenceProps {
   readonly reservationNumber: string;
   readonly memberId: string;
   readonly screeningId: string;
-  readonly status: ReservationStatus;
+  readonly status: ReservationStatusType;
   readonly totalPrice: number;
   readonly canceledAt?: Date;
   readonly cancelReason?: string;
@@ -33,7 +32,7 @@ export class ReservationModel extends PersistenceModel<string, ReservationPersis
     return this.etc.screeningId;
   }
 
-  get status(): ReservationStatus {
+  get status(): ReservationStatusType {
     return this.etc.status;
   }
 
