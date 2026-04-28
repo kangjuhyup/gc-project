@@ -1,0 +1,3 @@
+display_name: Documentation
+short_description: Project documentation, ADR, API docs, runbooks, and onboarding workflow.
+default_prompt: Use this skill to create, update, or review project documentation.

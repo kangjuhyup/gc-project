@@ -1,0 +1,7 @@
+interface:
+  display_name: "Backend"
+  short_description: "Backend hexagonal service workflow."
+  default_prompt: "Use $backend to design, implement, and verify a backend service change."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,3 @@
+display_name: Frontend
+short_description: Frontend design, implementation, and verification workflow.
+default_prompt: Use this skill to design, implement, and verify frontend changes in this project.
