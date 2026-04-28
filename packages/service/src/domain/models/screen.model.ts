@@ -1,6 +1,7 @@
 import { PersistenceModel } from '@domain/shared';
 
 export interface ScreenPersistenceProps {
+  readonly theaterId: string;
   readonly name: string;
   readonly totalSeats: number;
 }
@@ -12,6 +13,10 @@ export class ScreenModel extends PersistenceModel<string, ScreenPersistenceProps
 
   static of(props: ScreenPersistenceProps): ScreenModel {
     return new ScreenModel(props);
+  }
+
+  get theaterId(): string {
+    return this.etc.theaterId;
   }
 
   get name(): string {

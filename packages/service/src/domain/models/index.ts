@@ -1,4 +1,5 @@
 export { MemberModel } from './member.model';
+export { MovieImageModel } from './movie-image.model';
 export { MovieModel } from './movie.model';
 export { PhoneVerificationModel } from './phone-verification.model';
 export { ReservationEventModel } from './reservation-event.model';
@@ -8,8 +9,10 @@ export { ScreenModel } from './screen.model';
 export { ScreeningModel } from './screening.model';
 export { SeatHoldModel } from './seat-hold.model';
 export { SeatModel } from './seat.model';
+export { TheaterModel } from './theater.model';
 
 export type { MemberPersistenceProps } from './member.model';
+export type { MovieImagePersistenceProps } from './movie-image.model';
 export type { MoviePersistenceProps } from './movie.model';
 export type { PhoneVerificationPersistenceProps } from './phone-verification.model';
 export type { ReservationEventPersistenceProps } from './reservation-event.model';
@@ -19,3 +22,4 @@ export type { ScreenPersistenceProps } from './screen.model';
 export type { ScreeningPersistenceProps } from './screening.model';
 export type { SeatHoldPersistenceProps } from './seat-hold.model';
 export type { SeatPersistenceProps } from './seat.model';
+export type { TheaterPersistenceProps } from './theater.model';

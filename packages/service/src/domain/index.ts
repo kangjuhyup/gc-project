@@ -8,6 +8,7 @@ export {
 export { DomainError, DomainErrorCode } from './errors';
 export {
   MemberStatus,
+  MovieImageType,
   MovieRating,
   PhoneVerificationStatus,
   ReservationEventType,
@@ -18,6 +19,7 @@ export {
 export { PersistenceModel } from './shared';
 export {
   MemberModel,
+  MovieImageModel,
   MovieModel,
   PhoneVerificationModel,
   ReservationEventModel,
@@ -27,10 +29,12 @@ export {
   ScreeningModel,
   SeatHoldModel,
   SeatModel,
+  TheaterModel,
 } from './models';
 export type { DomainErrorCodeType } from './errors';
 export type {
   MemberPersistenceProps,
+  MovieImagePersistenceProps,
   MoviePersistenceProps,
   PhoneVerificationPersistenceProps,
   ReservationEventPersistenceProps,
@@ -40,9 +44,11 @@ export type {
   ScreeningPersistenceProps,
   SeatHoldPersistenceProps,
   SeatPersistenceProps,
+  TheaterPersistenceProps,
 } from './models';
 export type {
   MemberStatusType,
+  MovieImageTypeType,
   MovieRatingType,
   PhoneVerificationStatusType,
   ReservationEventTypeType,

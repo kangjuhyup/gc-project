@@ -1,4 +1,5 @@
 import { Collection, Entity, OneToMany, PrimaryKey, Property } from '@mikro-orm/core';
+import { MovieImageEntity } from './movie-image.entity';
 import { ScreeningEntity } from './screening.entity';
 
 @Entity({ tableName: 'movie' })
@@ -35,4 +36,7 @@ export class MovieEntity {
 
   @OneToMany(() => ScreeningEntity, (screening) => screening.movie)
   screenings = new Collection<ScreeningEntity>(this);
+
+  @OneToMany(() => MovieImageEntity, (image) => image.movie)
+  images = new Collection<MovieImageEntity>(this);
 }

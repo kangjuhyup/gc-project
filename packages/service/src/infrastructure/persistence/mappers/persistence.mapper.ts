@@ -1,6 +1,7 @@
 import type { Rel } from '@mikro-orm/core';
 import {
   MemberModel,
+  MovieImageModel,
   MovieModel,
   PhoneVerificationModel,
   ReservationEventModel,
@@ -10,7 +11,9 @@ import {
   ScreeningModel,
   SeatHoldModel,
   SeatModel,
+  TheaterModel,
   type MemberStatusType,
+  type MovieImageTypeType,
   type MovieRatingType,
   type PhoneVerificationStatusType,
   type ReservationEventTypeType,
@@ -19,6 +22,7 @@ import {
   type SeatTypeType,
 } from '@domain';
 import { MemberEntity } from '../entities/member.entity';
+import { MovieImageEntity } from '../entities/movie-image.entity';
 import { MovieEntity } from '../entities/movie.entity';
 import { PhoneVerificationEntity } from '../entities/phone-verification.entity';
 import { ReservationEventEntity } from '../entities/reservation-event.entity';
@@ -28,6 +32,7 @@ import { ScreenEntity } from '../entities/screen.entity';
 import { ScreeningEntity } from '../entities/screening.entity';
 import { SeatHoldEntity } from '../entities/seat-hold.entity';
 import { SeatEntity } from '../entities/seat.entity';
+import { TheaterEntity } from '../entities/theater.entity';
 
 const EPOCH = new Date(0);
 
@@ -110,6 +115,27 @@ export class PersistenceMapper {
     return entity;
   }
 
+  static movieImageToDomain(entity: MovieImageEntity): MovieImageModel {
+    return MovieImageModel.of({
+      movieId: entity.movie.id,
+      imageType: entity.imageType as MovieImageTypeType,
+      url: entity.url,
+      sortOrder: entity.sortOrder,
+    }).setPersistence(entity.id, entity.createdAt, entity.createdAt);
+  }
+
+  static movieImageToEntity(model: MovieImageModel): MovieImageEntity {
+    const entity = assignId(new MovieImageEntity(), currentId(model.id));
+    entity.movie = ref<MovieEntity>(model.movieId);
+    entity.imageType = model.imageType;
+    entity.url = model.url;
+    entity.sortOrder = model.sortOrder;
+    if (model.createdAt !== undefined) {
+      entity.createdAt = model.createdAt;
+    }
+    return entity;
+  }
+
   static phoneVerificationToDomain(entity: PhoneVerificationEntity): PhoneVerificationModel {
     return PhoneVerificationModel.of({
       phoneNumber: entity.phoneNumber,
@@ -136,8 +162,26 @@ export class PersistenceMapper {
     return entity;
   }
 
+  static theaterToDomain(entity: TheaterEntity): TheaterModel {
+    return TheaterModel.of({
+      name: entity.name,
+      address: entity.address,
+    }).setPersistence(entity.id, entity.createdAt, entity.createdAt);
+  }
+
+  static theaterToEntity(model: TheaterModel): TheaterEntity {
+    const entity = assignId(new TheaterEntity(), currentId(model.id));
+    entity.name = model.name;
+    entity.address = model.address;
+    if (model.createdAt !== undefined) {
+      entity.createdAt = model.createdAt;
+    }
+    return entity;
+  }
+
   static screenToDomain(entity: ScreenEntity): ScreenModel {
     return ScreenModel.of({
+      theaterId: entity.theater.id,
       name: entity.name,
       totalSeats: entity.totalSeats,
     }).setPersistence(entity.id, EPOCH, EPOCH);
@@ -145,6 +189,7 @@ export class PersistenceMapper {
 
   static screenToEntity(model: ScreenModel): ScreenEntity {
     const entity = assignId(new ScreenEntity(), currentId(model.id));
+    entity.theater = ref<TheaterEntity>(model.theaterId);
     entity.name = model.name;
     entity.totalSeats = model.totalSeats;
     return entity;

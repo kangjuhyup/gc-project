@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { PhoneVerificationModel, ReservationModel, SeatHoldModel } from '@domain';
+import {
+  MovieImageModel,
+  PhoneVerificationModel,
+  ReservationModel,
+  ScreenModel,
+  SeatHoldModel,
+  TheaterModel,
+} from '@domain';
 import { MemberEntity } from '@infrastructure/persistence/entities/member.entity';
+import { MovieEntity } from '@infrastructure/persistence/entities/movie.entity';
+import { MovieImageEntity } from '@infrastructure/persistence/entities/movie-image.entity';
 import { PhoneVerificationEntity } from '@infrastructure/persistence/entities/phone-verification.entity';
 import { ReservationEntity } from '@infrastructure/persistence/entities/reservation.entity';
 import { ScreeningEntity } from '@infrastructure/persistence/entities/screening.entity';
 import { SeatHoldEntity } from '@infrastructure/persistence/entities/seat-hold.entity';
 import { SeatEntity } from '@infrastructure/persistence/entities/seat.entity';
+import { TheaterEntity } from '@infrastructure/persistence/entities/theater.entity';
 import { PersistenceMapper } from '@infrastructure/persistence/mappers';
 
 describe('PersistenceMapper', () => {
@@ -88,6 +98,53 @@ describe('PersistenceMapper', () => {
     expect(mappedModel.id).toBe('verification-1');
     expect(mappedModel.code).toBe('123456');
     expect(mappedModel.verifiedAt).toBe(updatedAt);
+  });
+
+  it('영화 이미지 entity를 도메인으로 변환한 뒤 다시 entity로 변환한다', () => {
+    const createdAt = new Date('2026-04-28T00:00:00.000Z');
+    const entity = new MovieImageEntity();
+    entity.id = '10';
+    entity.movie = { id: '1' } as MovieEntity;
+    entity.imageType = 'POSTER';
+    entity.url = 'https://example.com/poster.jpg';
+    entity.sortOrder = 0;
+    entity.createdAt = createdAt;
+
+    const model = PersistenceMapper.movieImageToDomain(entity);
+    const mappedEntity = PersistenceMapper.movieImageToEntity(model);
+
+    expect(model).toBeInstanceOf(MovieImageModel);
+    expect(model.movieId).toBe('1');
+    expect(model.imageType).toBe('POSTER');
+    expect(mappedEntity.movie.id).toBe('1');
+    expect(mappedEntity.url).toBe('https://example.com/poster.jpg');
+  });
+
+  it('극장과 상영관 entity를 도메인으로 변환한 뒤 다시 entity로 변환한다', () => {
+    const createdAt = new Date('2026-04-28T00:00:00.000Z');
+    const theaterEntity = new TheaterEntity();
+    theaterEntity.id = '1';
+    theaterEntity.name = 'GC 시네마 강남';
+    theaterEntity.address = '서울특별시 강남구 테헤란로 427';
+    theaterEntity.createdAt = createdAt;
+
+    const theaterModel = PersistenceMapper.theaterToDomain(theaterEntity);
+    const mappedTheater = PersistenceMapper.theaterToEntity(theaterModel);
+    const screenModel = ScreenModel.of({
+      theaterId: theaterModel.id,
+      name: 'IMAX',
+      totalSeats: 100,
+    }).setPersistence('2', createdAt, createdAt);
+    const screenEntity = PersistenceMapper.screenToEntity(screenModel);
+    screenEntity.theater = theaterEntity;
+    const mappedScreen = PersistenceMapper.screenToDomain(screenEntity);
+
+    expect(theaterModel).toBeInstanceOf(TheaterModel);
+    expect(mappedTheater.id).toBe('1');
+    expect(mappedTheater.name).toBe('GC 시네마 강남');
+    expect(screenEntity.theater.id).toBe('1');
+    expect(mappedScreen.theaterId).toBe('1');
+    expect(mappedScreen.name).toBe('IMAX');
   });
 
   it('선택적 예약 참조가 있는 좌석 선점 entity를 도메인으로 변환한다', () => {

@@ -3,6 +3,7 @@ import {
   DomainError,
   DomainErrorCode,
   MemberModel,
+  MovieImageModel,
   MovieModel,
   PhoneVerificationModel,
   ReservationEventModel,
@@ -12,6 +13,7 @@ import {
   ScreeningModel,
   SeatHoldModel,
   SeatModel,
+  TheaterModel,
 } from '@domain';
 
 describe('domain persistence models', () => {
@@ -154,6 +156,12 @@ describe('domain persistence models', () => {
       endAt,
       price: 12000,
     });
+    const movieImage = MovieImageModel.of({
+      movieId: '1',
+      imageType: 'POSTER',
+      url: 'https://example.com/poster.jpg',
+      sortOrder: 0,
+    });
 
     expect(movie.title).toBe('Test Movie');
     expect(movie.runningTime).toBe(120);
@@ -164,10 +172,19 @@ describe('domain persistence models', () => {
     expect(screening.startAt).toBe(startAt);
     expect(screening.endAt).toBe(endAt);
     expect(screening.price).toBe(12000);
+    expect(movieImage.movieId).toBe('1');
+    expect(movieImage.imageType).toBe('POSTER');
+    expect(movieImage.url).toBe('https://example.com/poster.jpg');
   });
 
-  it('상영관과 좌석 persistence 속성으로 도메인 모델을 생성한다', () => {
+  it('극장과 상영관과 좌석 persistence 속성으로 도메인 모델을 생성한다', () => {
+    const theater = TheaterModel.of({
+      name: 'GC 시네마 강남',
+      address: '서울특별시 강남구 테헤란로 427',
+    });
+
     const screen = ScreenModel.of({
+      theaterId: '1',
       name: 'IMAX',
       totalSeats: 100,
     });
@@ -179,6 +196,9 @@ describe('domain persistence models', () => {
       seatType: 'NORMAL',
     });
 
+    expect(theater.name).toBe('GC 시네마 강남');
+    expect(theater.address).toBe('서울특별시 강남구 테헤란로 427');
+    expect(screen.theaterId).toBe('1');
     expect(screen.name).toBe('IMAX');
     expect(screen.totalSeats).toBe(100);
     expect(seat.screenId).toBe('1');
