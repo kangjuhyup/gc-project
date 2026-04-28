@@ -2,6 +2,7 @@ import type { Rel } from '@mikro-orm/core';
 import {
   MemberModel,
   MovieModel,
+  PhoneVerificationModel,
   ReservationEventModel,
   ReservationModel,
   ReservationSeatModel,
@@ -9,15 +10,17 @@ import {
   ScreeningModel,
   SeatHoldModel,
   SeatModel,
-  type MemberStatus,
-  type MovieRating,
-  type ReservationEventType,
-  type ReservationStatus,
-  type SeatHoldStatus,
-  type SeatType,
+  type MemberStatusType,
+  type MovieRatingType,
+  type PhoneVerificationStatusType,
+  type ReservationEventTypeType,
+  type ReservationStatusType,
+  type SeatHoldStatusType,
+  type SeatTypeType,
 } from '../../../domain';
 import { MemberEntity } from '../entities/member.entity';
 import { MovieEntity } from '../entities/movie.entity';
+import { PhoneVerificationEntity } from '../entities/phone-verification.entity';
 import { ReservationEventEntity } from '../entities/reservation-event.entity';
 import { ReservationSeatEntity } from '../entities/reservation-seat.entity';
 import { ReservationEntity } from '../entities/reservation.entity';
@@ -51,7 +54,7 @@ export class PersistenceMapper {
       birthDate: entity.birthDate,
       phoneNumber: entity.phoneNumber,
       address: entity.address,
-      status: entity.status as MemberStatus,
+      status: entity.status as MemberStatusType,
     }).setPersistence(entity.id, entity.createdAt, entity.updatedAt);
   }
 
@@ -78,7 +81,7 @@ export class PersistenceMapper {
       director: entity.director,
       genre: entity.genre,
       runningTime: entity.runningTime,
-      rating: entity.rating as MovieRating | undefined,
+      rating: entity.rating as MovieRatingType | undefined,
       releaseDate: entity.releaseDate,
       posterUrl: entity.posterUrl,
       description: entity.description,
@@ -97,6 +100,32 @@ export class PersistenceMapper {
     entity.description = model.description;
     if (model.createdAt !== undefined) {
       entity.createdAt = model.createdAt;
+    }
+    return entity;
+  }
+
+  static phoneVerificationToDomain(entity: PhoneVerificationEntity): PhoneVerificationModel {
+    return PhoneVerificationModel.of({
+      phoneNumber: entity.phoneNumber,
+      code: entity.code,
+      status: entity.status as PhoneVerificationStatusType,
+      expiresAt: entity.expiresAt,
+      verifiedAt: entity.verifiedAt,
+    }).setPersistence(entity.id, entity.createdAt, entity.updatedAt);
+  }
+
+  static phoneVerificationToEntity(model: PhoneVerificationModel): PhoneVerificationEntity {
+    const entity = assignId(new PhoneVerificationEntity(), currentId(model.id));
+    entity.phoneNumber = model.phoneNumber;
+    entity.code = model.code;
+    entity.status = model.status;
+    entity.expiresAt = model.expiresAt;
+    entity.verifiedAt = model.verifiedAt;
+    if (model.createdAt !== undefined) {
+      entity.createdAt = model.createdAt;
+    }
+    if (model.updatedAt !== undefined) {
+      entity.updatedAt = model.updatedAt;
     }
     return entity;
   }
@@ -120,7 +149,7 @@ export class PersistenceMapper {
       screenId: entity.screen.id,
       seatRow: entity.seatRow,
       seatCol: entity.seatCol,
-      seatType: entity.seatType as SeatType | undefined,
+      seatType: entity.seatType as SeatTypeType | undefined,
     }).setPersistence(entity.id, EPOCH, EPOCH);
   }
 
@@ -158,7 +187,7 @@ export class PersistenceMapper {
       reservationNumber: entity.reservationNumber,
       memberId: entity.member.id,
       screeningId: entity.screening.id,
-      status: entity.status as ReservationStatus,
+      status: entity.status as ReservationStatusType,
       totalPrice: entity.totalPrice,
       canceledAt: entity.canceledAt,
       cancelReason: entity.cancelReason,
@@ -202,7 +231,7 @@ export class PersistenceMapper {
       seatId: entity.seat.id,
       memberId: entity.member.id,
       reservationId: entity.reservation?.id,
-      status: entity.status as SeatHoldStatus,
+      status: entity.status as SeatHoldStatusType,
       expiresAt: entity.expiresAt,
     }).setPersistence(entity.id, entity.createdAt, entity.updatedAt);
   }
@@ -227,7 +256,7 @@ export class PersistenceMapper {
   static reservationEventToDomain(entity: ReservationEventEntity): ReservationEventModel {
     return ReservationEventModel.of({
       reservationId: entity.reservation.id,
-      eventType: entity.eventType as ReservationEventType,
+      eventType: entity.eventType as ReservationEventTypeType,
       description: entity.description,
     }).setPersistence(entity.id, entity.createdAt, entity.createdAt);
   }

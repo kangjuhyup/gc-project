@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ReservationModel, SeatHoldModel } from '../../../src/domain';
+import { PhoneVerificationModel, ReservationModel, SeatHoldModel } from '../../../src/domain';
 import { MemberEntity } from '../../../src/infrastructure/persistence/entities/member.entity';
+import { PhoneVerificationEntity } from '../../../src/infrastructure/persistence/entities/phone-verification.entity';
 import { ReservationEntity } from '../../../src/infrastructure/persistence/entities/reservation.entity';
 import { ScreeningEntity } from '../../../src/infrastructure/persistence/entities/screening.entity';
 import { SeatHoldEntity } from '../../../src/infrastructure/persistence/entities/seat-hold.entity';
@@ -59,6 +60,30 @@ describe('PersistenceMapper', () => {
     expect(mappedModel.memberId).toBe('10');
     expect(mappedModel.screeningId).toBe('20');
     expect(mappedModel.status).toBe('CONFIRMED');
+  });
+
+  it('maps phone verification model to entity and back to domain', () => {
+    const createdAt = new Date('2026-04-28T00:00:00.000Z');
+    const updatedAt = new Date('2026-04-28T00:01:00.000Z');
+    const expiresAt = new Date('2026-04-28T00:05:00.000Z');
+    const model = PhoneVerificationModel.of({
+      phoneNumber: '01000000000',
+      code: '123456',
+      status: 'VERIFIED',
+      expiresAt,
+      verifiedAt: updatedAt,
+    }).setPersistence('verification-1', createdAt, updatedAt);
+
+    const entity = PersistenceMapper.phoneVerificationToEntity(model);
+    const mappedModel = PersistenceMapper.phoneVerificationToDomain(entity);
+
+    expect(entity).toBeInstanceOf(PhoneVerificationEntity);
+    expect(entity.id).toBe('verification-1');
+    expect(entity.phoneNumber).toBe('01000000000');
+    expect(entity.status).toBe('VERIFIED');
+    expect(mappedModel.id).toBe('verification-1');
+    expect(mappedModel.code).toBe('123456');
+    expect(mappedModel.verifiedAt).toBe(updatedAt);
   });
 
   it('maps seat hold entity with optional reservation to domain', () => {

@@ -1,5 +1,6 @@
 export { MemberEntity } from './member.entity';
 export { MovieEntity } from './movie.entity';
+export { PhoneVerificationEntity } from './phone-verification.entity';
 export { ReservationEntity } from './reservation.entity';
 export { ReservationEventEntity } from './reservation-event.entity';
 export { ReservationSeatEntity } from './reservation-seat.entity';
@@ -10,6 +11,7 @@ export { SeatHoldEntity } from './seat-hold.entity';
 
 import { MemberEntity } from './member.entity';
 import { MovieEntity } from './movie.entity';
+import { PhoneVerificationEntity } from './phone-verification.entity';
 import { ReservationEntity } from './reservation.entity';
 import { ReservationEventEntity } from './reservation-event.entity';
 import { ReservationSeatEntity } from './reservation-seat.entity';
@@ -21,6 +23,7 @@ import { SeatHoldEntity } from './seat-hold.entity';
 export const persistenceEntities = [
   MemberEntity,
   MovieEntity,
+  PhoneVerificationEntity,
   ReservationEntity,
   ReservationEventEntity,
   ReservationSeatEntity,
