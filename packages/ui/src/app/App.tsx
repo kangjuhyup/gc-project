@@ -1,16 +1,33 @@
-import { Link, Navigate, Route, Routes } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { type PropsWithChildren } from 'react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/login/LoginPage';
+import { MoviesPage } from '@/features/movies/MoviesPage';
+import { SeatSelectionPage } from '@/features/seats/SeatSelectionPage';
 import { SignupPage } from '@/features/signup/SignupPage';
 
 export default function App() {
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
   return (
     <main className="app-shell">
       <nav className="topbar" aria-label="주요 메뉴">
-        <Link className="brand-link" to="/login">
+        <Link className="brand-link" to={isAuthenticated ? '/movies' : '/login'}>
           <p className="eyebrow">GC Project</p>
           <h1>Movie Reservation</h1>
         </Link>
+        {isAuthenticated ? (
+          <Button onClick={handleLogout} type="button" variant="secondary">
+            로그아웃
+          </Button>
+        ) : null}
       </nav>
 
       <Routes>
@@ -31,6 +48,22 @@ export default function App() {
         />
         <Route path="/signup" element={<SignupPage />} />
         <Route
+          path="/movies"
+          element={
+            <RequireAuth>
+              <MoviesPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/movies/:movieId/screenings/:screeningId/seats"
+          element={
+            <RequireAuth>
+              <SeatSelectionPage />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="*"
           element={
             <section className="not-found" aria-labelledby="not-found-title">
@@ -47,4 +80,15 @@ export default function App() {
       </Routes>
     </main>
   );
+}
+
+function RequireAuth({ children }: PropsWithChildren) {
+  const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    return <Navigate replace state={{ from: location.pathname }} to="/login" />;
+  }
+
+  return children;
 }

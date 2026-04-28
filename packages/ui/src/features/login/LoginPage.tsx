@@ -1,5 +1,6 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { LockKeyhole } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getSocialLoginUrl, type LoginFormValues } from './loginApi';
 import { usePasswordLogin } from './loginHooks';
@@ -18,11 +19,13 @@ interface LoginPageProps {
 export function LoginPage({ signupLink }: LoginPageProps) {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<LoginFormErrors>({});
-  const [loginMemberName, setLoginMemberName] = useState('');
 
   const { setSession } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const passwordLoginMutation = usePasswordLogin();
   const formErrors = useMemo(() => validateLoginForm(values), [values]);
+  const redirectTo = getRedirectPath(location.state);
 
   const handleChange =
     (field: keyof LoginFormValues) =>
@@ -47,7 +50,7 @@ export function LoginPage({ signupLink }: LoginPageProps) {
 
     const session = await passwordLoginMutation.mutateAsync(values);
     setSession(session);
-    setLoginMemberName(session.member.nickname || session.member.name);
+    navigate(redirectTo, { replace: true });
   };
 
   const handleSocialLogin = (provider: 'kakao' | 'naver') => {
@@ -98,12 +101,6 @@ export function LoginPage({ signupLink }: LoginPageProps) {
           </Button>
         </div>
 
-        {loginMemberName ? (
-          <p className="success-message" role="status">
-            {loginMemberName}님, 로그인되었습니다.
-          </p>
-        ) : null}
-
         <div className="social-login-area" aria-label="소셜 로그인">
           <div className="divider">
             <span>또는</span>
@@ -130,6 +127,20 @@ export function LoginPage({ signupLink }: LoginPageProps) {
       </form>
     </section>
   );
+}
+
+function getRedirectPath(state: unknown) {
+  if (
+    state &&
+    typeof state === 'object' &&
+    'from' in state &&
+    typeof state.from === 'string' &&
+    state.from.startsWith('/')
+  ) {
+    return state.from;
+  }
+
+  return '/movies';
 }
 
 interface LoginFieldProps {

@@ -1,7 +1,7 @@
 export const queryKeys = {
   movies: {
     all: ['movies'] as const,
-    list: () => [...queryKeys.movies.all, 'list'] as const,
+    list: (keyword = '') => [...queryKeys.movies.all, 'list', keyword] as const,
     detail: (movieId: number) => [...queryKeys.movies.all, 'detail', movieId] as const,
   },
   reservations: {
