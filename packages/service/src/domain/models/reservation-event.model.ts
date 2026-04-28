@@ -1,5 +1,5 @@
-import { PersistenceModel } from '../shared';
-import type { ReservationEventTypeType } from '../property';
+import { PersistenceModel } from '@domain/shared';
+import type { ReservationEventTypeType } from '@domain/property';
 
 export interface ReservationEventPersistenceProps {
   readonly reservationId: string;

@@ -1,4 +1,4 @@
-import type { MemberModel } from '../../../domain';
+import type { MemberModel } from '@domain';
 import type { RepositoryPort } from './repository.port';
 
 export const MEMBER_REPOSITORY = Symbol('MEMBER_REPOSITORY');

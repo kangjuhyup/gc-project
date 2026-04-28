@@ -10,23 +10,23 @@ import {
   PhoneVerificationRepositoryPort,
   VERIFICATION_CODE_GENERATOR,
   VerificationCodeGeneratorPort,
-} from './application/commands/ports';
+} from '@application/commands/ports';
 import {
   ConfirmPhoneVerificationCommandHandler,
   RequestPhoneVerificationCommandHandler,
   SignupMemberCommandHandler,
-} from './application/commands/handlers';
+} from '@application/commands/handlers';
 import {
   CheckUserIdAvailabilityQueryHandler,
   GetHealthQueryHandler,
-} from './application/query/handlers';
-import { MEMBER_QUERY, type MemberQueryPort } from './application/query/ports';
+} from '@application/query/handlers';
+import { MEMBER_QUERY, type MemberQueryPort } from '@application/query/ports';
 import {
   NumericVerificationCodeGenerator,
   SystemClock,
-} from './infrastructure/crypto';
-import { PersistenceModule } from './infrastructure/persistence';
-import { HealthController, MemberController } from './presentation/http';
+} from '@infrastructure/crypto';
+import { PersistenceModule } from '@infrastructure/persistence';
+import { HealthController, MemberController } from '@presentation/http';
 
 @Module({
   imports: [

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PhoneVerificationModel } from '../../../src/domain';
-import { SignupMemberCommand } from '../../../src/application/commands/dto';
-import { SignupMemberCommandHandler } from '../../../src/application/commands/handlers';
+import { PhoneVerificationModel } from '@domain';
+import { SignupMemberCommand } from '@application/commands/dto';
+import { SignupMemberCommandHandler } from '@application/commands/handlers';
 import type {
   MemberRepositoryPort,
   PhoneVerificationRepositoryPort,
-} from '../../../src/application/commands/ports';
+} from '@application/commands/ports';
 
 function command(): SignupMemberCommand {
   return SignupMemberCommand.of({

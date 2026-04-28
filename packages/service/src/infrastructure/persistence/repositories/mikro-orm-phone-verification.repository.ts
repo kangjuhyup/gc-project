@@ -1,7 +1,7 @@
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import type { PhoneVerificationModel } from '../../../domain';
-import type { PhoneVerificationRepositoryPort } from '../../../application/commands/ports';
+import type { PhoneVerificationModel } from '@domain';
+import type { PhoneVerificationRepositoryPort } from '@application/commands/ports';
 import { PhoneVerificationEntity } from '../entities';
 import { PersistenceMapper } from '../mappers';
 

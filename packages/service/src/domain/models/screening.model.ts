@@ -1,4 +1,4 @@
-import { PersistenceModel } from '../shared';
+import { PersistenceModel } from '@domain/shared';
 
 export interface ScreeningPersistenceProps {
   readonly movieId: string;

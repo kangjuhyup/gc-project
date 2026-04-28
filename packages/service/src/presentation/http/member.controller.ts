@@ -8,7 +8,7 @@ import {
   RequestPhoneVerificationCommandHandler,
   SignupMemberCommand,
   SignupMemberCommandHandler,
-} from '../../application';
+} from '@application';
 import {
   CheckUserIdRequestDto,
   ConfirmPhoneVerificationRequestDto,

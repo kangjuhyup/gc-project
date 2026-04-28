@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import { GetHealthQueryHandler } from '../../application/query/handlers';
-import { HealthStatusDto } from '../../application/query/dto';
+import { GetHealthQueryHandler } from '@application/query/handlers';
+import { HealthStatusDto } from '@application/query/dto';
 
 @Controller()
 export class HealthController {

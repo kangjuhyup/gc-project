@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { VerificationCodeGeneratorPort } from '../../application/commands/ports';
+import type { VerificationCodeGeneratorPort } from '@application/commands/ports';
 
 @Injectable()
 export class NumericVerificationCodeGenerator implements VerificationCodeGeneratorPort {

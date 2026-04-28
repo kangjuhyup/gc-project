@@ -2,17 +2,17 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ConfirmPhoneVerificationCommand,
   RequestPhoneVerificationCommand,
-} from '../../../src/application/commands/dto';
+} from '@application/commands/dto';
 import {
   ConfirmPhoneVerificationCommandHandler,
   RequestPhoneVerificationCommandHandler,
-} from '../../../src/application/commands/handlers';
+} from '@application/commands/handlers';
 import type {
   ClockPort,
   PhoneVerificationRepositoryPort,
   VerificationCodeGeneratorPort,
-} from '../../../src/application/commands/ports';
-import { PhoneVerificationModel } from '../../../src/domain';
+} from '@application/commands/ports';
+import { PhoneVerificationModel } from '@domain';
 
 describe('phone verification command handlers', () => {
   it('휴대전화 인증 요청 시 인증 코드를 발급한다', async () => {

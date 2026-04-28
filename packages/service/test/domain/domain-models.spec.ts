@@ -12,7 +12,7 @@ import {
   ScreeningModel,
   SeatHoldModel,
   SeatModel,
-} from '../../src/domain';
+} from '@domain';
 
 describe('domain persistence models', () => {
   it('회원 persistence 속성으로 회원 도메인 모델을 생성한다', () => {

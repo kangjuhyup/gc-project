@@ -17,7 +17,7 @@ import {
   type ReservationStatusType,
   type SeatHoldStatusType,
   type SeatTypeType,
-} from '../../../domain';
+} from '@domain';
 import { MemberEntity } from '../entities/member.entity';
 import { MovieEntity } from '../entities/movie.entity';
 import { PhoneVerificationEntity } from '../entities/phone-verification.entity';

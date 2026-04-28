@@ -1,5 +1,5 @@
-import { PersistenceModel } from '../shared';
-import type { SeatTypeType } from '../property';
+import { PersistenceModel } from '@domain/shared';
+import type { SeatTypeType } from '@domain/property';
 
 export interface SeatPersistenceProps {
   readonly screenId: string;

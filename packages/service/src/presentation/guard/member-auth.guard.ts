@@ -8,7 +8,7 @@ import {
 import {
   AUTHORIZATION_VERIFIER,
   type AuthorizationVerifierPort,
-} from '../../application/query/ports';
+} from '@application/query/ports';
 
 interface HttpRequestWithAuthorizationHeader {
   headers: {

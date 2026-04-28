@@ -1,6 +1,6 @@
-import { PersistenceModel } from '../shared';
-import { PhoneVerificationStatus, type PhoneVerificationStatusType } from '../property';
-import { DomainError, DomainErrorCode } from '../errors';
+import { PersistenceModel } from '@domain/shared';
+import { PhoneVerificationStatus, type PhoneVerificationStatusType } from '@domain/property';
+import { DomainError, DomainErrorCode } from '@domain/errors';
 
 export interface PhoneVerificationPersistenceProps {
   readonly phoneNumber: string;

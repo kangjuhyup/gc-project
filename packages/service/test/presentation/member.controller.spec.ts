@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { MemberController } from '../../src/presentation/http';
+import { MemberController } from '@presentation/http';
 
 describe('MemberController', () => {
   it('회원 아이디 중복검사를 query handler에 위임한다', async () => {

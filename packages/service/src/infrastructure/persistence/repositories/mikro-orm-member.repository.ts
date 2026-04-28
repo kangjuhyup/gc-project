@@ -1,8 +1,8 @@
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import type { MemberModel } from '../../../domain';
-import type { MemberRepositoryPort } from '../../../application/commands/ports';
-import type { MemberQueryPort } from '../../../application/query/ports';
+import type { MemberModel } from '@domain';
+import type { MemberRepositoryPort } from '@application/commands/ports';
+import type { MemberQueryPort } from '@application/query/ports';
 import { MemberEntity } from '../entities';
 import { PersistenceMapper } from '../mappers';
 

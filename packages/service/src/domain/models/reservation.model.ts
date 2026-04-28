@@ -1,5 +1,5 @@
-import { PersistenceModel } from '../shared';
-import type { ReservationStatusType } from '../property';
+import { PersistenceModel } from '@domain/shared';
+import type { ReservationStatusType } from '@domain/property';
 
 export interface ReservationPersistenceProps {
   readonly reservationNumber: string;

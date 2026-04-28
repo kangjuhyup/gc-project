@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { PhoneVerificationModel, ReservationModel, SeatHoldModel } from '../../../src/domain';
-import { MemberEntity } from '../../../src/infrastructure/persistence/entities/member.entity';
-import { PhoneVerificationEntity } from '../../../src/infrastructure/persistence/entities/phone-verification.entity';
-import { ReservationEntity } from '../../../src/infrastructure/persistence/entities/reservation.entity';
-import { ScreeningEntity } from '../../../src/infrastructure/persistence/entities/screening.entity';
-import { SeatHoldEntity } from '../../../src/infrastructure/persistence/entities/seat-hold.entity';
-import { SeatEntity } from '../../../src/infrastructure/persistence/entities/seat.entity';
-import { PersistenceMapper } from '../../../src/infrastructure/persistence/mappers';
+import { PhoneVerificationModel, ReservationModel, SeatHoldModel } from '@domain';
+import { MemberEntity } from '@infrastructure/persistence/entities/member.entity';
+import { PhoneVerificationEntity } from '@infrastructure/persistence/entities/phone-verification.entity';
+import { ReservationEntity } from '@infrastructure/persistence/entities/reservation.entity';
+import { ScreeningEntity } from '@infrastructure/persistence/entities/screening.entity';
+import { SeatHoldEntity } from '@infrastructure/persistence/entities/seat-hold.entity';
+import { SeatEntity } from '@infrastructure/persistence/entities/seat.entity';
+import { PersistenceMapper } from '@infrastructure/persistence/mappers';
 
 describe('PersistenceMapper', () => {
   it('회원 entity를 도메인으로 변환한 뒤 다시 entity로 변환한다', () => {

@@ -13,6 +13,17 @@
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@application": ["application/index.ts"],
+      "@application/*": ["application/*"],
+      "@domain": ["domain/index.ts"],
+      "@domain/*": ["domain/*"],
+      "@infrastructure": ["infrastructure/index.ts"],
+      "@infrastructure/*": ["infrastructure/*"],
+      "@presentation": ["presentation/index.ts"],
+      "@presentation/*": ["presentation/*"]
+    },
     "types": ["node"],
     "ignoreDeprecations": "6.0"
   },

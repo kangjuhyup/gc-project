@@ -3,11 +3,11 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import {
   MEMBER_QUERY,
-} from '../../application/query/ports';
+} from '@application/query/ports';
 import {
   MEMBER_REPOSITORY,
   PHONE_VERIFICATION_REPOSITORY,
-} from '../../application/commands/ports';
+} from '@application/commands/ports';
 import { persistenceEntities } from './entities';
 import {
   MikroOrmMemberRepository,

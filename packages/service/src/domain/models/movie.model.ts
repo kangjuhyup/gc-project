@@ -1,5 +1,5 @@
-import { PersistenceModel } from '../shared';
-import type { MovieRatingType } from '../property';
+import { PersistenceModel } from '@domain/shared';
+import type { MovieRatingType } from '@domain/property';
 
 export interface MoviePersistenceProps {
   readonly title: string;

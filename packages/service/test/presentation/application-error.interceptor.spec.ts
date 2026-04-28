@@ -1,8 +1,8 @@
 import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { lastValueFrom, throwError } from 'rxjs';
-import { DomainError, DomainErrorCode } from '../../src/domain';
-import { ApplicationErrorInterceptor } from '../../src/presentation';
+import { DomainError, DomainErrorCode } from '@domain';
+import { ApplicationErrorInterceptor } from '@presentation';
 
 function next(error: Error) {
   return {

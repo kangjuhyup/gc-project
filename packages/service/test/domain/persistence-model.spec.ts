@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MemberModel } from '../../src/domain';
+import { MemberModel } from '@domain';
 
 describe('PersistenceModel', () => {
   it('프레임워크 의존성 없이 persistence 필드를 설정한다', () => {

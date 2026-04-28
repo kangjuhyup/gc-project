@@ -1,6 +1,6 @@
-import { PersistenceModel } from '../shared';
-import { MemberStatus, type MemberStatusType } from '../property';
-import { DomainError, DomainErrorCode } from '../errors';
+import { PersistenceModel } from '@domain/shared';
+import { MemberStatus, type MemberStatusType } from '@domain/property';
+import { DomainError, DomainErrorCode } from '@domain/errors';
 
 export interface MemberPersistenceProps {
   readonly userId: string;

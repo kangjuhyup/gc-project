@@ -1,5 +1,5 @@
-import { PersistenceModel } from '../shared';
-import type { SeatHoldStatusType } from '../property';
+import { PersistenceModel } from '@domain/shared';
+import type { SeatHoldStatusType } from '@domain/property';
 
 export interface SeatHoldPersistenceProps {
   readonly screeningId: string;

@@ -1,4 +1,4 @@
-import { MemberModel } from '../../../domain';
+import { MemberModel } from '@domain';
 import { SignupMemberCommand, SignupMemberResultDto } from '../dto';
 import type {
   MemberRepositoryPort,

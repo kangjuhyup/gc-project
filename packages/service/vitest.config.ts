@@ -1,6 +1,15 @@
 import { defineConfig } from 'vitest/config';
+import { resolve } from 'node:path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@application': resolve(__dirname, './src/application'),
+      '@domain': resolve(__dirname, './src/domain'),
+      '@infrastructure': resolve(__dirname, './src/infrastructure'),
+      '@presentation': resolve(__dirname, './src/presentation'),
+    },
+  },
   test: {
     environment: 'node',
     include: ['test/**/*.spec.ts'],

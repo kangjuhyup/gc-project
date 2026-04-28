@@ -1,7 +1,7 @@
 import { UnauthorizedException, type ExecutionContext } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
-import type { AuthorizationVerifierPort } from '../../src/application/query/ports';
-import { MemberAuthGuard } from '../../src/presentation';
+import type { AuthorizationVerifierPort } from '@application/query/ports';
+import { MemberAuthGuard } from '@presentation';
 
 function contextWithAuthorization(authorization?: string | string[]): ExecutionContext {
   return {

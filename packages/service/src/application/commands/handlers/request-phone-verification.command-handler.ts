@@ -1,4 +1,4 @@
-import { PhoneVerificationModel } from '../../../domain';
+import { PhoneVerificationModel } from '@domain';
 import {
   PhoneVerificationIssuedDto,
   RequestPhoneVerificationCommand,

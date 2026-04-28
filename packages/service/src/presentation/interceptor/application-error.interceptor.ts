@@ -8,7 +8,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable, catchError, throwError } from 'rxjs';
-import { DomainError } from '../../domain';
+import { DomainError } from '@domain';
 
 const conflictErrors = new Set([
   'USER_ID_ALREADY_EXISTS',

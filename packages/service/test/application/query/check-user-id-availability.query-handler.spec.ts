@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CheckUserIdAvailabilityQuery } from '../../../src/application/query/dto';
-import { CheckUserIdAvailabilityQueryHandler } from '../../../src/application/query/handlers';
-import type { MemberQueryPort } from '../../../src/application/query/ports';
+import { CheckUserIdAvailabilityQuery } from '@application/query/dto';
+import { CheckUserIdAvailabilityQueryHandler } from '@application/query/handlers';
+import type { MemberQueryPort } from '@application/query/ports';
 
 describe('CheckUserIdAvailabilityQueryHandler', () => {
   it('회원 아이디가 이미 존재하면 사용 불가능으로 응답한다', async () => {
