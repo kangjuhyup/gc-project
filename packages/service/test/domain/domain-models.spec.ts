@@ -1,0 +1,163 @@
+import { describe, expect, it } from 'vitest';
+import {
+  MemberModel,
+  MovieModel,
+  ReservationEventModel,
+  ReservationModel,
+  ReservationSeatModel,
+  ScreenModel,
+  ScreeningModel,
+  SeatHoldModel,
+  SeatModel,
+} from '../../src/domain';
+
+describe('domain persistence models', () => {
+  it('creates a member model from persistence props', () => {
+    const birthDate = new Date('1990-01-01T00:00:00.000Z');
+
+    const member = MemberModel.of({
+      userId: 'member_01',
+      name: 'Member',
+      birthDate,
+      phoneNumber: '01000000000',
+      address: 'Seoul',
+      status: 'ACTIVE',
+    });
+
+    expect(member.userId).toBe('member_01');
+    expect(member.name).toBe('Member');
+    expect(member.birthDate).toBe(birthDate);
+    expect(member.phoneNumber).toBe('01000000000');
+    expect(member.address).toBe('Seoul');
+    expect(member.status).toBe('ACTIVE');
+  });
+
+  it('registers a member with default active status', () => {
+    const birthDate = new Date('1990-01-01T00:00:00.000Z');
+
+    const member = MemberModel.register({
+      userId: 'member_01',
+      name: 'Member',
+      birthDate,
+      phoneNumber: '01000000000',
+      address: 'Seoul',
+    });
+
+    expect(member.userId).toBe('member_01');
+    expect(member.status).toBe('ACTIVE');
+  });
+
+  it('creates movie and screening models from persistence props', () => {
+    const releaseDate = new Date('2026-04-28T00:00:00.000Z');
+    const startAt = new Date('2026-04-28T09:00:00.000Z');
+    const endAt = new Date('2026-04-28T11:00:00.000Z');
+
+    const movie = MovieModel.of({
+      title: 'Test Movie',
+      director: 'Director',
+      genre: 'Drama',
+      runningTime: 120,
+      rating: '15',
+      releaseDate,
+      posterUrl: 'https://example.com/poster.png',
+      description: 'Description',
+    });
+
+    const screening = ScreeningModel.of({
+      movieId: '1',
+      screenId: '2',
+      startAt,
+      endAt,
+      price: 12000,
+    });
+
+    expect(movie.title).toBe('Test Movie');
+    expect(movie.runningTime).toBe(120);
+    expect(movie.rating).toBe('15');
+    expect(movie.releaseDate).toBe(releaseDate);
+    expect(screening.movieId).toBe('1');
+    expect(screening.screenId).toBe('2');
+    expect(screening.startAt).toBe(startAt);
+    expect(screening.endAt).toBe(endAt);
+    expect(screening.price).toBe(12000);
+  });
+
+  it('creates screen and seat models from persistence props', () => {
+    const screen = ScreenModel.of({
+      name: 'IMAX',
+      totalSeats: 100,
+    });
+
+    const seat = SeatModel.of({
+      screenId: '1',
+      seatRow: 'A',
+      seatCol: 1,
+      seatType: 'NORMAL',
+    });
+
+    expect(screen.name).toBe('IMAX');
+    expect(screen.totalSeats).toBe(100);
+    expect(seat.screenId).toBe('1');
+    expect(seat.seatRow).toBe('A');
+    expect(seat.seatCol).toBe(1);
+    expect(seat.seatType).toBe('NORMAL');
+  });
+
+  it('creates reservation models from persistence props', () => {
+    const canceledAt = new Date('2026-04-28T12:00:00.000Z');
+
+    const reservation = ReservationModel.of({
+      reservationNumber: 'R20260428001',
+      memberId: '1',
+      screeningId: '2',
+      status: 'CANCELED',
+      totalPrice: 24000,
+      canceledAt,
+      cancelReason: 'user request',
+    });
+
+    const reservationSeat = ReservationSeatModel.of({
+      reservationId: '3',
+      screeningId: '2',
+      seatId: '4',
+    });
+
+    const reservationEvent = ReservationEventModel.of({
+      reservationId: '3',
+      eventType: 'CANCELED',
+      description: 'user request',
+    });
+
+    expect(reservation.reservationNumber).toBe('R20260428001');
+    expect(reservation.status).toBe('CANCELED');
+    expect(reservation.totalPrice).toBe(24000);
+    expect(reservation.canceledAt).toBe(canceledAt);
+    expect(reservation.cancelReason).toBe('user request');
+    expect(reservationSeat.reservationId).toBe('3');
+    expect(reservationSeat.screeningId).toBe('2');
+    expect(reservationSeat.seatId).toBe('4');
+    expect(reservationEvent.reservationId).toBe('3');
+    expect(reservationEvent.eventType).toBe('CANCELED');
+    expect(reservationEvent.description).toBe('user request');
+  });
+
+  it('creates seat hold model from persistence props', () => {
+    const expiresAt = new Date('2026-04-28T09:05:00.000Z');
+
+    const seatHold = SeatHoldModel.of({
+      screeningId: '1',
+      seatId: '2',
+      memberId: '3',
+      reservationId: '4',
+      status: 'HELD',
+      expiresAt,
+    });
+
+    expect(seatHold.screeningId).toBe('1');
+    expect(seatHold.seatId).toBe('2');
+    expect(seatHold.memberId).toBe('3');
+    expect(seatHold.reservationId).toBe('4');
+    expect(seatHold.status).toBe('HELD');
+    expect(seatHold.expiresAt).toBe(expiresAt);
+  });
+});
