@@ -1,0 +1,21 @@
+{
+  "name": "gc-project",
+  "version": "1.0.0",
+  "description": "GC메디아이 과제 전형",
+  "private": true,
+  "license": "ISC",
+  "author": "kangjuhyup",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  }
+}
