@@ -27,10 +27,16 @@ export {
   CheckUserIdAvailabilityQuery,
   CheckUserIdAvailabilityResultDto,
   HealthStatusDto,
+  ListMoviesQuery,
+  MovieListResultDto,
+  MovieScreeningSummaryDto,
+  MovieSummaryDto,
+  MovieTheaterSummaryDto,
   SearchAddressesQuery,
 } from './query/dto';
 export {
   CheckUserIdAvailabilityQueryHandler,
   GetHealthQueryHandler,
+  ListMoviesQueryHandler,
   SearchAddressesQueryHandler,
 } from './query/handlers';

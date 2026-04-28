@@ -2,6 +2,8 @@ export { ChangeMemberPasswordRequestDto } from './change-member-password.request
 export { CheckUserIdRequestDto } from './check-user-id.request.dto';
 export { ConfirmPhoneVerificationRequestDto } from './confirm-phone-verification.request.dto';
 export { IssueTemporaryPasswordRequestDto } from './issue-temporary-password.request.dto';
+export { ListMoviesRequestDto } from './list-movies.request.dto';
 export { LoginMemberRequestDto } from './login-member.request.dto';
 export { RequestPhoneVerificationRequestDto } from './request-phone-verification.request.dto';
+export { SearchAddressesRequestDto } from './search-addresses.request.dto';
 export { SignupMemberRequestDto } from './signup-member.request.dto';

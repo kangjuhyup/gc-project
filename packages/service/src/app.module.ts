@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { LogLevel } from '@kangjuhyup/rvlog';
 import { RvlogNestModule } from '@kangjuhyup/rvlog-nest';
 import {
@@ -28,8 +29,17 @@ import {
 import {
   CheckUserIdAvailabilityQueryHandler,
   GetHealthQueryHandler,
+  ListMoviesQueryHandler,
+  SearchAddressesQueryHandler,
 } from '@application/query/handlers';
-import { MEMBER_QUERY, type MemberQueryPort } from '@application/query/ports';
+import {
+  ADDRESS_SEARCH,
+  MEMBER_QUERY,
+  MOVIE_QUERY,
+  type AddressSearchPort,
+  type MemberQueryPort,
+  type MovieQueryPort,
+} from '@application/query/ports';
 import {
   NumericVerificationCodeGenerator,
   Pbkdf2PasswordHasher,
@@ -38,10 +48,14 @@ import {
 } from '@infrastructure/crypto';
 import { NestLogEventPublisher } from '@infrastructure/logging';
 import { PersistenceModule } from '@infrastructure/persistence';
-import { HealthController, MemberController } from '@presentation/http';
+import { JusoAddressSearchAdapter } from '@infrastructure/public-api';
+import { AddressController, HealthController, MemberController, MovieController } from '@presentation/http';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     PersistenceModule,
     RvlogNestModule.forRoot({
       logger: {
@@ -53,7 +67,7 @@ import { HealthController, MemberController } from '@presentation/http';
       },
     }),
   ],
-  controllers: [HealthController, MemberController],
+  controllers: [HealthController, MemberController, AddressController, MovieController],
   providers: [
     GetHealthQueryHandler,
     SystemClock,
@@ -61,6 +75,7 @@ import { HealthController, MemberController } from '@presentation/http';
     Pbkdf2PasswordHasher,
     RandomTemporaryPasswordGenerator,
     NestLogEventPublisher,
+    JusoAddressSearchAdapter,
     {
       provide: CLOCK,
       useExisting: SystemClock,
@@ -82,9 +97,23 @@ import { HealthController, MemberController } from '@presentation/http';
       useExisting: NestLogEventPublisher,
     },
     {
+      provide: ADDRESS_SEARCH,
+      useExisting: JusoAddressSearchAdapter,
+    },
+    {
       provide: CheckUserIdAvailabilityQueryHandler,
       useFactory: (memberQuery: MemberQueryPort) => new CheckUserIdAvailabilityQueryHandler(memberQuery),
       inject: [MEMBER_QUERY],
+    },
+    {
+      provide: SearchAddressesQueryHandler,
+      useFactory: (addressSearch: AddressSearchPort) => new SearchAddressesQueryHandler(addressSearch),
+      inject: [ADDRESS_SEARCH],
+    },
+    {
+      provide: ListMoviesQueryHandler,
+      useFactory: (movieQuery: MovieQueryPort) => new ListMoviesQueryHandler(movieQuery),
+      inject: [MOVIE_QUERY],
     },
     {
       provide: RequestPhoneVerificationCommandHandler,

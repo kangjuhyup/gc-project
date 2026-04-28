@@ -20,6 +20,7 @@ const conflictErrors = new Set([
 const badRequestErrors = new Set([
   'CURRENT_PASSWORD_MISMATCH',
   'INVALID_LOGIN_CREDENTIALS',
+  'INVALID_MOVIE_CURSOR',
   'INVALID_ADDRESS',
   'INVALID_MEMBER_NAME',
   'INVALID_PHONE_NUMBER',
