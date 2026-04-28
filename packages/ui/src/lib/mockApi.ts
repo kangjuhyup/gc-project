@@ -1,6 +1,7 @@
 import { demoMovies, filterMoviesForKeyword } from '@/features/movies/movieTimeline';
 import type { LoginResponse } from '@/features/login/loginApi';
 import type { PaymentRequest, PaymentResponse } from '@/features/payment/paymentApi';
+import type { ReservationListResponse, ReservationSummary } from '@/features/reservations/reservationApi';
 import type { ScreeningSeatMapResponse, SeatSummary } from '@/features/seats/seatApi';
 import type {
   AddressSearchResponse,
@@ -22,6 +23,49 @@ interface MockResponse<TResponse> {
 
 const mockMembers = new Set(['admin', 'movie_user', 'tester']);
 const mockVerificationCode = '123456';
+const mockReservations: ReservationSummary[] = [
+  {
+    id: 1,
+    reservationNumber: 'R20260428101',
+    status: 'CONFIRMED',
+    totalPrice: 28000,
+    createdAt: '2026-04-28T09:12:00+09:00',
+    movieTitle: '파묘',
+    posterUrl:
+      'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=560&q=80',
+    screeningStartAt: '2026-04-28T18:20:00+09:00',
+    screenName: '2관',
+    seats: ['C4', 'C5'],
+  },
+  {
+    id: 2,
+    reservationNumber: 'R20260420401',
+    status: 'CONFIRMED',
+    totalPrice: 14000,
+    createdAt: '2026-04-20T14:40:00+09:00',
+    movieTitle: '괴물',
+    posterUrl:
+      'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=560&q=80',
+    screeningStartAt: '2026-04-21T19:00:00+09:00',
+    screenName: '아트관',
+    seats: ['E6'],
+  },
+  {
+    id: 3,
+    reservationNumber: 'R20260411201',
+    status: 'CANCELED',
+    totalPrice: 36000,
+    createdAt: '2026-04-11T11:30:00+09:00',
+    movieTitle: '듄: 파트 2',
+    posterUrl:
+      'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=560&q=80',
+    screeningStartAt: '2026-04-12T20:40:00+09:00',
+    screenName: 'IMAX',
+    seats: ['F8', 'F9'],
+    canceledAt: '2026-04-11T15:20:00+09:00',
+    cancelReason: '사용자 요청으로 취소되었습니다.',
+  },
+];
 
 export async function resolveMockApi({
   body,
@@ -84,16 +128,43 @@ export async function resolveMockApi({
     });
   }
 
+  if (method === 'PATCH' && pathname === '/members/password') {
+    return toMockResponse({
+      changed: true,
+    });
+  }
+
   if (method === 'POST' && pathname === '/reservations') {
     const payload = await readJsonBody<PaymentRequest>(body);
+    const reservationNumber = `R${new Date().getFullYear()}${String(payload.screeningId).padStart(
+      4,
+      '0',
+    )}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+    const paymentScreening = findMockScreening(payload.screeningId);
+
+    mockReservations.unshift({
+      id: Date.now(),
+      reservationNumber,
+      status: 'CONFIRMED',
+      totalPrice: payload.totalPrice,
+      createdAt: new Date().toISOString(),
+      movieTitle: paymentScreening?.movie.title ?? '영화',
+      posterUrl: paymentScreening?.movie.posterUrl ?? '',
+      screeningStartAt: paymentScreening?.screening.startAt ?? new Date().toISOString(),
+      screenName: paymentScreening?.screening.screenName ?? '상영관',
+      seats: payload.seatIds.map((seatId) => getMockSeatLabel(payload.screeningId, seatId)),
+    });
 
     return toMockResponse<PaymentResponse>({
-      reservationNumber: `R${new Date().getFullYear()}${String(payload.screeningId).padStart(
-        4,
-        '0',
-      )}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+      reservationNumber,
       status: 'CONFIRMED',
       paidAt: new Date().toISOString(),
+    });
+  }
+
+  if (method === 'GET' && pathname === '/reservations') {
+    return toMockResponse<ReservationListResponse>({
+      items: mockReservations,
     });
   }
 
@@ -262,4 +333,28 @@ function getMockSeatStatus(screeningId: number, seatNumber: number): SeatSummary
   }
 
   return 'AVAILABLE';
+}
+
+function findMockScreening(screeningId: number) {
+  for (const movie of demoMovies) {
+    const screening = movie.screenings.find((currentScreening) => currentScreening.id === screeningId);
+
+    if (screening) {
+      return {
+        movie,
+        screening,
+      };
+    }
+  }
+
+  return null;
+}
+
+function getMockSeatLabel(screeningId: number, seatId: number) {
+  const seatNumber = seatId - screeningId * 1000;
+  const rowIndex = Math.floor((seatNumber - 1) / 10);
+  const col = ((seatNumber - 1) % 10) + 1;
+  const row = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'][rowIndex] ?? 'A';
+
+  return `${row}${col}`;
 }

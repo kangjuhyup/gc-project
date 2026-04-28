@@ -5,6 +5,10 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/login/LoginPage';
 import { MoviesPage } from '@/features/movies/MoviesPage';
 import { PaymentPage } from '@/features/payment/PaymentPage';
+import { PasswordChangePage } from '@/features/profile/PasswordChangePage';
+import { ProfilePage } from '@/features/profile/ProfilePage';
+import { ProfileLink } from '@/features/profile/ProfileLink';
+import { ReservationsPage } from '@/features/reservations/ReservationsPage';
 import { SeatSelectionPage } from '@/features/seats/SeatSelectionPage';
 import { SignupPage } from '@/features/signup/SignupPage';
 
@@ -25,9 +29,12 @@ export default function App() {
           <h1>Movie Reservation</h1>
         </Link>
         {isAuthenticated ? (
-          <Button onClick={handleLogout} type="button" variant="secondary">
-            로그아웃
-          </Button>
+          <div className="topbar-actions">
+            <ProfileLink />
+            <Button onClick={handleLogout} type="button" variant="secondary">
+              로그아웃
+            </Button>
+          </div>
         ) : null}
       </nav>
 
@@ -69,6 +76,30 @@ export default function App() {
           element={
             <RequireAuth>
               <PaymentPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/reservations"
+          element={
+            <RequireAuth>
+              <ReservationsPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <ProfilePage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/profile/password"
+          element={
+            <RequireAuth>
+              <PasswordChangePage />
             </RequireAuth>
           }
         />
