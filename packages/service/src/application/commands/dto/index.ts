@@ -5,7 +5,10 @@ export { HandlePaymentCallbackCommand } from './handle-payment-callback.command'
 export { IssueTemporaryPasswordCommand } from './issue-temporary-password.command';
 export { LoginMemberCommand } from './login-member.command';
 export { LoginMemberResultDto } from './login-member-result.dto';
+export { LogoutMemberCommand } from './logout-member.command';
+export { MemberLoggedOutDto } from './member-logged-out.dto';
 export { MemberPasswordChangedDto } from './member-password-changed.dto';
+export { MemberWithdrawnDto } from './member-withdrawn.dto';
 export { PhoneVerificationConfirmedDto } from './phone-verification-confirmed.dto';
 export { PhoneVerificationIssuedDto } from './phone-verification-issued.dto';
 export { PaymentCallbackResultDto } from './payment-callback-result.dto';
@@ -20,3 +23,4 @@ export { SeatHoldReleasedDto } from './seat-hold-released.dto';
 export { SignupMemberCommand } from './signup-member.command';
 export { SignupMemberResultDto } from './signup-member-result.dto';
 export { TemporaryPasswordIssuedDto } from './temporary-password-issued.dto';
+export { WithdrawMemberCommand } from './withdraw-member.command';

@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
@@ -8,6 +9,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import {
   ChangeMemberPasswordCommand,
@@ -17,7 +19,10 @@ import {
   IssueTemporaryPasswordCommand,
   LoginMemberCommand,
   LoginMemberResultDto,
+  LogoutMemberCommand,
+  MemberLoggedOutDto,
   MemberPasswordChangedDto,
+  MemberWithdrawnDto,
   PhoneVerificationConfirmedDto,
   PhoneVerificationIssuedDto,
   QueryBus,
@@ -26,7 +31,11 @@ import {
   SignupMemberResultDto,
   TemporaryPasswordIssuedDto,
   CheckUserIdAvailabilityResultDto,
+  WithdrawMemberCommand,
 } from '@application';
+import { AuthenticatedUserDto } from '@application/query/dto';
+import { User } from '@presentation/decorator';
+import { MemberAuthGuard } from '@presentation/guard';
 import {
   ChangeMemberPasswordRequestDto,
   CheckUserIdRequestDto,
@@ -135,6 +144,23 @@ export class MemberController {
     );
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '로그아웃',
+    description: '인증된 회원의 활성 refresh token을 폐기합니다.',
+  })
+  @ApiOkResponse({ type: MemberLoggedOutDto, description: '로그아웃 완료' })
+  @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
+  @UseGuards(MemberAuthGuard)
+  @Post('/members/logout')
+  logout(@User() user: AuthenticatedUserDto) {
+    return this.commandBus.execute(
+      LogoutMemberCommand.of({
+        memberId: user.memberId,
+      }),
+    );
+  }
+
   @ApiOperation({
     summary: '임시비밀번호 발급',
     description: '휴대전화 인증이 완료된 회원에게 임시비밀번호를 발급하고 잠금 상태를 해제합니다.',
@@ -168,6 +194,25 @@ export class MemberController {
         userId: request.userId,
         currentPassword: request.currentPassword,
         newPassword: request.newPassword,
+      }),
+    );
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '회원탈퇴',
+    description: '인증된 회원 본인을 탈퇴 처리합니다. 탈퇴한 회원은 이후 로그인과 인증 API 사용이 거부됩니다.',
+  })
+  @ApiOkResponse({ type: MemberWithdrawnDto, description: '회원탈퇴 완료' })
+  @ApiForbiddenResponse({ description: '이미 탈퇴한 회원인 경우' })
+  @ApiNotFoundResponse({ description: '회원을 찾을 수 없는 경우' })
+  @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
+  @UseGuards(MemberAuthGuard)
+  @Delete('/members/me')
+  withdraw(@User() user: AuthenticatedUserDto) {
+    return this.commandBus.execute(
+      WithdrawMemberCommand.of({
+        memberId: user.memberId,
       }),
     );
   }

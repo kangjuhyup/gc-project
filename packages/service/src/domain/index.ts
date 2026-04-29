@@ -4,6 +4,7 @@ export {
   LoginSucceededLogEvent,
   MemberPasswordChangedLogEvent,
   MemberSignedUpLogEvent,
+  MemberWithdrawnLogEvent,
 } from './events';
 export { DomainError, DomainErrorCode } from './errors';
 export {
@@ -30,6 +31,7 @@ export {
   PaymentEventLogModel,
   PaymentModel,
   PhoneVerificationModel,
+  RefreshTokenModel,
   ReservationEventModel,
   ReservationModel,
   ReservationSeatModel,
@@ -48,6 +50,7 @@ export type {
   PaymentEventLogPersistenceProps,
   PaymentPersistenceProps,
   PhoneVerificationPersistenceProps,
+  RefreshTokenPersistenceProps,
   ReservationEventPersistenceProps,
   ReservationPersistenceProps,
   ReservationSeatPersistenceProps,

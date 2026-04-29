@@ -45,7 +45,9 @@ const badRequestErrors = new Set([
 ]);
 
 const forbiddenErrors = new Set([
+  'MEMBER_ALREADY_WITHDRAWN',
   'MEMBER_LOCKED',
+  'MEMBER_WITHDRAWN',
   'SEAT_HOLD_FORBIDDEN',
   'SEAT_HOLD_PAYMENT_COMPLETED',
 ]);

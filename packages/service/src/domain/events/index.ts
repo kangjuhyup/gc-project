@@ -4,4 +4,5 @@ export {
   LoginSucceededLogEvent,
   MemberPasswordChangedLogEvent,
   MemberSignedUpLogEvent,
+  MemberWithdrawnLogEvent,
 } from './member-log.event';

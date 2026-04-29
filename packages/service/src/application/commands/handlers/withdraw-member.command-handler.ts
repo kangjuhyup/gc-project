@@ -1,0 +1,58 @@
+import { Logging } from '@kangjuhyup/rvlog';
+import { MemberWithdrawnLogEvent } from '@domain';
+import { MemberWithdrawnDto, WithdrawMemberCommand } from '../dto';
+import { Transactional } from '../decorators';
+import type {
+  ClockPort,
+  LogEventPublisherPort,
+  MemberRepositoryPort,
+  TokenRepositoryPort,
+  TransactionManagerPort,
+} from '../ports';
+import { TokenType } from '../ports';
+
+@Logging
+export class WithdrawMemberCommandHandler {
+  constructor(
+    private readonly memberRepository: MemberRepositoryPort,
+    private readonly tokenRepository: TokenRepositoryPort,
+    private readonly clock: ClockPort,
+    private readonly logEventPublisher: LogEventPublisherPort,
+    readonly transactionManager: TransactionManagerPort,
+  ) {}
+
+  @Transactional()
+  async execute(command: WithdrawMemberCommand): Promise<MemberWithdrawnDto> {
+    const member = await this.memberRepository.findById(command.memberId);
+
+    if (member === undefined) {
+      throw new Error('MEMBER_NOT_FOUND');
+    }
+
+    const occurredAt = this.clock.now();
+    const saved = await this.memberRepository.save(member.withdraw(occurredAt));
+    await this.tokenRepository.revokeActiveByMemberId({
+      type: TokenType.ACCESS,
+      memberId: saved.id,
+      now: occurredAt,
+    });
+    await this.tokenRepository.revokeActiveByMemberId({
+      type: TokenType.REFRESH,
+      memberId: saved.id,
+      now: occurredAt,
+    });
+    await this.logEventPublisher.publish(
+      MemberWithdrawnLogEvent.of({
+        memberId: saved.id,
+        userId: saved.userId,
+        occurredAt,
+      }),
+    );
+
+    return MemberWithdrawnDto.of({
+      memberId: saved.id,
+      userId: saved.userId,
+      withdrawn: true,
+    });
+  }
+}

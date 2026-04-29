@@ -7,7 +7,10 @@ export {
   IssueTemporaryPasswordCommand,
   LoginMemberCommand,
   LoginMemberResultDto,
+  LogoutMemberCommand,
+  MemberLoggedOutDto,
   MemberPasswordChangedDto,
+  MemberWithdrawnDto,
   PhoneVerificationConfirmedDto,
   PhoneVerificationIssuedDto,
   PaymentCallbackResultDto,
@@ -22,6 +25,7 @@ export {
   SignupMemberCommand,
   SignupMemberResultDto,
   TemporaryPasswordIssuedDto,
+  WithdrawMemberCommand,
 } from './commands/dto';
 export { CommandBus } from './commands/command-bus';
 export { CommandModule } from './commands/command.module';
@@ -37,11 +41,13 @@ export {
   HandlePaymentCallbackCommandHandler,
   IssueTemporaryPasswordCommandHandler,
   LoginMemberCommandHandler,
+  LogoutMemberCommandHandler,
   RequestPhoneVerificationCommandHandler,
   RefundPaymentCommandHandler,
   RequestPaymentCommandHandler,
   ReleaseSeatHoldCommandHandler,
   SignupMemberCommandHandler,
+  WithdrawMemberCommandHandler,
 } from './commands/handlers';
 export {
   AddressSearchItemDto,

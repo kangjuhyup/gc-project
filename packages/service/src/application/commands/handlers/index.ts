@@ -4,8 +4,10 @@ export { CreateSeatHoldCommandHandler } from './create-seat-hold.command-handler
 export { HandlePaymentCallbackCommandHandler } from './handle-payment-callback.command-handler';
 export { IssueTemporaryPasswordCommandHandler } from './issue-temporary-password.command-handler';
 export { LoginMemberCommandHandler } from './login-member.command-handler';
+export { LogoutMemberCommandHandler } from './logout-member.command-handler';
 export { RequestPhoneVerificationCommandHandler } from './request-phone-verification.command-handler';
 export { RefundPaymentCommandHandler } from './refund-payment.command-handler';
 export { RequestPaymentCommandHandler } from './request-payment.command-handler';
 export { ReleaseSeatHoldCommandHandler } from './release-seat-hold.command-handler';
 export { SignupMemberCommandHandler } from './signup-member.command-handler';
+export { WithdrawMemberCommandHandler } from './withdraw-member.command-handler';

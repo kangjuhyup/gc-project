@@ -115,6 +115,19 @@ export class MemberModel extends PersistenceModel<string, MemberPersistenceProps
     }).setPersistence(this.id, this.createdAt, params.now);
   }
 
+  withdraw(now: Date): MemberModel {
+    if (this.status === MemberStatus.WITHDRAWN) {
+      throw new Error('MEMBER_ALREADY_WITHDRAWN');
+    }
+
+    return new MemberModel({
+      ...this.etc,
+      status: MemberStatus.WITHDRAWN,
+      failedLoginCount: 0,
+      lockedAt: undefined,
+    }).setPersistence(this.id, this.createdAt, now);
+  }
+
   get userId(): string {
     return this.etc.userId;
   }

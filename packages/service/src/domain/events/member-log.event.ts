@@ -53,3 +53,15 @@ export class MemberPasswordChangedLogEvent implements DomainEvent {
     return new MemberPasswordChangedLogEvent(params.memberId, params.userId, params.occurredAt);
   }
 }
+
+export class MemberWithdrawnLogEvent implements DomainEvent {
+  private constructor(
+    readonly memberId: string,
+    readonly userId: string,
+    readonly occurredAt: Date,
+  ) {}
+
+  static of(params: { memberId: string; userId: string; occurredAt: Date }): MemberWithdrawnLogEvent {
+    return new MemberWithdrawnLogEvent(params.memberId, params.userId, params.occurredAt);
+  }
+}
