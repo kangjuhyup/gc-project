@@ -4,21 +4,28 @@ import {
   ChangeMemberPasswordCommand,
   IssueTemporaryPasswordCommand,
   LoginMemberCommand,
+  LogoutMemberCommand,
+  WithdrawMemberCommand,
 } from '@application/commands/dto';
 import {
   ChangeMemberPasswordCommandHandler,
   IssueTemporaryPasswordCommandHandler,
   LoginMemberCommandHandler,
+  LogoutMemberCommandHandler,
+  WithdrawMemberCommandHandler,
 } from '@application/commands/handlers';
 import type {
   ClockPort,
   LogEventPublisherPort,
   MemberRepositoryPort,
+  OpaqueTokenGeneratorPort,
   PasswordHasherPort,
   PhoneVerificationRepositoryPort,
   TemporaryPasswordGeneratorPort,
+  TokenRepositoryPort,
   TransactionManagerPort,
 } from '@application/commands/ports';
+import { TokenType } from '@application/commands/ports';
 
 function activeMember(failedLoginCount = 0): MemberModel {
   const createdAt = new Date('2026-04-28T00:00:00.000Z');
@@ -38,6 +45,22 @@ const transactionManager = {
   runInTransaction: vi.fn(async (work) => await work()),
 } satisfies TransactionManagerPort;
 
+function tokenRepository(): TokenRepositoryPort {
+  return {
+    save: vi.fn(),
+    findMemberId: vi.fn(),
+    revokeActiveByMemberId: vi.fn(async (params) => params.type === TokenType.REFRESH ? 1 : 1),
+  };
+}
+
+function opaqueTokenGenerator(): OpaqueTokenGeneratorPort {
+  return {
+    generate: vi.fn()
+      .mockReturnValueOnce('access-token-0001')
+      .mockReturnValueOnce('refresh-token-0001'),
+  };
+}
+
 describe('LoginMemberCommandHandler', () => {
   it('비밀번호가 일치하면 로그인 성공 결과를 반환한다', async () => {
     const memberRepository = {
@@ -53,11 +76,14 @@ describe('LoginMemberCommandHandler', () => {
     } satisfies PasswordHasherPort;
     const clock = { now: vi.fn(() => new Date('2026-04-28T00:01:00.000Z')) } satisfies ClockPort;
     const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
+    const tokens = tokenRepository();
     const handler = new LoginMemberCommandHandler(
       memberRepository,
       passwordHasher,
       clock,
       logEventPublisher,
+      opaqueTokenGenerator(),
+      tokens,
       transactionManager,
     );
 
@@ -65,6 +91,24 @@ describe('LoginMemberCommandHandler', () => {
 
     expect(result.memberId).toBe('member-1');
     expect(result.userId).toBe('member_01');
+    expect(result.accessToken).toBe('access-token-0001');
+    expect(result.accessTokenExpiresAt).toEqual(new Date('2026-04-28T00:16:00.000Z'));
+    expect(result.refreshToken).toBe('refresh-token-0001');
+    expect(result.refreshTokenExpiresAt).toEqual(new Date('2026-05-12T00:01:00.000Z'));
+    expect(tokens.save).toHaveBeenCalledWith({
+      type: TokenType.ACCESS,
+      memberId: 'member-1',
+      token: 'access-token-0001',
+      ttlSeconds: 15 * 60,
+      expiresAt: new Date('2026-04-28T00:16:00.000Z'),
+    });
+    expect(tokens.save).toHaveBeenCalledWith({
+      type: TokenType.REFRESH,
+      memberId: 'member-1',
+      token: 'refresh-token-0001',
+      ttlSeconds: 14 * 24 * 60 * 60,
+      expiresAt: new Date('2026-05-12T00:01:00.000Z'),
+    });
     expect(memberRepository.save).not.toHaveBeenCalled();
     expect(logEventPublisher.publish).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -94,6 +138,8 @@ describe('LoginMemberCommandHandler', () => {
       passwordHasher,
       clock,
       logEventPublisher,
+      opaqueTokenGenerator(),
+      tokenRepository(),
       transactionManager,
     );
 
@@ -132,6 +178,8 @@ describe('LoginMemberCommandHandler', () => {
       passwordHasher,
       clock,
       logEventPublisher,
+      opaqueTokenGenerator(),
+      tokenRepository(),
       transactionManager,
     );
 
@@ -170,12 +218,46 @@ describe('LoginMemberCommandHandler', () => {
       passwordHasher,
       clock,
       logEventPublisher,
+      opaqueTokenGenerator(),
+      tokenRepository(),
       transactionManager,
     );
 
     await expect(
       handler.execute(LoginMemberCommand.of({ userId: 'member_01', password: 'password123!' })),
     ).rejects.toThrow('MEMBER_LOCKED');
+
+    expect(passwordHasher.verify).not.toHaveBeenCalled();
+  });
+
+  it('탈퇴한 회원이면 비밀번호 검증 전에 로그인을 거부한다', async () => {
+    const withdrawnMember = activeMember().withdraw(new Date('2026-04-28T00:01:00.000Z'));
+    const memberRepository = {
+      findByUserId: vi.fn().mockResolvedValue(withdrawnMember),
+      findByPhoneNumber: vi.fn(),
+      existsByUserId: vi.fn(),
+      save: vi.fn(),
+      findById: vi.fn(),
+    } satisfies MemberRepositoryPort;
+    const passwordHasher = {
+      verify: vi.fn(),
+      hash: vi.fn(),
+    } satisfies PasswordHasherPort;
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:01:00.000Z')) } satisfies ClockPort;
+    const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
+    const handler = new LoginMemberCommandHandler(
+      memberRepository,
+      passwordHasher,
+      clock,
+      logEventPublisher,
+      opaqueTokenGenerator(),
+      tokenRepository(),
+      transactionManager,
+    );
+
+    await expect(
+      handler.execute(LoginMemberCommand.of({ userId: 'member_01', password: 'password123!' })),
+    ).rejects.toThrow('MEMBER_WITHDRAWN');
 
     expect(passwordHasher.verify).not.toHaveBeenCalled();
   });
@@ -232,6 +314,32 @@ describe('IssueTemporaryPasswordCommandHandler', () => {
     expect(memberRepository.save.mock.calls[0][0].passwordHash).toBe('temporary-hash');
     expect(memberRepository.save.mock.calls[0][0].status).toBe('ACTIVE');
     expect(memberRepository.save.mock.calls[0][0].failedLoginCount).toBe(0);
+  });
+});
+
+describe('LogoutMemberCommandHandler', () => {
+  it('로그아웃하면 회원의 활성 refresh token을 모두 폐기한다', async () => {
+    const tokens = tokenRepository();
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:06:00.000Z')) } satisfies ClockPort;
+    const handler = new LogoutMemberCommandHandler(tokens, clock, transactionManager);
+
+    const result = await handler.execute(LogoutMemberCommand.of({ memberId: 'member-1' }));
+
+    expect(tokens.revokeActiveByMemberId).toHaveBeenCalledWith({
+      type: TokenType.ACCESS,
+      memberId: 'member-1',
+      now: new Date('2026-04-28T00:06:00.000Z'),
+    });
+    expect(tokens.revokeActiveByMemberId).toHaveBeenCalledWith({
+      type: TokenType.REFRESH,
+      memberId: 'member-1',
+      now: new Date('2026-04-28T00:06:00.000Z'),
+    });
+    expect(result).toEqual({
+      memberId: 'member-1',
+      loggedOut: true,
+      revokedRefreshTokenCount: 1,
+    });
   });
 });
 
@@ -316,6 +424,79 @@ describe('ChangeMemberPasswordCommandHandler', () => {
 
     expect(passwordHasher.hash).not.toHaveBeenCalled();
     expect(memberRepository.save).not.toHaveBeenCalled();
+    expect(logEventPublisher.publish).not.toHaveBeenCalled();
+  });
+});
+
+describe('WithdrawMemberCommandHandler', () => {
+  it('회원을 탈퇴 상태로 저장하고 탈퇴 결과를 반환한다', async () => {
+    const memberRepository = {
+      findById: vi.fn().mockResolvedValue(activeMember()),
+      findByUserId: vi.fn(),
+      findByPhoneNumber: vi.fn(),
+      existsByUserId: vi.fn(),
+      save: vi.fn(async (saved) => saved),
+    } satisfies MemberRepositoryPort;
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:05:00.000Z')) } satisfies ClockPort;
+    const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
+    const tokens = tokenRepository();
+    const handler = new WithdrawMemberCommandHandler(
+      memberRepository,
+      tokens,
+      clock,
+      logEventPublisher,
+      transactionManager,
+    );
+
+    const result = await handler.execute(WithdrawMemberCommand.of({ memberId: 'member-1' }));
+
+    expect(memberRepository.findById).toHaveBeenCalledWith('member-1');
+    expect(memberRepository.save.mock.calls[0][0].status).toBe('WITHDRAWN');
+    expect(tokens.revokeActiveByMemberId).toHaveBeenCalledWith({
+      type: TokenType.ACCESS,
+      memberId: 'member-1',
+      now: new Date('2026-04-28T00:05:00.000Z'),
+    });
+    expect(tokens.revokeActiveByMemberId).toHaveBeenCalledWith({
+      type: TokenType.REFRESH,
+      memberId: 'member-1',
+      now: new Date('2026-04-28T00:05:00.000Z'),
+    });
+    expect(logEventPublisher.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        memberId: 'member-1',
+        userId: 'member_01',
+        occurredAt: new Date('2026-04-28T00:05:00.000Z'),
+      }),
+    );
+    expect(result).toEqual({ memberId: 'member-1', userId: 'member_01', withdrawn: true });
+  });
+
+  it('존재하지 않는 회원을 탈퇴하려고 하면 저장하지 않는다', async () => {
+    const memberRepository = {
+      findById: vi.fn().mockResolvedValue(undefined),
+      findByUserId: vi.fn(),
+      findByPhoneNumber: vi.fn(),
+      existsByUserId: vi.fn(),
+      save: vi.fn(),
+    } satisfies MemberRepositoryPort;
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:05:00.000Z')) } satisfies ClockPort;
+    const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
+    const tokens = tokenRepository();
+    const handler = new WithdrawMemberCommandHandler(
+      memberRepository,
+      tokens,
+      clock,
+      logEventPublisher,
+      transactionManager,
+    );
+
+    await expect(
+      handler.execute(WithdrawMemberCommand.of({ memberId: 'missing-member' })),
+    ).rejects.toThrow('MEMBER_NOT_FOUND');
+
+    expect(memberRepository.save).not.toHaveBeenCalled();
+    expect(tokens.revokeActiveByMemberId).not.toHaveBeenCalled();
     expect(logEventPublisher.publish).not.toHaveBeenCalled();
   });
 });
