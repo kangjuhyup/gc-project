@@ -5,6 +5,9 @@ import {
   MemberModel,
   MovieImageModel,
   MovieModel,
+  OutboxEventModel,
+  PaymentEventLogModel,
+  PaymentModel,
   PhoneVerificationModel,
   ReservationEventModel,
   ReservationModel,
@@ -267,6 +270,143 @@ describe('domain persistence models', () => {
     expect(seatHold.reservationId).toBe('4');
     expect(seatHold.status).toBe('HELD');
     expect(seatHold.expiresAt).toBe(expiresAt);
+  });
+
+  it('결제 요청은 PENDING 상태의 결제 도메인 모델을 생성한다', () => {
+    const requestedAt = new Date('2026-04-29T01:00:00.000Z');
+
+    const payment = PaymentModel.request({
+      memberId: '1',
+      seatHoldId: '10',
+      provider: 'LOCAL',
+      amount: 15000,
+      now: requestedAt,
+    });
+
+    expect(payment.memberId).toBe('1');
+    expect(payment.seatHoldId).toBe('10');
+    expect(payment.provider).toBe('LOCAL');
+    expect(payment.amount).toBe(15000);
+    expect(payment.status).toBe('PENDING');
+    expect(payment.requestedAt).toBe(requestedAt);
+  });
+
+  it('결제 승인 금액이 요청 금액과 다르면 도메인 에러를 던진다', () => {
+    const createdAt = new Date('2026-04-29T01:00:00.000Z');
+    const payment = PaymentModel.request({
+      memberId: '1',
+      seatHoldId: '10',
+      provider: 'LOCAL',
+      amount: 15000,
+      now: createdAt,
+    }).setPersistence('payment-1', createdAt, createdAt);
+
+    expect(() =>
+      payment.markApproving({
+        providerPaymentId: 'local-payment-1',
+        amount: 10000,
+        now: new Date('2026-04-29T01:01:00.000Z'),
+      }),
+    ).toThrow(new DomainError(DomainErrorCode.PAYMENT_AMOUNT_MISMATCH));
+  });
+
+  it('결제 승인 후 예약 생성이 완료되면 APPROVED 상태로 전환한다', () => {
+    const createdAt = new Date('2026-04-29T01:00:00.000Z');
+    const approvedAt = new Date('2026-04-29T01:02:00.000Z');
+    const payment = PaymentModel.request({
+      memberId: '1',
+      seatHoldId: '10',
+      provider: 'LOCAL',
+      amount: 15000,
+      now: createdAt,
+    }).setPersistence('payment-1', createdAt, createdAt);
+
+    const approved = payment
+      .markApproving({
+        providerPaymentId: 'local-payment-1',
+        amount: 15000,
+        now: new Date('2026-04-29T01:01:00.000Z'),
+      })
+      .approve({ reservationId: 'reservation-1', now: approvedAt });
+
+    expect(approved.status).toBe('APPROVED');
+    expect(approved.providerPaymentId).toBe('local-payment-1');
+    expect(approved.reservationId).toBe('reservation-1');
+    expect(approved.approvedAt).toBe(approvedAt);
+  });
+
+  it('PG 승인 후 내부 후처리 실패 시 환불 필요 상태로 전환한다', () => {
+    const createdAt = new Date('2026-04-29T01:00:00.000Z');
+    const payment = PaymentModel.request({
+      memberId: '1',
+      seatHoldId: '10',
+      provider: 'LOCAL',
+      amount: 15000,
+      now: createdAt,
+    }).setPersistence('payment-1', createdAt, createdAt);
+
+    const refundRequired = payment
+      .markApproving({
+        providerPaymentId: 'local-payment-1',
+        amount: 15000,
+        now: new Date('2026-04-29T01:01:00.000Z'),
+      })
+      .requireRefund({
+        reason: 'reservation failed',
+        now: new Date('2026-04-29T01:02:00.000Z'),
+      });
+
+    expect(refundRequired.status).toBe('REFUND_REQUIRED');
+    expect(refundRequired.failureReason).toBe('reservation failed');
+  });
+
+  it('환불 요청이 성공하면 REFUNDED 상태로 전환한다', () => {
+    const createdAt = new Date('2026-04-29T01:00:00.000Z');
+    const refundedAt = new Date('2026-04-29T01:03:00.000Z');
+    const payment = PaymentModel.of({
+      memberId: '1',
+      seatHoldId: '10',
+      provider: 'LOCAL',
+      providerPaymentId: 'local-payment-1',
+      amount: 15000,
+      status: 'REFUND_REQUIRED',
+      requestedAt: createdAt,
+      failureReason: 'reservation failed',
+    }).setPersistence('payment-1', createdAt, createdAt);
+
+    const refunded = payment
+      .startRefund({ now: new Date('2026-04-29T01:02:00.000Z') })
+      .completeRefund({ now: refundedAt });
+
+    expect(refunded.status).toBe('REFUNDED');
+    expect(refunded.refundedAt).toBe(refundedAt);
+  });
+
+  it('결제 이벤트 로그와 아웃박스 이벤트는 persistence 속성으로 생성한다', () => {
+    const occurredAt = new Date('2026-04-29T01:00:00.000Z');
+    const eventLog = PaymentEventLogModel.of({
+      paymentId: 'payment-1',
+      eventType: 'PAYMENT_REQUESTED',
+      nextStatus: 'PENDING',
+      provider: 'LOCAL',
+      amount: 15000,
+      metadata: { seatHoldId: '10' },
+      occurredAt,
+    });
+    const outbox = OutboxEventModel.pending({
+      aggregateType: 'PAYMENT',
+      aggregateId: 'payment-1',
+      eventType: 'PAYMENT_REQUESTED',
+      payload: { paymentId: 'payment-1' },
+      occurredAt,
+    });
+
+    expect(eventLog.paymentId).toBe('payment-1');
+    expect(eventLog.eventType).toBe('PAYMENT_REQUESTED');
+    expect(eventLog.metadata).toEqual({ seatHoldId: '10' });
+    expect(outbox.aggregateType).toBe('PAYMENT');
+    expect(outbox.status).toBe('PENDING');
+    expect(outbox.retryCount).toBe(0);
   });
 
   it('내가 점유했고 결제 완료되지 않은 좌석 선점은 RELEASED 상태로 해제한다', () => {
