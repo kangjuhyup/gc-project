@@ -1,10 +1,14 @@
-import { CalendarClock, Clapperboard, TicketCheck } from 'lucide-react';
+import { CalendarClock, Clapperboard, TicketCheck, XCircle } from 'lucide-react';
 import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { formatScreeningTime } from '@/features/movies/movieTimeline';
 import { formatCurrency } from '@/features/payment/paymentSummary';
-import { getReservationViewLabel, type ReservationView } from './reservationFilters';
+import {
+  canCancelReservation,
+  getReservationViewLabel,
+  type ReservationView,
+} from './reservationFilters';
 import { useReservationsPage } from './useReservationsPage';
 
 const reservationViews: ReservationView[] = ['UPCOMING', 'COMPLETED', 'CANCELED'];
@@ -34,8 +38,15 @@ interface ReservationHistoryPanelProps {
 }
 
 export function ReservationHistoryPanel({ actionSlot }: ReservationHistoryPanelProps) {
-  const { currentView, filteredReservations, reservationsQuery, setCurrentView } =
-    useReservationsPage();
+  const {
+    cancelErrorReservationId,
+    cancelReservationMutation,
+    currentView,
+    filteredReservations,
+    handleCancelReservation,
+    reservationsQuery,
+    setCurrentView,
+  } = useReservationsPage();
 
   return (
     <>
@@ -111,6 +122,31 @@ export function ReservationHistoryPanel({ actionSlot }: ReservationHistoryPanelP
                   </dl>
                   {reservation.cancelReason ? (
                     <p className="reservation-note">{reservation.cancelReason}</p>
+                  ) : null}
+                  {cancelErrorReservationId === reservation.id ? (
+                    <p className="reservation-note" data-state="error" role="alert">
+                      예매 취소 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.
+                    </p>
+                  ) : null}
+                  {canCancelReservation(reservation) ? (
+                    <div className="reservation-actions">
+                      <Button
+                        disabled={
+                          cancelReservationMutation.isPending &&
+                          cancelReservationMutation.variables === reservation.id
+                        }
+                        onClick={() => handleCancelReservation(reservation.id)}
+                        size="sm"
+                        type="button"
+                        variant="secondary"
+                      >
+                        <XCircle size={15} aria-hidden="true" />
+                        {cancelReservationMutation.isPending &&
+                        cancelReservationMutation.variables === reservation.id
+                          ? '취소 요청 중'
+                          : '예매 취소'}
+                      </Button>
+                    </div>
                   ) : null}
                 </div>
               </article>

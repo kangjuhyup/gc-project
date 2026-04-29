@@ -1245,6 +1245,20 @@ h2 {
   font-weight: 700;
 }
 
+.reservation-note[data-state="error"] {
+  background: #fff1f0;
+  color: #b42318;
+}
+
+.reservation-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.reservation-actions .button {
+  gap: 6px;
+}
+
 .profile-page {
   display: grid;
   gap: 18px;

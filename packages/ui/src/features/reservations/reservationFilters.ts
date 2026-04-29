@@ -1,6 +1,7 @@
 import { type ReservationSummary } from './reservationApi';
 
 export type ReservationView = 'UPCOMING' | 'COMPLETED' | 'CANCELED';
+export const DEFAULT_RESERVATION_CANCEL_REASON = '사용자 요청';
 
 export function filterReservations(
   reservations: ReservationSummary[],
@@ -34,4 +35,8 @@ export function getReservationViewLabel(view: ReservationView) {
   };
 
   return labels[view];
+}
+
+export function canCancelReservation(reservation: ReservationSummary, now = new Date()) {
+  return reservation.status === 'CONFIRMED' && new Date(reservation.screeningStartAt) > now;
 }

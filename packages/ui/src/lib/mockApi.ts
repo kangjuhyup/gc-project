@@ -1,6 +1,10 @@
 import { demoMovies, filterMoviesForKeyword } from '@/features/movies/movieTimeline';
 import type { PaymentResultDto, RequestPaymentRequestDto } from '@/features/payment/paymentApi';
-import type { ReservationListResponse, ReservationSummary } from '@/features/reservations/reservationApi';
+import type {
+  ReservationCanceledDto,
+  ReservationListResponse,
+  ReservationSummary,
+} from '@/features/reservations/reservationApi';
 import type { SeatSummary } from '@/features/seats/seatApi';
 import type {
   AddressSearchResponse,
@@ -193,6 +197,28 @@ export async function resolveMockApi({
   if (method === 'GET' && pathname === '/reservations') {
     return toMockResponse<ReservationListResponse>({
       items: mockReservations,
+    });
+  }
+
+  const reservationCancelMatch = pathname.match(/^\/reservations\/(\d+)\/cancel$/);
+
+  if (method === 'POST' && reservationCancelMatch) {
+    const reservationId = Number(reservationCancelMatch[1]);
+    const payload = await readJsonBody<{ reason?: string }>(body);
+    const reservation = mockReservations.find((item) => item.id === reservationId);
+
+    if (reservation) {
+      reservation.status = 'CANCELED';
+      reservation.canceledAt = new Date().toISOString();
+      reservation.cancelReason = payload.reason ?? '사용자 요청';
+    }
+
+    return toMockResponse<ReservationCanceledDto>({
+      reservationId: String(reservationId),
+      paymentId: `payment-${reservationId}`,
+      reservationStatus: 'CANCELED',
+      paymentStatus: 'REFUND_REQUIRED',
+      reason: payload.reason,
     });
   }
 
