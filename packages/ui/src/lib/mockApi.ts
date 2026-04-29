@@ -1,5 +1,5 @@
 import { demoMovies, filterMoviesForKeyword } from '@/features/movies/movieTimeline';
-import type { PaymentRequest, PaymentResponse } from '@/features/payment/paymentApi';
+import type { PaymentResultDto, RequestPaymentRequestDto } from '@/features/payment/paymentApi';
 import type { ReservationListResponse, ReservationSummary } from '@/features/reservations/reservationApi';
 import type { SeatSummary } from '@/features/seats/seatApi';
 import type {
@@ -135,32 +135,38 @@ export async function resolveMockApi({
     });
   }
 
-  if (method === 'POST' && pathname === '/reservations') {
-    const payload = await readJsonBody<PaymentRequest>(body);
-    const screeningId = Number(payload.screeningId);
-    const reservationNumber = `R${new Date().getFullYear()}${String(payload.screeningId).padStart(
-      4,
-      '0',
-    )}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+  if (method === 'POST' && pathname === '/payments') {
+    const payload = await readJsonBody<RequestPaymentRequestDto>(body);
+    const heldSeat = mockSeatHoldIndex.get(payload.seatHoldId);
+    const screeningId = Number(heldSeat?.screeningId ?? '101');
+    const reservationNumber = `R${new Date().getFullYear()}${String(screeningId).padStart(4, '0')}${String(
+      Math.floor(Math.random() * 1000),
+    ).padStart(3, '0')}`;
     const paymentScreening = findMockScreening(screeningId);
 
     mockReservations.unshift({
       id: Date.now(),
       reservationNumber,
       status: 'CONFIRMED',
-      totalPrice: payload.totalPrice,
+      totalPrice: payload.amount,
       createdAt: new Date().toISOString(),
       movieTitle: paymentScreening?.movie.title ?? '영화',
       posterUrl: paymentScreening?.movie.posterUrl ?? '',
       screeningStartAt: paymentScreening?.screening.startAt ?? new Date().toISOString(),
       screenName: paymentScreening?.screening.screenName ?? '상영관',
-      seats: payload.seatIds.map((seatId) => getMockSeatLabel(screeningId, seatId)),
+      seats: heldSeat ? [getMockSeatLabel(screeningId, heldSeat.seatId)] : [],
     });
 
-    return toMockResponse<PaymentResponse>({
-      reservationNumber,
-      status: 'CONFIRMED',
-      paidAt: new Date().toISOString(),
+    return toMockResponse<PaymentResultDto>({
+      paymentId: String(Date.now()),
+      seatHoldId: payload.seatHoldId,
+      idempotencyKey: payload.idempotencyKey,
+      reservationId: String(Date.now() + 1),
+      provider: payload.provider,
+      providerPaymentId: `mock-${payload.seatHoldId}`,
+      status: 'PENDING',
+      amount: payload.amount,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     });
   }
 

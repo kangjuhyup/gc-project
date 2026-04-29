@@ -10,6 +10,10 @@ export const queryKeys = {
     detail: (reservationId: number) =>
       [...queryKeys.reservations.all, 'detail', reservationId] as const,
   },
+  payments: {
+    all: ['payments'] as const,
+    detail: (paymentId: string) => [...queryKeys.payments.all, 'detail', paymentId] as const,
+  },
   screenings: {
     all: ['screenings'] as const,
     seats: (screeningId: number) => [...queryKeys.screenings.all, screeningId, 'seats'] as const,

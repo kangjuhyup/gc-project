@@ -103,8 +103,16 @@ export function PaymentPage() {
             <div className="payment-success" role="status">
               <BadgeCheck size={22} aria-hidden="true" />
               <div>
-                <strong>예매가 완료되었습니다.</strong>
-                <span>예매번호 {paymentMutation.data.reservationNumber}</span>
+                <strong>결제 요청이 생성되었습니다.</strong>
+                <span>
+                  결제 ID {paymentMutation.data[0]?.paymentId}
+                  {paymentMutation.data.length > 1 ? ` 외 ${paymentMutation.data.length - 1}건` : ''}
+                </span>
+                {paymentMutation.data[0]?.approvalUrl ? (
+                  <a href={paymentMutation.data[0].approvalUrl} rel="noreferrer" target="_blank">
+                    결제 승인으로 이동
+                  </a>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -138,7 +146,7 @@ export function PaymentPage() {
             type="button"
           >
             <CreditCard size={17} aria-hidden="true" />
-            {paymentMutation.isPending ? '결제 처리 중' : '결제 완료'}
+            {paymentMutation.isPending ? '결제 요청 중' : '결제 요청'}
           </Button>
         </aside>
       </div>

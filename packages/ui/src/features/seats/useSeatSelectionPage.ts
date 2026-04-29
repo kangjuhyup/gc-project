@@ -40,6 +40,32 @@ export function useSeatSelectionPage() {
     [seatsQuery.data?.seats, selectedSeatIds],
   );
   const totalPrice = selectedSeats.length * screeningSummary.price;
+  const paymentRouteState = useMemo(
+    () => ({
+      movieTitle: screeningSummary.movieTitle,
+      screenName: screeningSummary.screenName,
+      screeningId: screeningSummary.id,
+      screeningStartAt: screeningSummary.startAt,
+      seats: selectedSeats.map((seat) => ({
+        id: seat.id,
+        label: seat.label,
+      })),
+      seatHoldIds: selectedSeats
+        .map((seat) => heldSeatIdsRef.current.get(seat.id))
+        .filter((holdId): holdId is string => typeof holdId === 'string'),
+      totalPrice,
+    }),
+    [
+      screeningSummary.id,
+      screeningSummary.movieTitle,
+      screeningSummary.screenName,
+      screeningSummary.startAt,
+      selectedSeats,
+      totalPrice,
+    ],
+  );
+  const canProceedToPayment =
+    selectedSeats.length > 0 && paymentRouteState.seatHoldIds.length === selectedSeats.length;
 
   const releaseHeldSeat = useCallback(async (seatId: string, options: Pick<RequestInit, 'keepalive'> = {}) => {
     const holdId = heldSeatIdsRef.current.get(seatId);
@@ -128,7 +154,9 @@ export function useSeatSelectionPage() {
   return {
     handlePaymentNavigation,
     handleSeatClick,
+    canProceedToPayment,
     movieId,
+    paymentRouteState,
     screeningSummary,
     seatHoldMutation,
     seatsQuery,

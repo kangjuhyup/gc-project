@@ -10,9 +10,21 @@ describe('paymentSummary', () => {
         screeningId: '101',
         screeningStartAt: '2026-04-28T10:30:00+09:00',
         seats: [{ id: '1', label: 'A1' }],
+        seatHoldIds: ['9001'],
         totalPrice: 14000,
       }),
     ).toBe(true);
+    expect(
+      isPaymentRouteState({
+        movieTitle: '파묘',
+        screenName: '1관',
+        screeningId: '101',
+        screeningStartAt: '2026-04-28T10:30:00+09:00',
+        seats: [{ id: '1', label: 'A1' }],
+        seatHoldIds: [],
+        totalPrice: 14000,
+      }),
+    ).toBe(false);
     expect(isPaymentRouteState({ seats: [] })).toBe(false);
   });
 

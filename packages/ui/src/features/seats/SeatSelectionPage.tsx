@@ -8,7 +8,9 @@ export function SeatSelectionPage() {
   const {
     handlePaymentNavigation,
     handleSeatClick,
+    canProceedToPayment,
     movieId,
+    paymentRouteState,
     screeningSummary,
     seatHoldMutation,
     seatsQuery,
@@ -133,20 +135,10 @@ export function SeatSelectionPage() {
                 <dd>{totalPrice.toLocaleString()}원</dd>
               </div>
             </dl>
-            {selectedSeats.length ? (
+            {canProceedToPayment ? (
               <Button asChild>
                 <Link
-                  state={{
-                    movieTitle: screeningSummary.movieTitle,
-                    screenName: screeningSummary.screenName,
-                    screeningId: screeningSummary.id,
-                    screeningStartAt: screeningSummary.startAt,
-                    seats: selectedSeats.map((seat) => ({
-                      id: seat.id,
-                      label: seat.label,
-                    })),
-                    totalPrice,
-                  }}
+                  state={paymentRouteState}
                   onClick={handlePaymentNavigation}
                   to={`/movies/${movieId ?? '1'}/screenings/${screeningSummary.id}/payment`}
                   viewTransition

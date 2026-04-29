@@ -6,6 +6,7 @@ export interface PaymentRouteState {
   screeningId: string;
   screeningStartAt: string;
   seats: PaymentSeat[];
+  seatHoldIds: string[];
   totalPrice: number;
 }
 
@@ -22,7 +23,9 @@ export function isPaymentRouteState(value: unknown): value is PaymentRouteState 
     typeof state.screeningId === 'string' &&
     typeof state.screeningStartAt === 'string' &&
     Array.isArray(state.seats) &&
+    Array.isArray(state.seatHoldIds) &&
     state.seats.length > 0 &&
+    state.seatHoldIds.length === state.seats.length &&
     state.seats.every(
       (seat) =>
         Boolean(seat) &&
@@ -30,6 +33,7 @@ export function isPaymentRouteState(value: unknown): value is PaymentRouteState 
         typeof seat.id === 'string' &&
         typeof seat.label === 'string',
     ) &&
+    state.seatHoldIds.every((seatHoldId) => typeof seatHoldId === 'string') &&
     typeof state.totalPrice === 'number'
   );
 }

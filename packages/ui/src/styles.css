@@ -1065,6 +1065,13 @@ h2 {
   font-size: 14px;
 }
 
+.payment-success a {
+  display: inline-flex;
+  margin-top: 8px;
+  color: #087f8c;
+  font-weight: 800;
+}
+
 .payment-summary {
   display: grid;
   gap: 18px;
