@@ -17,6 +17,8 @@ const conflictErrors = new Set([
   'SEAT_ALREADY_HELD',
   'USER_ID_ALREADY_EXISTS',
   'PHONE_NUMBER_ALREADY_EXISTS',
+  'PAYMENT_ALREADY_REQUESTED',
+  'PAYMENT_IDEMPOTENCY_KEY_CONFLICT',
 ]);
 
 const badRequestErrors = new Set([
@@ -36,6 +38,9 @@ const badRequestErrors = new Set([
   'INVALID_SEAT_HOLD_REQUEST',
   'SEAT_NOT_FOUND',
   'SEAT_HOLD_NOT_RELEASABLE',
+  'PAYMENT_CALLBACK_INVALID',
+  'PAYMENT_PROVIDER_MISMATCH',
+  'PAYMENT_PROVIDER_PAYMENT_ID_REQUIRED',
 ]);
 
 const forbiddenErrors = new Set([
@@ -47,6 +52,7 @@ const forbiddenErrors = new Set([
 const notFoundErrors = new Set([
   'MEMBER_NOT_FOUND',
   'SEAT_HOLD_NOT_FOUND',
+  'PAYMENT_NOT_FOUND',
 ]);
 
 @Injectable()

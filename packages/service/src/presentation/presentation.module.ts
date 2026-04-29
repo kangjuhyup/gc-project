@@ -7,6 +7,7 @@ import {
   HealthController,
   MemberController,
   MovieController,
+  PaymentController,
   SeatController,
   TheaterController,
 } from './http';
@@ -18,6 +19,7 @@ import {
     MemberController,
     AddressController,
     MovieController,
+    PaymentController,
     TheaterController,
     SeatController,
   ],
