@@ -1,11 +1,18 @@
 import { IdCard, KeyRound, Mail, UserRound, UserX } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/features/auth/AuthProvider';
 import { ReservationHistoryPanel } from '@/features/reservations/ReservationsPage';
+import { useProfilePage } from './useProfilePage';
 
 export function ProfilePage() {
-  const { member } = useAuth();
+  const {
+    closeWithdrawConfirm,
+    handleWithdraw,
+    isWithdrawConfirmOpen,
+    member,
+    openWithdrawConfirm,
+    withdrawMutation,
+  } = useProfilePage();
 
   return (
     <section className="profile-page" aria-labelledby="profile-page-title">
@@ -65,11 +72,49 @@ export function ProfilePage() {
               비밀번호 변경
             </Link>
           </Button>
-          <Button className="danger-button" type="button" variant="secondary">
+          <Button
+            className="danger-button"
+            disabled={withdrawMutation.isPending}
+            onClick={openWithdrawConfirm}
+            type="button"
+            variant="secondary"
+          >
             <UserX size={17} aria-hidden="true" />
             회원탈퇴
           </Button>
         </div>
+        {isWithdrawConfirmOpen ? (
+          <div className="withdraw-confirm" role="alertdialog" aria-labelledby="withdraw-title">
+            <div>
+              <h4 id="withdraw-title">회원탈퇴를 진행할까요?</h4>
+              <p>탈퇴 후에는 같은 계정으로 로그인할 수 없습니다.</p>
+            </div>
+            {withdrawMutation.isError ? (
+              <p className="status-message" data-state="error" role="alert">
+                회원탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.
+              </p>
+            ) : null}
+            <div className="withdraw-confirm-actions">
+              <Button
+                disabled={withdrawMutation.isPending}
+                onClick={closeWithdrawConfirm}
+                type="button"
+                variant="ghost"
+              >
+                취소
+              </Button>
+              <Button
+                className="danger-button"
+                disabled={withdrawMutation.isPending}
+                onClick={handleWithdraw}
+                type="button"
+                variant="secondary"
+              >
+                탈퇴하기
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="profile-reservations" aria-labelledby="profile-reservations-title">

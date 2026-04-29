@@ -1,4 +1,4 @@
-import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { type PropsWithChildren } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -11,15 +11,10 @@ import { ProfileLink } from '@/features/profile/ProfileLink';
 import { ReservationsPage } from '@/features/reservations/ReservationsPage';
 import { SeatSelectionPage } from '@/features/seats/SeatSelectionPage';
 import { SignupPage } from '@/features/signup/SignupPage';
+import { useAppShell } from './useAppShell';
 
 export default function App() {
-  const { isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login', { replace: true });
-  };
+  const { handleLogout, isAuthenticated, logoutMutation } = useAppShell();
 
   return (
     <main className="app-shell">
@@ -31,7 +26,12 @@ export default function App() {
         {isAuthenticated ? (
           <div className="topbar-actions">
             <ProfileLink />
-            <Button onClick={handleLogout} type="button" variant="secondary">
+            <Button
+              disabled={logoutMutation.isPending}
+              onClick={handleLogout}
+              type="button"
+              variant="secondary"
+            >
               로그아웃
             </Button>
           </div>

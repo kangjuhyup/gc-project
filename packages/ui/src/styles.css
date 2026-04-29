@@ -1347,10 +1347,9 @@ h2 {
 }
 
 .profile-actions-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .profile-actions-card h3 {
@@ -1369,6 +1368,35 @@ h2 {
   gap: 8px;
 }
 
+.withdraw-confirm {
+  display: grid;
+  gap: 14px;
+  grid-column: 1 / -1;
+  border: 1px solid #e1b7b3;
+  border-radius: 8px;
+  background: #fff8f7;
+  padding: 14px;
+}
+
+.withdraw-confirm h4 {
+  margin: 0;
+  color: #7a271a;
+  font-size: 17px;
+}
+
+.withdraw-confirm p {
+  margin: 6px 0 0;
+  color: #8f4e45;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.withdraw-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     padding: 16px;
@@ -1378,10 +1406,13 @@ h2 {
   .workspace-header,
   .reservations-header,
   .profile-header,
-  .profile-section-heading,
-  .profile-actions-card {
+  .profile-section-heading {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .profile-actions-card {
+    grid-template-columns: 1fr;
   }
 
   .topbar-actions,
