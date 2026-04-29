@@ -35,12 +35,12 @@ interface ScreeningSeatListApiResponse {
   }>;
 }
 
-export interface SeatHoldRequest {
+export interface CreateSeatHoldRequestDto {
   screeningId: SeatId;
   seatIds: SeatId[];
 }
 
-export interface SeatHoldResponse {
+export interface SeatHoldCreatedDto {
   screeningId: SeatId;
   seatIds: SeatId[];
   holdIds: string[];
@@ -48,7 +48,7 @@ export interface SeatHoldResponse {
   expiresAt: string;
 }
 
-export interface SeatHoldReleaseResponse {
+export interface SeatHoldReleasedDto {
   holdId: string;
   released: boolean;
 }
@@ -72,15 +72,15 @@ export function fetchScreeningSeats(screeningId: number) {
   );
 }
 
-export function createSeatHold(payload: SeatHoldRequest) {
-  return apiClient<SeatHoldResponse>('/seat-holds', {
+export function createSeatHold(payload: CreateSeatHoldRequestDto) {
+  return apiClient<SeatHoldCreatedDto>('/seat-holds', {
     body: JSON.stringify(payload),
     method: 'POST',
   });
 }
 
 export function releaseSeatHold(holdId: string, options: Pick<RequestInit, 'keepalive'> = {}) {
-  return apiClient<SeatHoldReleaseResponse>(`/seat-holds/${holdId}`, {
+  return apiClient<SeatHoldReleasedDto>(`/seat-holds/${encodeURIComponent(holdId)}`, {
     keepalive: options.keepalive,
     method: 'DELETE',
   });

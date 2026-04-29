@@ -23,6 +23,8 @@ interface MockResponse<TResponse> {
 const mockMembers = new Set(['admin', 'movie_user', 'tester']);
 const mockVerificationCode = '123456';
 const mockHeldSeatIdsByScreening = new Map<string, Set<string>>();
+const mockSeatHoldIndex = new Map<string, { screeningId: string; seatId: string }>();
+let mockNextSeatHoldId = 9001;
 const mockReservations: ReservationSummary[] = [
   {
     id: 1,
@@ -173,6 +175,14 @@ export async function resolveMockApi({
     const screeningId = payload.screeningId ?? '';
     const seatIds = payload.seatIds ?? [];
     const heldSeatIds = mockHeldSeatIdsByScreening.get(screeningId) ?? new Set<string>();
+    const holdIds = seatIds.map((seatId) => {
+      const holdId = String(mockNextSeatHoldId);
+
+      mockNextSeatHoldId += 1;
+      mockSeatHoldIndex.set(holdId, { screeningId, seatId });
+
+      return holdId;
+    });
 
     seatIds.forEach((seatId) => heldSeatIds.add(seatId));
     mockHeldSeatIdsByScreening.set(screeningId, heldSeatIds);
@@ -180,7 +190,7 @@ export async function resolveMockApi({
     return toMockResponse({
       screeningId,
       seatIds,
-      holdIds: seatIds.map((seatId) => `hold-${screeningId}-${seatId}`),
+      holdIds,
       ttlSeconds: 600,
       expiresAt: new Date(Date.now() + 600 * 1000).toISOString(),
     });
@@ -190,13 +200,13 @@ export async function resolveMockApi({
 
   if (method === 'DELETE' && seatHoldReleaseMatch) {
     const holdId = decodeURIComponent(seatHoldReleaseMatch[1]);
-    const holdIdMatch = holdId.match(/^hold-(\d+)-(.+)$/);
+    const heldSeat = mockSeatHoldIndex.get(holdId);
 
-    if (holdIdMatch) {
-      const [, screeningId, seatId] = holdIdMatch;
-      const heldSeatIds = mockHeldSeatIdsByScreening.get(screeningId);
+    if (heldSeat) {
+      const heldSeatIds = mockHeldSeatIdsByScreening.get(heldSeat.screeningId);
 
-      heldSeatIds?.delete(seatId);
+      heldSeatIds?.delete(heldSeat.seatId);
+      mockSeatHoldIndex.delete(holdId);
     }
 
     return toMockResponse({
