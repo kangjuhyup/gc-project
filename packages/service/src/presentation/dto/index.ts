@@ -1,6 +1,7 @@
 export { ChangeMemberPasswordRequestDto } from './change-member-password.request.dto';
 export { CheckUserIdRequestDto } from './check-user-id.request.dto';
 export { ConfirmPhoneVerificationRequestDto } from './confirm-phone-verification.request.dto';
+export { CreateSeatHoldRequestDto } from './create-seat-hold.request.dto';
 export { IssueTemporaryPasswordRequestDto } from './issue-temporary-password.request.dto';
 export { ListMoviesRequestDto } from './list-movies.request.dto';
 export { ListTheatersRequestDto } from './list-theaters.request.dto';

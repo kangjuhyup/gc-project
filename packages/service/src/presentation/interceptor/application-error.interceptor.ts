@@ -13,6 +13,7 @@ import { Observable, catchError, throwError } from 'rxjs';
 import { DomainError } from '@domain';
 
 const conflictErrors = new Set([
+  'SEAT_ALREADY_HELD',
   'USER_ID_ALREADY_EXISTS',
   'PHONE_NUMBER_ALREADY_EXISTS',
 ]);
@@ -31,6 +32,8 @@ const badRequestErrors = new Set([
   'PHONE_VERIFICATION_NOT_FOUND',
   'PHONE_VERIFICATION_NOT_PENDING',
   'PHONE_VERIFICATION_REQUIRED',
+  'INVALID_SEAT_HOLD_REQUEST',
+  'SEAT_NOT_FOUND',
 ]);
 
 const forbiddenErrors = new Set([

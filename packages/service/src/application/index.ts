@@ -1,6 +1,7 @@
 export {
   ChangeMemberPasswordCommand,
   ConfirmPhoneVerificationCommand,
+  CreateSeatHoldCommand,
   IssueTemporaryPasswordCommand,
   LoginMemberCommand,
   LoginMemberResultDto,
@@ -8,6 +9,7 @@ export {
   PhoneVerificationConfirmedDto,
   PhoneVerificationIssuedDto,
   RequestPhoneVerificationCommand,
+  SeatHoldCreatedDto,
   SignupMemberCommand,
   SignupMemberResultDto,
   TemporaryPasswordIssuedDto,
@@ -15,6 +17,7 @@ export {
 export {
   ChangeMemberPasswordCommandHandler,
   ConfirmPhoneVerificationCommandHandler,
+  CreateSeatHoldCommandHandler,
   IssueTemporaryPasswordCommandHandler,
   LoginMemberCommandHandler,
   RequestPhoneVerificationCommandHandler,
