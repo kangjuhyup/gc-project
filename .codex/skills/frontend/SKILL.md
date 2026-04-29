@@ -19,6 +19,8 @@ Deliver frontend work that is usable, consistent with the existing app, accessib
 - Use React with strict TypeScript.
 - Use functional components only.
 - Keep components small and reusable. Avoid god components.
+- Do not put business logic or hook implementations directly inside components or pages.
+- Move page state, server-state orchestration, mutations, side effects, route parsing, and event handlers into page-level or feature-level custom hooks.
 - Use shadcn/ui as the default component foundation for forms, dialogs, buttons, menus, tabs, tables, toasts, and other common UI primitives.
 - Use the project's existing shadcn/ui wrapper components and variants before creating custom components.
 - Use TanStack Query for all API communication and server state: fetching, mutations, caching, invalidation, retries, loading/error states, and optimistic updates.
@@ -58,6 +60,7 @@ Forbidden Zustand state:
 - Identify the target user workflow first: entry point, primary action, empty/loading/error states, success state, and recovery path.
 - Prefer existing shadcn/ui components, design tokens, icons, layout primitives, form patterns, TanStack Query hooks, and Zustand stores.
 - Decide state ownership before implementation: TanStack Query for remote data, Zustand for shared client-only state, component state for local interaction state.
+- Define custom hook boundaries before implementing a page: components and pages should render UI, while page-specific business logic lives in `useXxxPage` or equivalent feature hooks.
 - Keep application screens work-focused. Avoid marketing-style hero sections unless the requested surface is explicitly a landing page.
 - Define responsive behavior for mobile, tablet, and desktop. Ensure text, buttons, tables, dialogs, and toolbars do not overlap or shift unexpectedly.
 - Include accessibility requirements in the design: semantic HTML, labels, keyboard flow, focus state, contrast, and reduced-motion handling where relevant.
@@ -70,6 +73,7 @@ Forbidden Zustand state:
 - Use `src/lib/apiClient.ts` and TanStack Query hooks for API communication. Do not duplicate request logic.
 - Model mutations with TanStack Query mutation hooks and invalidate or update affected queries deliberately.
 - Keep query keys stable, specific, and produced by centralized factories in `queryKeys.ts`.
+- Keep page and component files free of hook implementation bodies. Extract `useState`, `useMemo`, `useEffect`, TanStack Query calls, route-derived state, and submit/click handlers into custom hooks when they express business or workflow logic.
 - Use Zustand stores for shared client state only. Keep stores small, typed, and action-oriented.
 - Avoid mixing business/domain server rules into Zustand stores; keep server validation and persistence behavior in API/application flows.
 - Keep visual polish grounded in the product domain: restrained spacing, predictable navigation, stable dimensions, and readable hierarchy.
@@ -104,6 +108,7 @@ Forbidden Zustand state:
 - [ ] Environment variables use `import.meta.env` and only `VITE_` prefixed client values.
 - [ ] No secrets or client secrets are exposed or stored in UI code.
 - [ ] shadcn/ui components and variants are reused where appropriate.
+- [ ] Components and pages contain rendering composition only; business logic and hook implementations are extracted into custom hooks.
 - [ ] Server state is owned by TanStack Query, not `useEffect + fetch`, component state, or Zustand.
 - [ ] Shared client-only state is modeled with Zustand only when component state is insufficient.
 - [ ] API calls go through `src/lib/apiClient.ts`.
