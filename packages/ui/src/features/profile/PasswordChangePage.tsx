@@ -2,6 +2,7 @@ import { ArrowLeft, KeyRound } from 'lucide-react';
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { type PasswordChangeFormValues } from './passwordApi';
 import { useChangePassword } from './passwordHooks';
 import {
@@ -16,6 +17,7 @@ const initialValues: PasswordChangeFormValues = {
 };
 
 export function PasswordChangePage() {
+  const { member } = useAuth();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<PasswordChangeFormErrors>({});
   const passwordMutation = useChangePassword();
@@ -43,7 +45,10 @@ export function PasswordChangePage() {
       return;
     }
 
-    await passwordMutation.mutateAsync(values);
+    await passwordMutation.mutateAsync({
+      ...values,
+      userId: member?.memberId ?? '',
+    });
     setValues(initialValues);
   };
 

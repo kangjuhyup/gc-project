@@ -3,7 +3,7 @@ import { type PaymentSeat } from './paymentApi';
 export interface PaymentRouteState {
   movieTitle: string;
   screenName: string;
-  screeningId: number;
+  screeningId: string;
   screeningStartAt: string;
   seats: PaymentSeat[];
   totalPrice: number;
@@ -19,7 +19,7 @@ export function isPaymentRouteState(value: unknown): value is PaymentRouteState 
   return (
     typeof state.movieTitle === 'string' &&
     typeof state.screenName === 'string' &&
-    typeof state.screeningId === 'number' &&
+    typeof state.screeningId === 'string' &&
     typeof state.screeningStartAt === 'string' &&
     Array.isArray(state.seats) &&
     state.seats.length > 0 &&
@@ -27,7 +27,7 @@ export function isPaymentRouteState(value: unknown): value is PaymentRouteState 
       (seat) =>
         Boolean(seat) &&
         typeof seat === 'object' &&
-        typeof seat.id === 'number' &&
+        typeof seat.id === 'string' &&
         typeof seat.label === 'string',
     ) &&
     typeof state.totalPrice === 'number'

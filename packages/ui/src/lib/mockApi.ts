@@ -1,8 +1,7 @@
 import { demoMovies, filterMoviesForKeyword } from '@/features/movies/movieTimeline';
-import type { LoginResponse } from '@/features/login/loginApi';
 import type { PaymentRequest, PaymentResponse } from '@/features/payment/paymentApi';
 import type { ReservationListResponse, ReservationSummary } from '@/features/reservations/reservationApi';
-import type { ScreeningSeatMapResponse, SeatSummary } from '@/features/seats/seatApi';
+import type { SeatSummary } from '@/features/seats/seatApi';
 import type {
   AddressSearchResponse,
   IdAvailabilityResponse,
@@ -23,6 +22,7 @@ interface MockResponse<TResponse> {
 
 const mockMembers = new Set(['admin', 'movie_user', 'tester']);
 const mockVerificationCode = '123456';
+const mockHeldSeatIdsByScreening = new Map<string, Set<string>>();
 const mockReservations: ReservationSummary[] = [
   {
     id: 1,
@@ -81,66 +81,66 @@ export async function resolveMockApi({
 
   await waitForMockLatency();
 
-  if (method === 'POST' && pathname === '/auth/login') {
-    const payload = await readJsonBody<{ memberId?: string; password?: string }>(body);
-    const memberId = payload.memberId?.trim() || 'movie_user';
+  if (method === 'POST' && pathname === '/members/login') {
+    const payload = await readJsonBody<{ userId?: string; password?: string }>(body);
+    const userId = payload.userId?.trim() || 'movie_user';
 
-    return toMockResponse<LoginResponse>({
-      accessToken: `mock-access-token-${memberId}`,
-      member: {
-        id: 1,
-        memberId,
-        name: '홍길동',
-        nickname: '시네필',
-      },
+    return toMockResponse({
+      memberId: '1',
+      userId,
     });
   }
 
-  if (method === 'POST' && pathname === '/members/check-id') {
-    const payload = await readJsonBody<{ memberId?: string }>(body);
-    const memberId = payload.memberId?.trim().toLocaleLowerCase() ?? '';
+  if (method === 'GET' && pathname === '/members/check-user-id') {
+    const userId = url.searchParams.get('userId')?.trim().toLocaleLowerCase() ?? '';
 
     return toMockResponse<IdAvailabilityResponse>({
-      available: Boolean(memberId) && !mockMembers.has(memberId),
+      available: Boolean(userId) && !mockMembers.has(userId),
     });
   }
 
-  if (method === 'POST' && pathname === '/members/phone-verifications') {
+  if (method === 'POST' && pathname === '/phone-verifications') {
     return toMockResponse<PhoneVerificationRequestResponse>({
-      expiresInSeconds: 180,
+      verificationId: 'mock-verification-1',
+      code: mockVerificationCode,
+      expiresAt: new Date(Date.now() + 180 * 1000).toISOString(),
     });
   }
 
-  if (method === 'POST' && pathname === '/members/phone-verifications/confirm') {
-    const payload = await readJsonBody<{ verificationCode?: string }>(body);
+  if (method === 'POST' && pathname === '/phone-verifications/confirm') {
+    const payload = await readJsonBody<{ code?: string; verificationId?: string }>(body);
 
     return toMockResponse<PhoneVerificationConfirmResponse>({
-      verified: payload.verificationCode === mockVerificationCode,
-      verificationToken: `mock-phone-token-${Date.now()}`,
+      verified: Boolean(payload.verificationId) && payload.code === mockVerificationCode,
     });
   }
 
-  if (method === 'POST' && pathname === '/members') {
-    const payload = await readJsonBody<{ memberId?: string }>(body);
+  if (method === 'POST' && pathname === '/members/signup') {
+    const payload = await readJsonBody<{ userId?: string }>(body);
 
     return toMockResponse({
-      memberId: payload.memberId ?? 'mock_member',
+      memberId: '2',
+      userId: payload.userId ?? 'mock_member',
     });
   }
 
-  if (method === 'PATCH' && pathname === '/members/password') {
+  if (method === 'POST' && pathname === '/members/password') {
+    const payload = await readJsonBody<{ userId?: string }>(body);
+
     return toMockResponse({
+      userId: payload.userId ?? 'movie_user',
       changed: true,
     });
   }
 
   if (method === 'POST' && pathname === '/reservations') {
     const payload = await readJsonBody<PaymentRequest>(body);
+    const screeningId = Number(payload.screeningId);
     const reservationNumber = `R${new Date().getFullYear()}${String(payload.screeningId).padStart(
       4,
       '0',
     )}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-    const paymentScreening = findMockScreening(payload.screeningId);
+    const paymentScreening = findMockScreening(screeningId);
 
     mockReservations.unshift({
       id: Date.now(),
@@ -152,7 +152,7 @@ export async function resolveMockApi({
       posterUrl: paymentScreening?.movie.posterUrl ?? '',
       screeningStartAt: paymentScreening?.screening.startAt ?? new Date().toISOString(),
       screenName: paymentScreening?.screening.screenName ?? '상영관',
-      seats: payload.seatIds.map((seatId) => getMockSeatLabel(payload.screeningId, seatId)),
+      seats: payload.seatIds.map((seatId) => getMockSeatLabel(screeningId, seatId)),
     });
 
     return toMockResponse<PaymentResponse>({
@@ -165,6 +165,24 @@ export async function resolveMockApi({
   if (method === 'GET' && pathname === '/reservations') {
     return toMockResponse<ReservationListResponse>({
       items: mockReservations,
+    });
+  }
+
+  if (method === 'POST' && pathname === '/seat-holds') {
+    const payload = await readJsonBody<{ screeningId?: string; seatIds?: string[] }>(body);
+    const screeningId = payload.screeningId ?? '';
+    const seatIds = payload.seatIds ?? [];
+    const heldSeatIds = mockHeldSeatIdsByScreening.get(screeningId) ?? new Set<string>();
+
+    seatIds.forEach((seatId) => heldSeatIds.add(seatId));
+    mockHeldSeatIdsByScreening.set(screeningId, heldSeatIds);
+
+    return toMockResponse({
+      screeningId,
+      seatIds,
+      holdIds: seatIds.map((seatId) => `hold-${screeningId}-${seatId}`),
+      ttlSeconds: 600,
+      expiresAt: new Date(Date.now() + 600 * 1000).toISOString(),
     });
   }
 
@@ -190,6 +208,7 @@ export async function resolveMockApi({
 
     return toMockResponse({
       items: filterMoviesForKeyword(demoMovies, keyword),
+      hasNext: false,
     });
   }
 
@@ -206,15 +225,8 @@ export async function resolveMockApi({
       return null;
     }
 
-    return toMockResponse<ScreeningSeatMapResponse>({
-      screening: {
-        id: screening.id,
-        movieTitle: movie.title,
-        screenName: screening.screenName,
-        startAt: screening.startAt,
-        endAt: screening.endAt,
-        price: screening.screenName === 'IMAX' ? 18000 : 14000,
-      },
+    return toMockResponse({
+      screeningId: String(screening.id),
       seats: createMockSeats(screening.id),
     });
   }
@@ -305,6 +317,7 @@ const mockAddresses: AddressSearchResponse['items'] = [
 
 function createMockSeats(screeningId: number): SeatSummary[] {
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  const heldSeatIds = mockHeldSeatIdsByScreening.get(String(screeningId)) ?? new Set<string>();
 
   return rows.flatMap((row, rowIndex) =>
     Array.from({ length: 10 }, (_, colIndex) => {
@@ -312,12 +325,14 @@ function createMockSeats(screeningId: number): SeatSummary[] {
       const seatNumber = rowIndex * 10 + col;
 
       return {
-        id: screeningId * 1000 + seatNumber,
+        id: String(screeningId * 1000 + seatNumber),
         label: `${row}${col}`,
         row,
         col,
         type: row === 'H' && col >= 9 ? 'COUPLE' : col === 1 ? 'DISABLED' : 'NORMAL',
-        status: getMockSeatStatus(screeningId, seatNumber),
+        status: heldSeatIds.has(String(screeningId * 1000 + seatNumber))
+          ? 'HELD'
+          : getMockSeatStatus(screeningId, seatNumber),
       };
     }),
   );
@@ -350,8 +365,8 @@ function findMockScreening(screeningId: number) {
   return null;
 }
 
-function getMockSeatLabel(screeningId: number, seatId: number) {
-  const seatNumber = seatId - screeningId * 1000;
+function getMockSeatLabel(screeningId: number, seatId: string) {
+  const seatNumber = Number(seatId) - screeningId * 1000;
   const rowIndex = Math.floor((seatNumber - 1) / 10);
   const col = ((seatNumber - 1) % 10) + 1;
   const row = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'][rowIndex] ?? 'A';

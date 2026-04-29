@@ -20,6 +20,11 @@ const movies: MovieSummary[] = [
         endAt: '2026-04-29T23:26:00+09:00',
         remainingSeats: 10,
         totalSeats: 80,
+        theater: {
+          id: 1,
+          name: 'GC 시네마 강남',
+          address: '서울특별시 강남구 테헤란로 427',
+        },
       },
     ],
   },
@@ -40,6 +45,11 @@ const movies: MovieSummary[] = [
         endAt: '2026-04-28T12:44:00+09:00',
         remainingSeats: 20,
         totalSeats: 80,
+        theater: {
+          id: 1,
+          name: 'GC 시네마 강남',
+          address: '서울특별시 강남구 테헤란로 427',
+        },
       },
     ],
   },

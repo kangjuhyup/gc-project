@@ -2,7 +2,7 @@ import { type SignupFormValues } from './signupApi';
 
 export type SignupFormErrors = Partial<Record<keyof SignupFormValues, string>>;
 
-const memberIdPattern = /^[a-zA-Z0-9_]{4,20}$/;
+const memberIdPattern = /^[a-z][a-z0-9_]{3,19}$/;
 const phoneNumberPattern = /^01[016789]\d{7,8}$/;
 const verificationCodePattern = /^\d{6}$/;
 const forbiddenAddressKeywordPattern = /[%=><[\]]/;
@@ -13,7 +13,7 @@ export function validateMemberId(memberId: string) {
   }
 
   if (!memberIdPattern.test(memberId)) {
-    return '아이디는 영문, 숫자, 밑줄 4~20자로 입력해 주세요.';
+    return '아이디는 소문자로 시작하고 소문자, 숫자, 밑줄 4~20자로 입력해 주세요.';
   }
 
   return undefined;
@@ -79,6 +79,12 @@ export function validateSignupForm(values: SignupFormValues) {
 
   if (!values.name.trim()) {
     errors.name = '이름을 입력해 주세요.';
+  }
+
+  if (!values.password) {
+    errors.password = '비밀번호를 입력해 주세요.';
+  } else if (values.password.length < 8) {
+    errors.password = '비밀번호는 8자 이상이어야 합니다.';
   }
 
   if (!values.birthDate) {

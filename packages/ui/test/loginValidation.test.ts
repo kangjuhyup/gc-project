@@ -26,9 +26,9 @@ describe('loginValidation', () => {
   it('회원 아이디 형식이 맞지 않으면 형식 에러를 반환한다', () => {
     expect(
       validateLoginForm({
-        memberId: 'ab',
+        memberId: 'MovieUser',
         password: 'password',
       }).memberId,
-    ).toBe('아이디 형식을 확인해 주세요.');
+    ).toBe('아이디는 소문자로 시작하고 소문자, 숫자, 밑줄 4~20자로 입력해 주세요.');
   });
 });

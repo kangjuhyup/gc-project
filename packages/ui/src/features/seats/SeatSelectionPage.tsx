@@ -1,31 +1,56 @@
-import { Armchair, ArrowLeft, Clock, CreditCard } from 'lucide-react';
+import { Armchair, ArrowLeft, Clock, CreditCard, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { formatScreeningTime } from '@/features/movies/movieTimeline';
 import { getSelectedSeats, toggleSeatSelection } from './seatSelection';
-import { useScreeningSeats } from './seatHooks';
+import { useCreateSeatHold, useScreeningSeats } from './seatHooks';
 
 export function SeatSelectionPage() {
   const { movieId, screeningId } = useParams();
+  const location = useLocation();
   const parsedScreeningId = Number(screeningId);
   const validScreeningId = Number.isFinite(parsedScreeningId) ? parsedScreeningId : null;
   const seatsQuery = useScreeningSeats(validScreeningId);
-  const [selectedSeatIds, setSelectedSeatIds] = useState<number[]>([]);
+  const seatHoldMutation = useCreateSeatHold();
+  const routeScreening = getSeatRouteState(location.state);
+  const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
+  const screeningSummary = {
+    id: seatsQuery.data?.screening.id ?? String(validScreeningId ?? ''),
+    movieTitle: routeScreening?.movieTitle ?? seatsQuery.data?.screening.movieTitle ?? '상영 좌석',
+    screenName: routeScreening?.screenName ?? seatsQuery.data?.screening.screenName ?? '상영관',
+    startAt: routeScreening?.screeningStartAt ?? seatsQuery.data?.screening.startAt ?? new Date().toISOString(),
+    endAt: routeScreening?.screeningEndAt ?? seatsQuery.data?.screening.endAt ?? new Date().toISOString(),
+    price: seatsQuery.data?.screening.price ?? 14000,
+  };
   const selectedSeats = useMemo(
     () => getSelectedSeats(seatsQuery.data?.seats ?? [], selectedSeatIds),
     [seatsQuery.data?.seats, selectedSeatIds],
   );
-  const totalPrice = selectedSeats.length * (seatsQuery.data?.screening.price ?? 0);
+  const totalPrice = selectedSeats.length * screeningSummary.price;
 
-  const handleSeatClick = (seatId: number) => {
+  const handleSeatClick = async (seatId: string) => {
     const seat = seatsQuery.data?.seats.find((currentSeat) => currentSeat.id === seatId);
 
     if (!seat) {
       return;
     }
 
+    if (selectedSeatIds.includes(seat.id)) {
+      setSelectedSeatIds((currentSeatIds) => toggleSeatSelection(currentSeatIds, seat));
+      return;
+    }
+
+    if (seat.status !== 'AVAILABLE' || !validScreeningId) {
+      return;
+    }
+
+    await seatHoldMutation.mutateAsync({
+      screeningId: String(validScreeningId),
+      seatIds: [seat.id],
+    });
     setSelectedSeatIds((currentSeatIds) => toggleSeatSelection(currentSeatIds, seat));
+    await seatsQuery.refetch();
   };
 
   if (!validScreeningId) {
@@ -68,15 +93,31 @@ export function SeatSelectionPage() {
           <div className="seat-map-panel">
             <header className="screening-summary">
               <div>
-                <h3>{seatsQuery.data.screening.movieTitle}</h3>
+                <h3>{screeningSummary.movieTitle}</h3>
                 <p>
                   <Clock size={16} aria-hidden="true" />
-                  {formatScreeningTime(seatsQuery.data.screening.startAt)} ·{' '}
-                  {seatsQuery.data.screening.screenName}
+                  {formatScreeningTime(screeningSummary.startAt)} · {screeningSummary.screenName}
                 </p>
               </div>
-              <span>{selectedSeats.length}석 선택</span>
+              <div className="seat-toolbar">
+                <Button
+                  disabled={seatsQuery.isFetching}
+                  onClick={() => void seatsQuery.refetch()}
+                  type="button"
+                  variant="secondary"
+                >
+                  <RefreshCw size={16} aria-hidden="true" />
+                  새로고침
+                </Button>
+                <span>{selectedSeats.length}석 선택</span>
+              </div>
             </header>
+
+            {seatHoldMutation.isError ? (
+              <p className="status-message" data-state="error" role="alert">
+                좌석 점유에 실패했습니다. 좌석 상태를 새로고침한 뒤 다시 선택해 주세요.
+              </p>
+            ) : null}
 
             <div className="screen-indicator" aria-hidden="true">
               SCREEN
@@ -85,7 +126,7 @@ export function SeatSelectionPage() {
             <div className="seat-grid" aria-label="좌석 배치">
               {seatsQuery.data.seats.map((seat) => {
                 const isSelected = selectedSeatIds.includes(seat.id);
-                const isUnavailable = seat.status !== 'AVAILABLE';
+                const isUnavailable = seat.status !== 'AVAILABLE' && !isSelected;
 
                 return (
                   <button
@@ -95,7 +136,7 @@ export function SeatSelectionPage() {
                     className="seat-button"
                     data-selected={isSelected}
                     data-status={seat.status.toLowerCase()}
-                    disabled={isUnavailable}
+                    disabled={isUnavailable || seatHoldMutation.isPending}
                     key={seat.id}
                     onClick={() => handleSeatClick(seat.id)}
                     type="button"
@@ -131,17 +172,17 @@ export function SeatSelectionPage() {
               <Button asChild>
                 <Link
                   state={{
-                    movieTitle: seatsQuery.data.screening.movieTitle,
-                    screenName: seatsQuery.data.screening.screenName,
-                    screeningId: seatsQuery.data.screening.id,
-                    screeningStartAt: seatsQuery.data.screening.startAt,
+                    movieTitle: screeningSummary.movieTitle,
+                    screenName: screeningSummary.screenName,
+                    screeningId: screeningSummary.id,
+                    screeningStartAt: screeningSummary.startAt,
                     seats: selectedSeats.map((seat) => ({
                       id: seat.id,
                       label: seat.label,
                     })),
                     totalPrice,
                   }}
-                  to={`/movies/${movieId ?? '1'}/screenings/${seatsQuery.data.screening.id}/payment`}
+                  to={`/movies/${movieId ?? '1'}/screenings/${screeningSummary.id}/payment`}
                   viewTransition
                 >
                   <CreditCard size={17} aria-hidden="true" />
@@ -161,4 +202,30 @@ export function SeatSelectionPage() {
       ) : null}
     </section>
   );
+}
+
+interface SeatRouteState {
+  movieTitle: string;
+  screenName: string;
+  screeningStartAt: string;
+  screeningEndAt: string;
+}
+
+function getSeatRouteState(value: unknown): SeatRouteState | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const state = value as Partial<SeatRouteState>;
+
+  if (
+    typeof state.movieTitle === 'string' &&
+    typeof state.screenName === 'string' &&
+    typeof state.screeningStartAt === 'string' &&
+    typeof state.screeningEndAt === 'string'
+  ) {
+    return state as SeatRouteState;
+  }
+
+  return null;
 }

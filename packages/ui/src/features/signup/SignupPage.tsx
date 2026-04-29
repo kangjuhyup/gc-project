@@ -22,6 +22,7 @@ import { type AddressSearchItem, type SignupFormValues } from './signupApi';
 
 const initialValues: SignupFormValues = {
   memberId: '',
+  password: '',
   name: '',
   birthDate: '',
   zipCode: '',
@@ -43,7 +44,7 @@ export function SignupPage() {
   const [idCheckState, setIdCheckState] = useState<IdCheckState>('idle');
   const [phoneVerificationState, setPhoneVerificationState] =
     useState<PhoneVerificationState>('idle');
-  const [phoneVerificationToken, setPhoneVerificationToken] = useState('');
+  const [phoneVerificationId, setPhoneVerificationId] = useState('');
   const [submittedMemberId, setSubmittedMemberId] = useState('');
   const [addressKeyword, setAddressKeyword] = useState('');
   const [addressKeywordError, setAddressKeywordError] = useState('');
@@ -78,12 +79,11 @@ export function SignupPage() {
 
       if (field === 'phoneNumber') {
         setPhoneVerificationState('idle');
-        setPhoneVerificationToken('');
+        setPhoneVerificationId('');
       }
 
       if (field === 'verificationCode') {
         setPhoneVerificationState((current) => (current === 'verified' ? 'requested' : current));
-        setPhoneVerificationToken('');
       }
     };
 
@@ -107,7 +107,10 @@ export function SignupPage() {
       return;
     }
 
-    await requestPhoneVerificationMutation.mutateAsync(normalizePhoneNumber(values.phoneNumber));
+    const result = await requestPhoneVerificationMutation.mutateAsync(
+      normalizePhoneNumber(values.phoneNumber),
+    );
+    setPhoneVerificationId(result.verificationId);
     setPhoneVerificationState('requested');
   };
 
@@ -154,11 +157,11 @@ export function SignupPage() {
     const result = await confirmPhoneVerificationMutation.mutateAsync({
       phoneNumber: normalizePhoneNumber(values.phoneNumber),
       verificationCode: values.verificationCode,
+      verificationId: phoneVerificationId,
     });
 
     if (result.verified) {
       setPhoneVerificationState('verified');
-      setPhoneVerificationToken(result.verificationToken);
     }
   };
 
@@ -172,18 +175,12 @@ export function SignupPage() {
 
     const result = await createMemberMutation.mutateAsync({
       memberId: values.memberId,
+      password: values.password,
       name: values.name,
       birthDate: values.birthDate,
-      address: {
-        zipCode: values.zipCode,
-        roadAddress: values.roadAddress,
-        jibunAddress: values.jibunAddress,
-        detailAddress: values.detailAddress,
-        buildingManagementNumber: values.buildingManagementNumber,
-      },
+      address: `${values.roadAddress} ${values.detailAddress}`.trim(),
       phoneNumber: normalizePhoneNumber(values.phoneNumber),
-      nickname: values.nickname,
-      phoneVerificationToken,
+      phoneVerificationId,
     });
 
     setSubmittedMemberId(result.memberId);
@@ -218,6 +215,16 @@ export function SignupPage() {
             중복검사
           </Button>
         </div>
+        <TextField
+          autoComplete="new-password"
+          error={errors.password}
+          id="password"
+          label="비밀번호"
+          onChange={handleChange('password')}
+          placeholder="password123!"
+          type="password"
+          value={values.password}
+        />
         <StatusMessage
           status={idCheckState}
           idle=""

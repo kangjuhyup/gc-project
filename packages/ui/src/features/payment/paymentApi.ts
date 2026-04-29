@@ -3,13 +3,13 @@ import { apiClient } from '@/lib/apiClient';
 export type PaymentMethod = 'CARD' | 'KAKAO_PAY' | 'NAVER_PAY';
 
 export interface PaymentSeat {
-  id: number;
+  id: string;
   label: string;
 }
 
 export interface PaymentRequest {
-  screeningId: number;
-  seatIds: number[];
+  screeningId: string;
+  seatIds: string[];
   paymentMethod: PaymentMethod;
   totalPrice: number;
 }

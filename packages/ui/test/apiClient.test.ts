@@ -64,7 +64,7 @@ describe('apiClient', () => {
       randomUUID: () => 'correlation-3',
     });
 
-    await expect(apiClient('/auth/login', { skipAuthRedirect: true })).rejects.toThrow(
+    await expect(apiClient('/members/login', { skipAuthRedirect: true })).rejects.toThrow(
       'Unauthorized',
     );
 

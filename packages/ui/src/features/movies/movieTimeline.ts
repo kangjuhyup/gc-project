@@ -151,6 +151,11 @@ function createScreening(
     endAt: endDate.toISOString(),
     remainingSeats,
     totalSeats: 80,
+    theater: {
+      id: 1,
+      name: 'GC 시네마 강남',
+      address: '서울특별시 강남구 테헤란로 427',
+    },
   };
 }
 

@@ -90,6 +90,12 @@ export function MoviesPage() {
                       </dl>
                       <Button asChild>
                         <Link
+                          state={{
+                            movieTitle: movie.title,
+                            screenName: movie.nextScreening.screenName,
+                            screeningEndAt: movie.nextScreening.endAt,
+                            screeningStartAt: movie.nextScreening.startAt,
+                          }}
                           to={`/movies/${movie.id}/screenings/${movie.nextScreening.id}/seats`}
                           viewTransition
                         >

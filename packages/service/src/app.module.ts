@@ -63,7 +63,7 @@ import {
 import { NestLogEventPublisher } from '@infrastructure/logging';
 import { PersistenceModule } from '@infrastructure/persistence';
 import { JusoAddressSearchAdapter, LocalAddressSearchAdapter } from '@infrastructure/public-api';
-import { MemberIdAuthorizationVerifier, RedisModule, RedisSeatHoldCache, RedisSeatHoldLock } from '@infrastructure';
+import { EnvironmentAdapterFlag, MemberIdAuthorizationVerifier, RedisModule, RedisSeatHoldCache, RedisSeatHoldLock } from '@infrastructure';
 import { AddressController, HealthController, MemberController, MovieController, SeatController, TheaterController } from '@presentation/http';
 
 @Module({
@@ -142,9 +142,16 @@ import { AddressController, HealthController, MemberController, MovieController,
         jusoAddressSearchAdapter: JusoAddressSearchAdapter,
         localAddressSearchAdapter: LocalAddressSearchAdapter,
       ): AddressSearchPort =>
-        configService.get<string>('ADDRESS_SEARCH_ADAPTER') === 'local'
-          ? localAddressSearchAdapter
-          : jusoAddressSearchAdapter,
+        EnvironmentAdapterFlag.of({
+          name: 'ADDRESS_SEARCH_ADAPTER',
+          value: configService.get<string>('ADDRESS_SEARCH_ADAPTER'),
+        }).select({
+          adapters: {
+            local: localAddressSearchAdapter,
+            juso: jusoAddressSearchAdapter,
+          },
+          fallback: jusoAddressSearchAdapter,
+        }),
       inject: [ConfigService, JusoAddressSearchAdapter, LocalAddressSearchAdapter],
     },
     {

@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/apiClient';
 
 export interface SignupFormValues {
   memberId: string;
+  password: string;
   name: string;
   birthDate: string;
   zipCode: string;
@@ -42,28 +43,23 @@ export interface IdAvailabilityResponse {
 }
 
 export interface PhoneVerificationRequestResponse {
-  expiresInSeconds: number;
+  verificationId: string;
+  code: string;
+  expiresAt: string;
 }
 
 export interface PhoneVerificationConfirmResponse {
   verified: boolean;
-  verificationToken: string;
 }
 
 interface SignupRequest {
   memberId: string;
+  password: string;
   name: string;
   birthDate: string;
-  address: {
-    zipCode: string;
-    roadAddress: string;
-    jibunAddress: string;
-    detailAddress: string;
-    buildingManagementNumber: string;
-  };
+  address: string;
   phoneNumber: string;
-  nickname: string;
-  phoneVerificationToken: string;
+  phoneVerificationId: string;
 }
 
 export function searchAddresses(keyword: string) {
@@ -77,29 +73,42 @@ export function searchAddresses(keyword: string) {
 }
 
 export function checkMemberId(memberId: string) {
-  return apiClient<IdAvailabilityResponse>('/members/check-id', {
-    body: JSON.stringify({ memberId }),
-    method: 'POST',
+  const params = new URLSearchParams({
+    userId: memberId,
   });
+
+  return apiClient<IdAvailabilityResponse>(`/members/check-user-id?${params}`);
 }
 
 export function requestPhoneVerification(phoneNumber: string) {
-  return apiClient<PhoneVerificationRequestResponse>('/members/phone-verifications', {
+  return apiClient<PhoneVerificationRequestResponse>('/phone-verifications', {
     body: JSON.stringify({ phoneNumber }),
     method: 'POST',
   });
 }
 
-export function confirmPhoneVerification(phoneNumber: string, verificationCode: string) {
-  return apiClient<PhoneVerificationConfirmResponse>('/members/phone-verifications/confirm', {
-    body: JSON.stringify({ phoneNumber, verificationCode }),
+export function confirmPhoneVerification(
+  verificationId: string,
+  phoneNumber: string,
+  verificationCode: string,
+) {
+  return apiClient<PhoneVerificationConfirmResponse>('/phone-verifications/confirm', {
+    body: JSON.stringify({ verificationId, phoneNumber, code: verificationCode }),
     method: 'POST',
   });
 }
 
 export function createMember(payload: SignupRequest) {
-  return apiClient<{ memberId: string }>('/members', {
-    body: JSON.stringify(payload),
+  return apiClient<{ memberId: string; userId: string }>('/members/signup', {
+    body: JSON.stringify({
+      userId: payload.memberId,
+      password: payload.password,
+      name: payload.name,
+      birthDate: payload.birthDate,
+      phoneNumber: payload.phoneNumber,
+      address: payload.address,
+      phoneVerificationId: payload.phoneVerificationId,
+    }),
     method: 'POST',
   });
 }

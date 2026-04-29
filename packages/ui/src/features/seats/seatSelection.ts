@@ -3,11 +3,11 @@ import { type SeatSummary } from './seatApi';
 export const MAX_SELECTABLE_SEATS = 8;
 
 export function toggleSeatSelection(
-  selectedSeatIds: number[],
+  selectedSeatIds: string[],
   seat: SeatSummary,
   maxSelectableSeats = MAX_SELECTABLE_SEATS,
 ) {
-  if (seat.status !== 'AVAILABLE') {
+  if (seat.status !== 'AVAILABLE' && !selectedSeatIds.includes(seat.id)) {
     return selectedSeatIds;
   }
 
@@ -22,7 +22,7 @@ export function toggleSeatSelection(
   return [...selectedSeatIds, seat.id];
 }
 
-export function getSelectedSeats(seats: SeatSummary[], selectedSeatIds: number[]) {
+export function getSelectedSeats(seats: SeatSummary[], selectedSeatIds: string[]) {
   return selectedSeatIds
     .map((seatId) => seats.find((seat) => seat.id === seatId))
     .filter((seat): seat is SeatSummary => Boolean(seat));

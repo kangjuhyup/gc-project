@@ -2,7 +2,7 @@ import { type LoginFormValues } from './loginApi';
 
 export type LoginFormErrors = Partial<Record<keyof LoginFormValues, string>>;
 
-const memberIdPattern = /^[a-zA-Z0-9_]{4,20}$/;
+const memberIdPattern = /^[a-z][a-z0-9_]{3,19}$/;
 
 export function validateLoginForm(values: LoginFormValues) {
   const errors: LoginFormErrors = {};
@@ -10,7 +10,7 @@ export function validateLoginForm(values: LoginFormValues) {
   if (!values.memberId.trim()) {
     errors.memberId = '아이디를 입력해 주세요.';
   } else if (!memberIdPattern.test(values.memberId)) {
-    errors.memberId = '아이디 형식을 확인해 주세요.';
+    errors.memberId = '아이디는 소문자로 시작하고 소문자, 숫자, 밑줄 4~20자로 입력해 주세요.';
   }
 
   if (!values.password) {

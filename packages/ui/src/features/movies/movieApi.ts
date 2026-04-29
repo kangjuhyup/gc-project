@@ -7,6 +7,11 @@ export interface MovieScreening {
   endAt: string;
   remainingSeats: number;
   totalSeats: number;
+  theater: {
+    id: number;
+    name: string;
+    address: string;
+  };
 }
 
 export interface MovieSummary {
@@ -23,12 +28,15 @@ export interface MovieSummary {
 
 export interface MovieListResponse {
   items: MovieSummary[];
+  hasNext: boolean;
+  nextCursor?: string;
 }
 
 type MovieListApiResponse = MovieListResponse | MovieSummary[];
 
 export async function fetchMovies(keyword: string) {
   const searchParams = new URLSearchParams();
+  searchParams.set('limit', '20');
 
   if (keyword.trim()) {
     searchParams.set('keyword', keyword.trim());

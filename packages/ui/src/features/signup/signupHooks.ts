@@ -23,10 +23,13 @@ export function useRequestPhoneVerification() {
 
 export function useConfirmPhoneVerification() {
   return useMutation({
-    mutationFn: ({ phoneNumber, verificationCode }: Pick<
-      SignupFormValues,
-      'phoneNumber' | 'verificationCode'
-    >) => confirmPhoneVerification(phoneNumber, verificationCode),
+    mutationFn: ({
+      phoneNumber,
+      verificationCode,
+      verificationId,
+    }: Pick<SignupFormValues, 'phoneNumber' | 'verificationCode'> & {
+      verificationId: string;
+    }) => confirmPhoneVerification(verificationId, phoneNumber, verificationCode),
   });
 }
 

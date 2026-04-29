@@ -11,7 +11,9 @@ import {
 describe('signupValidation', () => {
   it('회원 아이디 형식을 검증한다', () => {
     expect(validateMemberId('user_01')).toBeUndefined();
-    expect(validateMemberId('ab')).toBe('아이디는 영문, 숫자, 밑줄 4~20자로 입력해 주세요.');
+    expect(validateMemberId('MovieUser')).toBe(
+      '아이디는 소문자로 시작하고 소문자, 숫자, 밑줄 4~20자로 입력해 주세요.',
+    );
   });
 
   it('휴대전화번호를 정규화하고 형식을 검증한다', () => {
@@ -38,6 +40,7 @@ describe('signupValidation', () => {
     expect(
       validateSignupForm({
         memberId: 'movie_user',
+        password: 'password123!',
         name: '홍길동',
         birthDate: '1990-01-01',
         zipCode: '04524',
