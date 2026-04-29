@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
   ChangeMemberPasswordCommand,
-  CommandBus,
   ConfirmPhoneVerificationCommand,
   CreateSeatHoldCommand,
   HandlePaymentCallbackCommand,
@@ -12,7 +11,7 @@ import {
   RequestPhoneVerificationCommand,
   RequestPaymentCommand,
   SignupMemberCommand,
-} from '@application';
+} from './dto';
 import {
   CLOCK,
   LOG_EVENT_PUBLISHER,
@@ -56,6 +55,7 @@ import {
   type VerificationCodeGeneratorPort,
 } from '@application/commands/ports';
 import { InfrastructureModule } from '@infrastructure';
+import { CommandBus } from './command-bus';
 import {
   ChangeMemberPasswordCommandHandler,
   ConfirmPhoneVerificationCommandHandler,

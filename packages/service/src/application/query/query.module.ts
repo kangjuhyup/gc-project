@@ -6,9 +6,8 @@ import {
   ListMoviesQuery,
   ListScreeningSeatsQuery,
   ListTheatersQuery,
-  QueryBus,
   SearchAddressesQuery,
-} from '@application';
+} from './dto';
 import {
   ADDRESS_SEARCH,
   MEMBER_QUERY,
@@ -24,6 +23,7 @@ import {
   type TheaterQueryPort,
 } from '@application/query/ports';
 import { InfrastructureModule } from '@infrastructure';
+import { QueryBus } from './query-bus';
 import {
   CheckUserIdAvailabilityQueryHandler,
   GetPaymentQueryHandler,

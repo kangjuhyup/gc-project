@@ -10,7 +10,7 @@ export const REDIS = Symbol('REDIS');
     {
       provide: REDIS,
       useFactory: (configService: ConfigService): Redis =>
-        new Redis(configService.getOrThrow<string>('REDIS_URL')),
+        new Redis(configService.get<string>('REDIS_URL') ?? 'redis://:gc_redis_password@localhost:6379'),
       inject: [ConfigService],
     },
   ],

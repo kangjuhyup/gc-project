@@ -45,8 +45,8 @@ import {
       host: process.env.DB_HOST ?? 'localhost',
       port: Number(process.env.DB_PORT ?? 5432),
       dbName: process.env.DB_NAME ?? 'gc_project',
-      user: process.env.DB_USER ?? 'postgres',
-      password: process.env.DB_PASSWORD ?? 'postgres',
+      user: process.env.DB_USER ?? 'gc_user',
+      password: process.env.DB_PASSWORD ?? 'gc_password',
       debug: process.env.NODE_ENV !== 'production',
     }),
   ],
@@ -126,7 +126,6 @@ import {
     },
   ],
   exports: [
-    MikroOrmModule,
     MEMBER_REPOSITORY,
     MEMBER_QUERY,
     MOVIE_QUERY,

@@ -15,13 +15,13 @@
     "strict": true,
     "baseUrl": "./src",
     "paths": {
-      "@application": ["application/index.ts"],
+      "@application": ["application/index"],
       "@application/*": ["application/*"],
-      "@domain": ["domain/index.ts"],
+      "@domain": ["domain/index"],
       "@domain/*": ["domain/*"],
-      "@infrastructure": ["infrastructure/index.ts"],
+      "@infrastructure": ["infrastructure/index"],
       "@infrastructure/*": ["infrastructure/*"],
-      "@presentation": ["presentation/index.ts"],
+      "@presentation": ["presentation/index"],
       "@presentation/*": ["presentation/*"]
     },
     "types": ["node"],
