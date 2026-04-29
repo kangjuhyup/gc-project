@@ -7,6 +7,7 @@ import {
   PaymentEventLogModel,
   PaymentModel,
   PhoneVerificationModel,
+  RefreshTokenModel,
   ReservationEventModel,
   ReservationModel,
   ReservationSeatModel,
@@ -35,6 +36,7 @@ import { OutboxEventEntity } from '../entities/outbox-event.entity';
 import { PaymentEntity } from '../entities/payment.entity';
 import { PaymentEventLogEntity } from '../entities/payment-event-log.entity';
 import { PhoneVerificationEntity } from '../entities/phone-verification.entity';
+import { RefreshTokenEntity } from '../entities/refresh-token.entity';
 import { ReservationEventEntity } from '../entities/reservation-event.entity';
 import { ReservationSeatEntity } from '../entities/reservation-seat.entity';
 import { ReservationEntity } from '../entities/reservation.entity';
@@ -163,6 +165,30 @@ export class PersistenceMapper {
     entity.status = model.status;
     entity.expiresAt = model.expiresAt;
     entity.verifiedAt = model.verifiedAt;
+    if (model.createdAt !== undefined) {
+      entity.createdAt = model.createdAt;
+    }
+    if (model.updatedAt !== undefined) {
+      entity.updatedAt = model.updatedAt;
+    }
+    return entity;
+  }
+
+  static refreshTokenToDomain(entity: RefreshTokenEntity): RefreshTokenModel {
+    return RefreshTokenModel.of({
+      memberId: entity.member.id,
+      token: entity.token,
+      expiresAt: entity.expiresAt,
+      revokedAt: entity.revokedAt,
+    }).setPersistence(entity.id, entity.createdAt, entity.updatedAt);
+  }
+
+  static refreshTokenToEntity(model: RefreshTokenModel): RefreshTokenEntity {
+    const entity = assignId(new RefreshTokenEntity(), currentId(model.id));
+    entity.member = ref<MemberEntity>(model.memberId);
+    entity.token = model.token;
+    entity.expiresAt = model.expiresAt;
+    entity.revokedAt = model.revokedAt;
     if (model.createdAt !== undefined) {
       entity.createdAt = model.createdAt;
     }

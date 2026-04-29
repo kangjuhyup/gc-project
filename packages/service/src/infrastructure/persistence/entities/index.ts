@@ -5,6 +5,7 @@ export { OutboxEventEntity } from './outbox-event.entity';
 export { PaymentEntity } from './payment.entity';
 export { PaymentEventLogEntity } from './payment-event-log.entity';
 export { PhoneVerificationEntity } from './phone-verification.entity';
+export { RefreshTokenEntity } from './refresh-token.entity';
 export { ReservationEntity } from './reservation.entity';
 export { ReservationEventEntity } from './reservation-event.entity';
 export { ReservationSeatEntity } from './reservation-seat.entity';
@@ -21,6 +22,7 @@ import { OutboxEventEntity } from './outbox-event.entity';
 import { PaymentEntity } from './payment.entity';
 import { PaymentEventLogEntity } from './payment-event-log.entity';
 import { PhoneVerificationEntity } from './phone-verification.entity';
+import { RefreshTokenEntity } from './refresh-token.entity';
 import { ReservationEntity } from './reservation.entity';
 import { ReservationEventEntity } from './reservation-event.entity';
 import { ReservationSeatEntity } from './reservation-seat.entity';
@@ -38,6 +40,7 @@ export const persistenceEntities = [
   PaymentEntity,
   PaymentEventLogEntity,
   PhoneVerificationEntity,
+  RefreshTokenEntity,
   ReservationEntity,
   ReservationEventEntity,
   ReservationSeatEntity,

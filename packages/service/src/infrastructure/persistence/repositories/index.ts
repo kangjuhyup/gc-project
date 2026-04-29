@@ -4,6 +4,7 @@ export { MikroOrmOutboxEventRepository } from './mikro-orm-outbox-event.reposito
 export { MikroOrmPaymentEventLogRepository } from './mikro-orm-payment-event-log.repository';
 export { MikroOrmPaymentRepository } from './mikro-orm-payment.repository';
 export { MikroOrmPhoneVerificationRepository } from './mikro-orm-phone-verification.repository';
+export { MikroOrmRefreshTokenRepository } from './mikro-orm-refresh-token.repository';
 export { MikroOrmReservationEventRepository } from './mikro-orm-reservation-event.repository';
 export { MikroOrmReservationRepository } from './mikro-orm-reservation.repository';
 export { MikroOrmReservationSeatRepository } from './mikro-orm-reservation-seat.repository';
