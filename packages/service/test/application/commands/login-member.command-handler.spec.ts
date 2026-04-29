@@ -17,6 +17,7 @@ import type {
   PasswordHasherPort,
   PhoneVerificationRepositoryPort,
   TemporaryPasswordGeneratorPort,
+  TransactionManagerPort,
 } from '@application/commands/ports';
 
 function activeMember(failedLoginCount = 0): MemberModel {
@@ -33,6 +34,10 @@ function activeMember(failedLoginCount = 0): MemberModel {
   }).setPersistence('member-1', createdAt, createdAt);
 }
 
+const transactionManager = {
+  runInTransaction: vi.fn(async (work) => await work()),
+} satisfies TransactionManagerPort;
+
 describe('LoginMemberCommandHandler', () => {
   it('비밀번호가 일치하면 로그인 성공 결과를 반환한다', async () => {
     const memberRepository = {
@@ -48,7 +53,13 @@ describe('LoginMemberCommandHandler', () => {
     } satisfies PasswordHasherPort;
     const clock = { now: vi.fn(() => new Date('2026-04-28T00:01:00.000Z')) } satisfies ClockPort;
     const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
-    const handler = new LoginMemberCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher);
+    const handler = new LoginMemberCommandHandler(
+      memberRepository,
+      passwordHasher,
+      clock,
+      logEventPublisher,
+      transactionManager,
+    );
 
     const result = await handler.execute(LoginMemberCommand.of({ userId: 'member_01', password: 'password123!' }));
 
@@ -78,7 +89,13 @@ describe('LoginMemberCommandHandler', () => {
     } satisfies PasswordHasherPort;
     const clock = { now: vi.fn(() => new Date('2026-04-28T00:01:00.000Z')) } satisfies ClockPort;
     const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
-    const handler = new LoginMemberCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher);
+    const handler = new LoginMemberCommandHandler(
+      memberRepository,
+      passwordHasher,
+      clock,
+      logEventPublisher,
+      transactionManager,
+    );
 
     await expect(
       handler.execute(LoginMemberCommand.of({ userId: 'member_01', password: 'wrong-password' })),
@@ -110,7 +127,13 @@ describe('LoginMemberCommandHandler', () => {
     } satisfies PasswordHasherPort;
     const clock = { now: vi.fn(() => new Date('2026-04-28T00:01:00.000Z')) } satisfies ClockPort;
     const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
-    const handler = new LoginMemberCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher);
+    const handler = new LoginMemberCommandHandler(
+      memberRepository,
+      passwordHasher,
+      clock,
+      logEventPublisher,
+      transactionManager,
+    );
 
     await expect(
       handler.execute(LoginMemberCommand.of({ userId: 'member_01', password: 'wrong-password' })),
@@ -142,7 +165,13 @@ describe('LoginMemberCommandHandler', () => {
     } satisfies PasswordHasherPort;
     const clock = { now: vi.fn(() => new Date('2026-04-28T00:01:00.000Z')) } satisfies ClockPort;
     const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
-    const handler = new LoginMemberCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher);
+    const handler = new LoginMemberCommandHandler(
+      memberRepository,
+      passwordHasher,
+      clock,
+      logEventPublisher,
+      transactionManager,
+    );
 
     await expect(
       handler.execute(LoginMemberCommand.of({ userId: 'member_01', password: 'password123!' })),
@@ -191,6 +220,7 @@ describe('IssueTemporaryPasswordCommandHandler', () => {
       phoneVerificationRepository,
       temporaryPasswordGenerator,
       passwordHasher,
+      transactionManager,
       clock,
     );
 
@@ -220,7 +250,13 @@ describe('ChangeMemberPasswordCommandHandler', () => {
     } satisfies PasswordHasherPort;
     const clock = { now: vi.fn(() => new Date('2026-04-28T00:04:00.000Z')) } satisfies ClockPort;
     const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
-    const handler = new ChangeMemberPasswordCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher);
+    const handler = new ChangeMemberPasswordCommandHandler(
+      memberRepository,
+      passwordHasher,
+      clock,
+      logEventPublisher,
+      transactionManager,
+    );
 
     const result = await handler.execute(
       ChangeMemberPasswordCommand.of({
@@ -260,7 +296,13 @@ describe('ChangeMemberPasswordCommandHandler', () => {
     } satisfies PasswordHasherPort;
     const clock = { now: vi.fn(() => new Date('2026-04-28T00:04:00.000Z')) } satisfies ClockPort;
     const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
-    const handler = new ChangeMemberPasswordCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher);
+    const handler = new ChangeMemberPasswordCommandHandler(
+      memberRepository,
+      passwordHasher,
+      clock,
+      logEventPublisher,
+      transactionManager,
+    );
 
     await expect(
       handler.execute(

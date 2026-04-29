@@ -1,7 +1,14 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { LoginFailedLogEvent, LoginSucceededLogEvent, MemberStatus } from '@domain';
 import { LoginMemberCommand, LoginMemberResultDto } from '../dto';
-import type { ClockPort, LogEventPublisherPort, MemberRepositoryPort, PasswordHasherPort } from '../ports';
+import { Transactional } from '../decorators';
+import type {
+  ClockPort,
+  LogEventPublisherPort,
+  MemberRepositoryPort,
+  PasswordHasherPort,
+  TransactionManagerPort,
+} from '../ports';
 
 @Logging
 export class LoginMemberCommandHandler {
@@ -10,8 +17,10 @@ export class LoginMemberCommandHandler {
     private readonly passwordHasher: PasswordHasherPort,
     private readonly clock: ClockPort,
     private readonly logEventPublisher: LogEventPublisherPort,
+    readonly transactionManager: TransactionManagerPort,
   ) {}
 
+  @Transactional()
   async execute(command: LoginMemberCommand): Promise<LoginMemberResultDto> {
     const member = await this.memberRepository.findByUserId(command.userId);
 

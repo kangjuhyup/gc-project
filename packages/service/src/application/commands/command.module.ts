@@ -78,17 +78,25 @@ import {
       useFactory: (
         phoneVerificationRepository: PhoneVerificationRepositoryPort,
         verificationCodeGenerator: VerificationCodeGeneratorPort,
+        transactionManager: TransactionManagerPort,
         clock: ClockPort,
-      ) => new RequestPhoneVerificationCommandHandler(phoneVerificationRepository, verificationCodeGenerator, clock),
-      inject: [PHONE_VERIFICATION_REPOSITORY, VERIFICATION_CODE_GENERATOR, CLOCK],
+      ) =>
+        new RequestPhoneVerificationCommandHandler(
+          phoneVerificationRepository,
+          verificationCodeGenerator,
+          transactionManager,
+          clock,
+        ),
+      inject: [PHONE_VERIFICATION_REPOSITORY, VERIFICATION_CODE_GENERATOR, TRANSACTION_MANAGER, CLOCK],
     },
     {
       provide: ConfirmPhoneVerificationCommandHandler,
       useFactory: (
         phoneVerificationRepository: PhoneVerificationRepositoryPort,
+        transactionManager: TransactionManagerPort,
         clock: ClockPort,
-      ) => new ConfirmPhoneVerificationCommandHandler(phoneVerificationRepository, clock),
-      inject: [PHONE_VERIFICATION_REPOSITORY, CLOCK],
+      ) => new ConfirmPhoneVerificationCommandHandler(phoneVerificationRepository, transactionManager, clock),
+      inject: [PHONE_VERIFICATION_REPOSITORY, TRANSACTION_MANAGER, CLOCK],
     },
     {
       provide: SignupMemberCommandHandler,
@@ -97,6 +105,7 @@ import {
         phoneVerificationRepository: PhoneVerificationRepositoryPort,
         passwordHasher: PasswordHasherPort,
         logEventPublisher: LogEventPublisherPort,
+        transactionManager: TransactionManagerPort,
         clock: ClockPort,
       ) =>
         new SignupMemberCommandHandler(
@@ -104,9 +113,17 @@ import {
           phoneVerificationRepository,
           passwordHasher,
           logEventPublisher,
+          transactionManager,
           clock,
         ),
-      inject: [MEMBER_REPOSITORY, PHONE_VERIFICATION_REPOSITORY, PASSWORD_HASHER, LOG_EVENT_PUBLISHER, CLOCK],
+      inject: [
+        MEMBER_REPOSITORY,
+        PHONE_VERIFICATION_REPOSITORY,
+        PASSWORD_HASHER,
+        LOG_EVENT_PUBLISHER,
+        TRANSACTION_MANAGER,
+        CLOCK,
+      ],
     },
     {
       provide: LoginMemberCommandHandler,
@@ -115,8 +132,9 @@ import {
         passwordHasher: PasswordHasherPort,
         clock: ClockPort,
         logEventPublisher: LogEventPublisherPort,
-      ) => new LoginMemberCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher),
-      inject: [MEMBER_REPOSITORY, PASSWORD_HASHER, CLOCK, LOG_EVENT_PUBLISHER],
+        transactionManager: TransactionManagerPort,
+      ) => new LoginMemberCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher, transactionManager),
+      inject: [MEMBER_REPOSITORY, PASSWORD_HASHER, CLOCK, LOG_EVENT_PUBLISHER, TRANSACTION_MANAGER],
     },
     {
       provide: IssueTemporaryPasswordCommandHandler,
@@ -125,6 +143,7 @@ import {
         phoneVerificationRepository: PhoneVerificationRepositoryPort,
         temporaryPasswordGenerator: TemporaryPasswordGeneratorPort,
         passwordHasher: PasswordHasherPort,
+        transactionManager: TransactionManagerPort,
         clock: ClockPort,
       ) =>
         new IssueTemporaryPasswordCommandHandler(
@@ -132,6 +151,7 @@ import {
           phoneVerificationRepository,
           temporaryPasswordGenerator,
           passwordHasher,
+          transactionManager,
           clock,
         ),
       inject: [
@@ -139,6 +159,7 @@ import {
         PHONE_VERIFICATION_REPOSITORY,
         TEMPORARY_PASSWORD_GENERATOR,
         PASSWORD_HASHER,
+        TRANSACTION_MANAGER,
         CLOCK,
       ],
     },
@@ -149,8 +170,16 @@ import {
         passwordHasher: PasswordHasherPort,
         clock: ClockPort,
         logEventPublisher: LogEventPublisherPort,
-      ) => new ChangeMemberPasswordCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher),
-      inject: [MEMBER_REPOSITORY, PASSWORD_HASHER, CLOCK, LOG_EVENT_PUBLISHER],
+        transactionManager: TransactionManagerPort,
+      ) =>
+        new ChangeMemberPasswordCommandHandler(
+          memberRepository,
+          passwordHasher,
+          clock,
+          logEventPublisher,
+          transactionManager,
+        ),
+      inject: [MEMBER_REPOSITORY, PASSWORD_HASHER, CLOCK, LOG_EVENT_PUBLISHER, TRANSACTION_MANAGER],
     },
     {
       provide: CreateSeatHoldCommandHandler,
@@ -158,17 +187,19 @@ import {
         seatHoldRepository: SeatHoldRepositoryPort,
         seatHoldCache: SeatHoldCachePort,
         seatHoldLock: SeatHoldLockPort,
+        transactionManager: TransactionManagerPort,
         clock: ClockPort,
-      ) => new CreateSeatHoldCommandHandler(seatHoldRepository, seatHoldCache, seatHoldLock, clock),
-      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, SEAT_HOLD_LOCK, CLOCK],
+      ) => new CreateSeatHoldCommandHandler(seatHoldRepository, seatHoldCache, seatHoldLock, transactionManager, clock),
+      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, SEAT_HOLD_LOCK, TRANSACTION_MANAGER, CLOCK],
     },
     {
       provide: ReleaseSeatHoldCommandHandler,
       useFactory: (
         seatHoldRepository: SeatHoldRepositoryPort,
         seatHoldCache: SeatHoldCachePort,
-      ) => new ReleaseSeatHoldCommandHandler(seatHoldRepository, seatHoldCache),
-      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE],
+        transactionManager: TransactionManagerPort,
+      ) => new ReleaseSeatHoldCommandHandler(seatHoldRepository, seatHoldCache, transactionManager),
+      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, TRANSACTION_MANAGER],
     },
     {
       provide: RequestPaymentCommandHandler,

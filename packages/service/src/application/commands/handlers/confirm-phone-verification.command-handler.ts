@@ -3,15 +3,18 @@ import {
   ConfirmPhoneVerificationCommand,
   PhoneVerificationConfirmedDto,
 } from '../dto';
-import type { ClockPort, PhoneVerificationRepositoryPort } from '../ports';
+import { Transactional } from '../decorators';
+import type { ClockPort, PhoneVerificationRepositoryPort, TransactionManagerPort } from '../ports';
 
 @Logging
 export class ConfirmPhoneVerificationCommandHandler {
   constructor(
     private readonly phoneVerificationRepository: PhoneVerificationRepositoryPort,
+    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 
+  @Transactional()
   async execute(command: ConfirmPhoneVerificationCommand): Promise<PhoneVerificationConfirmedDto> {
     const verification = await this.phoneVerificationRepository.findById(command.verificationId);
 

@@ -1,7 +1,15 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { SeatHoldModel, SeatHoldStatus } from '@domain';
 import { CreateSeatHoldCommand, SeatHoldCreatedDto } from '../dto';
-import type { ClockPort, SeatHoldCachePort, SeatHoldLock, SeatHoldLockPort, SeatHoldRepositoryPort } from '../ports';
+import { Transactional } from '../decorators';
+import type {
+  ClockPort,
+  SeatHoldCachePort,
+  SeatHoldLock,
+  SeatHoldLockPort,
+  SeatHoldRepositoryPort,
+  TransactionManagerPort,
+} from '../ports';
 
 const RESPONSE_HOLD_TTL_SECONDS = 10 * 60;
 const ACTUAL_HOLD_TTL_SECONDS = 13 * 60;
@@ -13,9 +21,11 @@ export class CreateSeatHoldCommandHandler {
     private readonly seatHoldRepository: SeatHoldRepositoryPort,
     private readonly seatHoldCache: SeatHoldCachePort,
     private readonly seatHoldLock: SeatHoldLockPort,
+    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 
+  @Transactional()
   async execute(command: CreateSeatHoldCommand): Promise<SeatHoldCreatedDto> {
     const seatIds = this.uniqueSeatIds(command.seatIds);
     const lock = await this.acquireLock(command.screeningId, seatIds);

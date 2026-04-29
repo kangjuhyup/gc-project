@@ -1,12 +1,14 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { MemberModel, MemberSignedUpLogEvent } from '@domain';
 import { SignupMemberCommand, SignupMemberResultDto } from '../dto';
+import { Transactional } from '../decorators';
 import type {
   ClockPort,
   LogEventPublisherPort,
   MemberRepositoryPort,
   PasswordHasherPort,
   PhoneVerificationRepositoryPort,
+  TransactionManagerPort,
 } from '../ports';
 
 @Logging
@@ -16,9 +18,11 @@ export class SignupMemberCommandHandler {
     private readonly phoneVerificationRepository: PhoneVerificationRepositoryPort,
     private readonly passwordHasher: PasswordHasherPort,
     private readonly logEventPublisher: LogEventPublisherPort,
+    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 
+  @Transactional()
   async execute(command: SignupMemberCommand): Promise<SignupMemberResultDto> {
     if (await this.memberRepository.existsByUserId(command.userId)) {
       throw new Error('USER_ID_ALREADY_EXISTS');

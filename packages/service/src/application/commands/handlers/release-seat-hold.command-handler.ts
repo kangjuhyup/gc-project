@@ -1,14 +1,17 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { ReleaseSeatHoldCommand, SeatHoldReleasedDto } from '../dto';
-import type { SeatHoldCachePort, SeatHoldRepositoryPort } from '../ports';
+import { Transactional } from '../decorators';
+import type { SeatHoldCachePort, SeatHoldRepositoryPort, TransactionManagerPort } from '../ports';
 
 @Logging
 export class ReleaseSeatHoldCommandHandler {
   constructor(
     private readonly seatHoldRepository: SeatHoldRepositoryPort,
     private readonly seatHoldCache: SeatHoldCachePort,
+    readonly transactionManager: TransactionManagerPort,
   ) {}
 
+  @Transactional()
   async execute(command: ReleaseSeatHoldCommand): Promise<SeatHoldReleasedDto> {
     const hold = await this.seatHoldRepository.findById(command.holdId);
 

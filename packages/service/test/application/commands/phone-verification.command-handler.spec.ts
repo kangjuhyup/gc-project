@@ -10,9 +10,14 @@ import {
 import type {
   ClockPort,
   PhoneVerificationRepositoryPort,
+  TransactionManagerPort,
   VerificationCodeGeneratorPort,
 } from '@application/commands/ports';
 import { PhoneVerificationModel } from '@domain';
+
+const transactionManager = {
+  runInTransaction: vi.fn(async (work) => await work()),
+} satisfies TransactionManagerPort;
 
 describe('phone verification command handlers', () => {
   it('휴대전화 인증 요청 시 인증 코드를 발급한다', async () => {
@@ -24,7 +29,7 @@ describe('phone verification command handlers', () => {
       findById: vi.fn(),
       findVerifiedByPhoneNumber: vi.fn(),
     } satisfies PhoneVerificationRepositoryPort;
-    const handler = new RequestPhoneVerificationCommandHandler(repository, generator, clock);
+    const handler = new RequestPhoneVerificationCommandHandler(repository, generator, transactionManager, clock);
 
     const result = await handler.execute(RequestPhoneVerificationCommand.of({ phoneNumber: '01000000000' }));
 
@@ -48,7 +53,7 @@ describe('phone verification command handlers', () => {
       save: vi.fn(),
       findVerifiedByPhoneNumber: vi.fn(),
     } satisfies PhoneVerificationRepositoryPort;
-    const handler = new ConfirmPhoneVerificationCommandHandler(repository, clock);
+    const handler = new ConfirmPhoneVerificationCommandHandler(repository, transactionManager, clock);
 
     const result = await handler.execute(
       ConfirmPhoneVerificationCommand.of({

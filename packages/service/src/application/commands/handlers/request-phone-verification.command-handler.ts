@@ -4,9 +4,11 @@ import {
   PhoneVerificationIssuedDto,
   RequestPhoneVerificationCommand,
 } from '../dto';
+import { Transactional } from '../decorators';
 import type {
   ClockPort,
   PhoneVerificationRepositoryPort,
+  TransactionManagerPort,
   VerificationCodeGeneratorPort,
 } from '../ports';
 
@@ -17,9 +19,11 @@ export class RequestPhoneVerificationCommandHandler {
   constructor(
     private readonly phoneVerificationRepository: PhoneVerificationRepositoryPort,
     private readonly verificationCodeGenerator: VerificationCodeGeneratorPort,
+    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 
+  @Transactional()
   async execute(command: RequestPhoneVerificationCommand): Promise<PhoneVerificationIssuedDto> {
     const now = this.clock.now();
     const verification = PhoneVerificationModel.issue({

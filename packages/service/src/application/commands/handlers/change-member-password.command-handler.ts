@@ -1,7 +1,14 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { MemberPasswordChangedLogEvent } from '@domain';
 import { ChangeMemberPasswordCommand, MemberPasswordChangedDto } from '../dto';
-import type { ClockPort, LogEventPublisherPort, MemberRepositoryPort, PasswordHasherPort } from '../ports';
+import { Transactional } from '../decorators';
+import type {
+  ClockPort,
+  LogEventPublisherPort,
+  MemberRepositoryPort,
+  PasswordHasherPort,
+  TransactionManagerPort,
+} from '../ports';
 
 @Logging
 export class ChangeMemberPasswordCommandHandler {
@@ -10,8 +17,10 @@ export class ChangeMemberPasswordCommandHandler {
     private readonly passwordHasher: PasswordHasherPort,
     private readonly clock: ClockPort,
     private readonly logEventPublisher: LogEventPublisherPort,
+    readonly transactionManager: TransactionManagerPort,
   ) {}
 
+  @Transactional()
   async execute(command: ChangeMemberPasswordCommand): Promise<MemberPasswordChangedDto> {
     const member = await this.memberRepository.findByUserId(command.userId);
 

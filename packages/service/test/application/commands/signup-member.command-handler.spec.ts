@@ -7,6 +7,7 @@ import type {
   LogEventPublisherPort,
   MemberRepositoryPort,
   PhoneVerificationRepositoryPort,
+  TransactionManagerPort,
 } from '@application/commands/ports';
 
 function command(): SignupMemberCommand {
@@ -20,6 +21,10 @@ function command(): SignupMemberCommand {
     phoneVerificationId: 'verification-1',
   });
 }
+
+const transactionManager = {
+  runInTransaction: vi.fn(async (work) => await work()),
+} satisfies TransactionManagerPort;
 
 describe('SignupMemberCommandHandler', () => {
   it('중복된 회원 아이디로 가입하면 거부한다', async () => {
@@ -43,6 +48,7 @@ describe('SignupMemberCommandHandler', () => {
       phoneVerificationRepository,
       passwordHasher,
       logEventPublisher,
+      transactionManager,
       clock,
     );
 
@@ -73,6 +79,7 @@ describe('SignupMemberCommandHandler', () => {
       phoneVerificationRepository,
       passwordHasher,
       logEventPublisher,
+      transactionManager,
       clock,
     );
 
@@ -103,6 +110,7 @@ describe('SignupMemberCommandHandler', () => {
       phoneVerificationRepository,
       passwordHasher,
       logEventPublisher,
+      transactionManager,
       clock,
     );
 
@@ -138,6 +146,7 @@ describe('SignupMemberCommandHandler', () => {
       phoneVerificationRepository,
       passwordHasher,
       logEventPublisher,
+      transactionManager,
       clock,
     );
 

@@ -2,7 +2,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { SeatHoldModel } from '@domain';
 import { CreateSeatHoldCommand, ReleaseSeatHoldCommand } from '@application/commands/dto';
 import { CreateSeatHoldCommandHandler, ReleaseSeatHoldCommandHandler } from '@application/commands/handlers';
-import type { ClockPort, SeatHoldCachePort, SeatHoldLockPort, SeatHoldRepositoryPort } from '@application/commands/ports';
+import type {
+  ClockPort,
+  SeatHoldCachePort,
+  SeatHoldLockPort,
+  SeatHoldRepositoryPort,
+  TransactionManagerPort,
+} from '@application/commands/ports';
+
+const transactionManager = {
+  runInTransaction: vi.fn(async (work) => await work()),
+} satisfies TransactionManagerPort;
 
 describe('CreateSeatHoldCommandHandler', () => {
   it('좌석 임시점유 시 DB에는 13분 만료 상태를 저장하고 응답 TTL은 10분으로 반환한다', async () => {
@@ -26,7 +36,7 @@ describe('CreateSeatHoldCommandHandler', () => {
       acquire: vi.fn().mockResolvedValue({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' }),
       release: vi.fn(),
     } satisfies SeatHoldLockPort;
-    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, clock);
+    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, transactionManager, clock);
 
     const result = await handler.execute(
       CreateSeatHoldCommand.of({
@@ -73,7 +83,13 @@ describe('CreateSeatHoldCommandHandler', () => {
       acquire: vi.fn().mockResolvedValue({ screeningId: '101', seatIds: ['1001'], token: 'lock-token' }),
       release: vi.fn(),
     } satisfies SeatHoldLockPort;
-    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, { now: vi.fn(() => now) });
+    const handler = new CreateSeatHoldCommandHandler(
+      repository,
+      cache,
+      lock,
+      transactionManager,
+      { now: vi.fn(() => now) },
+    );
 
     await expect(
       handler.execute(
@@ -108,7 +124,13 @@ describe('CreateSeatHoldCommandHandler', () => {
       acquire: vi.fn().mockResolvedValue({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' }),
       release: vi.fn(),
     } satisfies SeatHoldLockPort;
-    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, { now: vi.fn(() => now) });
+    const handler = new CreateSeatHoldCommandHandler(
+      repository,
+      cache,
+      lock,
+      transactionManager,
+      { now: vi.fn(() => now) },
+    );
 
     await expect(
       handler.execute(
@@ -143,7 +165,13 @@ describe('CreateSeatHoldCommandHandler', () => {
       acquire: vi.fn().mockResolvedValue(undefined),
       release: vi.fn(),
     } satisfies SeatHoldLockPort;
-    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, { now: vi.fn(() => now) });
+    const handler = new CreateSeatHoldCommandHandler(
+      repository,
+      cache,
+      lock,
+      transactionManager,
+      { now: vi.fn(() => now) },
+    );
 
     await expect(
       handler.execute(
@@ -183,7 +211,7 @@ describe('ReleaseSeatHoldCommandHandler', () => {
       hold: vi.fn(),
       release: vi.fn(),
     } satisfies SeatHoldCachePort;
-    const handler = new ReleaseSeatHoldCommandHandler(repository, cache);
+    const handler = new ReleaseSeatHoldCommandHandler(repository, cache, transactionManager);
 
     const result = await handler.execute(ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '1' }));
 
@@ -213,7 +241,7 @@ describe('ReleaseSeatHoldCommandHandler', () => {
       hold: vi.fn(),
       release: vi.fn(),
     } satisfies SeatHoldCachePort;
-    const handler = new ReleaseSeatHoldCommandHandler(repository, cache);
+    const handler = new ReleaseSeatHoldCommandHandler(repository, cache, transactionManager);
 
     await expect(
       handler.execute(ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '2' })),
@@ -245,7 +273,7 @@ describe('ReleaseSeatHoldCommandHandler', () => {
       hold: vi.fn(),
       release: vi.fn(),
     } satisfies SeatHoldCachePort;
-    const handler = new ReleaseSeatHoldCommandHandler(repository, cache);
+    const handler = new ReleaseSeatHoldCommandHandler(repository, cache, transactionManager);
 
     await expect(
       handler.execute(ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '1' })),

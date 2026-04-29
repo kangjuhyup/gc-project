@@ -1,11 +1,13 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { IssueTemporaryPasswordCommand, TemporaryPasswordIssuedDto } from '../dto';
+import { Transactional } from '../decorators';
 import type {
   ClockPort,
   MemberRepositoryPort,
   PasswordHasherPort,
   PhoneVerificationRepositoryPort,
   TemporaryPasswordGeneratorPort,
+  TransactionManagerPort,
 } from '../ports';
 
 @Logging
@@ -15,9 +17,11 @@ export class IssueTemporaryPasswordCommandHandler {
     private readonly phoneVerificationRepository: PhoneVerificationRepositoryPort,
     private readonly temporaryPasswordGenerator: TemporaryPasswordGeneratorPort,
     private readonly passwordHasher: PasswordHasherPort,
+    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 
+  @Transactional()
   async execute(command: IssueTemporaryPasswordCommand): Promise<TemporaryPasswordIssuedDto> {
     const member = await this.memberRepository.findByUserId(command.userId);
 
