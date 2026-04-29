@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import type { SeatHoldModel } from '@domain';
@@ -10,6 +11,7 @@ interface SeatIdRow {
 }
 
 @Injectable()
+@Logging
 export class MikroOrmSeatHoldRepository implements SeatHoldRepositoryPort {
   constructor(private readonly entityManager: EntityManager) {}
 

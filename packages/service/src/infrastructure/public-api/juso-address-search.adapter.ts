@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -37,6 +38,7 @@ interface JusoAddressItem {
 }
 
 @Injectable()
+@Logging
 export class JusoAddressSearchAdapter implements AddressSearchPort {
   constructor(private readonly configService: ConfigService) {}
 

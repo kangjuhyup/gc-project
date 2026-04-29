@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { Injectable } from '@nestjs/common';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -25,6 +26,7 @@ interface LocalAddressItem {
 }
 
 @Injectable()
+@Logging
 export class LocalAddressSearchAdapter implements AddressSearchPort {
   private readonly addresses: LocalAddressItem[];
 

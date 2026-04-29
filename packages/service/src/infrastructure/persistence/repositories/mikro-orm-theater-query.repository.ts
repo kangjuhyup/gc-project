@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ListTheatersQuery, TheaterListResultDto, TheaterSummaryDto } from '@application/query/dto';
@@ -13,6 +14,7 @@ interface TheaterListRow {
 }
 
 @Injectable()
+@Logging
 export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
   constructor(private readonly entityManager: EntityManager) {}
 

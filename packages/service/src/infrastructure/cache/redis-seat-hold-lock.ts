@@ -1,3 +1,4 @@
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import Redis from 'ioredis';
@@ -5,6 +6,7 @@ import type { SeatHoldLock, SeatHoldLockPort } from '@application/commands/ports
 import { REDIS } from './redis.module';
 
 @Injectable()
+@Logging
 export class RedisSeatHoldLock implements SeatHoldLockPort {
   constructor(@Inject(REDIS) private readonly redis: Redis) {}
 
@@ -47,6 +49,7 @@ export class RedisSeatHoldLock implements SeatHoldLockPort {
     };
   }
 
+  @NoLog
   async release(lock: SeatHoldLock): Promise<void> {
     await Promise.all(
       lock.seatIds.map((seatId) =>

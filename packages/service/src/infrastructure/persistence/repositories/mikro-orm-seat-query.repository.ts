@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ListScreeningSeatsQuery, ScreeningSeatListResultDto, ScreeningSeatSummaryDto } from '@application/query/dto';
@@ -13,6 +14,7 @@ interface ScreeningSeatRow {
 }
 
 @Injectable()
+@Logging
 export class MikroOrmSeatQueryRepository implements SeatQueryPort {
   constructor(private readonly entityManager: EntityManager) {}
 

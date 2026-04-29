@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import type { MemberModel } from '@domain';
@@ -7,6 +8,7 @@ import { MemberEntity } from '../entities';
 import { PersistenceMapper } from '../mappers';
 
 @Injectable()
+@Logging
 export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQueryPort {
   constructor(private readonly entityManager: EntityManager) {}
 

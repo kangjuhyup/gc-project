@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import {
@@ -38,6 +39,7 @@ interface MovieCursor {
 }
 
 @Injectable()
+@Logging
 export class MikroOrmMovieQueryRepository implements MovieQueryPort {
   constructor(private readonly entityManager: EntityManager) {}
 

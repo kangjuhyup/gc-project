@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
 import type { SeatHoldModel } from '@domain';
@@ -5,6 +6,7 @@ import type { SeatHoldCachePort } from '@application/commands/ports';
 import { REDIS } from './redis.module';
 
 @Injectable()
+@Logging
 export class RedisSeatHoldCache implements SeatHoldCachePort {
   constructor(@Inject(REDIS) private readonly redis: Redis) {}
 

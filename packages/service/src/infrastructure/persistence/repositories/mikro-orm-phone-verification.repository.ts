@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import type { PhoneVerificationModel } from '@domain';
@@ -6,6 +7,7 @@ import { PhoneVerificationEntity } from '../entities';
 import { PersistenceMapper } from '../mappers';
 
 @Injectable()
+@Logging
 export class MikroOrmPhoneVerificationRepository implements PhoneVerificationRepositoryPort {
   constructor(private readonly entityManager: EntityManager) {}
 

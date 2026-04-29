@@ -1,8 +1,10 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { Injectable, Logger } from '@nestjs/common';
 import type { DomainEvent } from '@domain';
 import type { LogEventPublisherPort } from '@application/commands/ports';
 
 @Injectable()
+@Logging
 export class NestLogEventPublisher implements LogEventPublisherPort {
   private readonly logger = new Logger(NestLogEventPublisher.name);
 
