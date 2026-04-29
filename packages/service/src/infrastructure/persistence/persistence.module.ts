@@ -9,12 +9,14 @@ import {
 import {
   MEMBER_REPOSITORY,
   PHONE_VERIFICATION_REPOSITORY,
+  SEAT_HOLD_REPOSITORY,
 } from '@application/commands/ports';
 import { persistenceEntities } from './entities';
 import {
   MikroOrmMemberRepository,
   MikroOrmMovieQueryRepository,
   MikroOrmPhoneVerificationRepository,
+  MikroOrmSeatHoldRepository,
   MikroOrmTheaterQueryRepository,
 } from './repositories';
 
@@ -35,6 +37,7 @@ import {
     MikroOrmMemberRepository,
     MikroOrmMovieQueryRepository,
     MikroOrmPhoneVerificationRepository,
+    MikroOrmSeatHoldRepository,
     MikroOrmTheaterQueryRepository,
     {
       provide: MEMBER_REPOSITORY,
@@ -56,6 +59,10 @@ import {
       provide: PHONE_VERIFICATION_REPOSITORY,
       useExisting: MikroOrmPhoneVerificationRepository,
     },
+    {
+      provide: SEAT_HOLD_REPOSITORY,
+      useExisting: MikroOrmSeatHoldRepository,
+    },
   ],
   exports: [
     MikroOrmModule,
@@ -64,6 +71,7 @@ import {
     MOVIE_QUERY,
     THEATER_QUERY,
     PHONE_VERIFICATION_REPOSITORY,
+    SEAT_HOLD_REPOSITORY,
   ],
 })
 export class PersistenceModule {}

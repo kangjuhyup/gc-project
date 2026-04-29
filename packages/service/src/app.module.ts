@@ -13,6 +13,12 @@ import {
   PasswordHasherPort,
   PHONE_VERIFICATION_REPOSITORY,
   PhoneVerificationRepositoryPort,
+  SEAT_HOLD_CACHE,
+  SEAT_HOLD_LOCK,
+  SEAT_HOLD_REPOSITORY,
+  SeatHoldCachePort,
+  SeatHoldLockPort,
+  SeatHoldRepositoryPort,
   TEMPORARY_PASSWORD_GENERATOR,
   TemporaryPasswordGeneratorPort,
   VERIFICATION_CODE_GENERATOR,
@@ -21,6 +27,7 @@ import {
 import {
   ChangeMemberPasswordCommandHandler,
   ConfirmPhoneVerificationCommandHandler,
+  CreateSeatHoldCommandHandler,
   IssueTemporaryPasswordCommandHandler,
   LoginMemberCommandHandler,
   RequestPhoneVerificationCommandHandler,
@@ -35,6 +42,7 @@ import {
 } from '@application/query/handlers';
 import {
   ADDRESS_SEARCH,
+  AUTHORIZATION_VERIFIER,
   MEMBER_QUERY,
   MOVIE_QUERY,
   THEATER_QUERY,
@@ -52,7 +60,8 @@ import {
 import { NestLogEventPublisher } from '@infrastructure/logging';
 import { PersistenceModule } from '@infrastructure/persistence';
 import { JusoAddressSearchAdapter } from '@infrastructure/public-api';
-import { AddressController, HealthController, MemberController, MovieController, TheaterController } from '@presentation/http';
+import { MemberIdAuthorizationVerifier, RedisModule, RedisSeatHoldCache, RedisSeatHoldLock } from '@infrastructure';
+import { AddressController, HealthController, MemberController, MovieController, SeatHoldController, TheaterController } from '@presentation/http';
 
 @Module({
   imports: [
@@ -60,6 +69,7 @@ import { AddressController, HealthController, MemberController, MovieController,
       isGlobal: true,
     }),
     PersistenceModule,
+    RedisModule,
     RvlogNestModule.forRoot({
       logger: {
         minLevel: LogLevel.INFO,
@@ -70,7 +80,7 @@ import { AddressController, HealthController, MemberController, MovieController,
       },
     }),
   ],
-  controllers: [HealthController, MemberController, AddressController, MovieController, TheaterController],
+  controllers: [HealthController, MemberController, AddressController, MovieController, TheaterController, SeatHoldController],
   providers: [
     GetHealthQueryHandler,
     SystemClock,
@@ -79,6 +89,8 @@ import { AddressController, HealthController, MemberController, MovieController,
     RandomTemporaryPasswordGenerator,
     NestLogEventPublisher,
     JusoAddressSearchAdapter,
+    RedisSeatHoldCache,
+    RedisSeatHoldLock,
     {
       provide: CLOCK,
       useExisting: SystemClock,
@@ -98,6 +110,19 @@ import { AddressController, HealthController, MemberController, MovieController,
     {
       provide: LOG_EVENT_PUBLISHER,
       useExisting: NestLogEventPublisher,
+    },
+    {
+      provide: SEAT_HOLD_CACHE,
+      useExisting: RedisSeatHoldCache,
+    },
+    {
+      provide: SEAT_HOLD_LOCK,
+      useExisting: RedisSeatHoldLock,
+    },
+    {
+      provide: AUTHORIZATION_VERIFIER,
+      useFactory: (memberRepository: MemberRepositoryPort) => new MemberIdAuthorizationVerifier(memberRepository),
+      inject: [MEMBER_REPOSITORY],
     },
     {
       provide: ADDRESS_SEARCH,
@@ -206,6 +231,16 @@ import { AddressController, HealthController, MemberController, MovieController,
         logEventPublisher: LogEventPublisherPort,
       ) => new ChangeMemberPasswordCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher),
       inject: [MEMBER_REPOSITORY, PASSWORD_HASHER, CLOCK, LOG_EVENT_PUBLISHER],
+    },
+    {
+      provide: CreateSeatHoldCommandHandler,
+      useFactory: (
+        seatHoldRepository: SeatHoldRepositoryPort,
+        seatHoldCache: SeatHoldCachePort,
+        seatHoldLock: SeatHoldLockPort,
+        clock: ClockPort,
+      ) => new CreateSeatHoldCommandHandler(seatHoldRepository, seatHoldCache, seatHoldLock, clock),
+      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, SEAT_HOLD_LOCK, CLOCK],
     },
   ],
 })

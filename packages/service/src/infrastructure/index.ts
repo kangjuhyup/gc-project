@@ -1,4 +1,5 @@
-export { REDIS, RedisModule } from './cache';
+export { MemberIdAuthorizationVerifier } from './auth';
+export { REDIS, RedisModule, RedisSeatHoldCache, RedisSeatHoldLock } from './cache';
 export { NumericVerificationCodeGenerator, SystemClock } from './crypto';
 export { NestLogEventPublisher } from './logging';
 export { PersistenceModule } from './persistence';
