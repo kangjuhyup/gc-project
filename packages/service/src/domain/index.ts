@@ -13,6 +13,7 @@ export {
   PhoneVerificationStatus,
   ReservationEventType,
   ReservationStatus,
+  SeatAvailabilityStatus,
   SeatHoldStatus,
   SeatType,
 } from './property';
@@ -53,6 +54,7 @@ export type {
   PhoneVerificationStatusType,
   ReservationEventTypeType,
   ReservationStatusType,
+  SeatAvailabilityStatusType,
   SeatHoldStatusType,
   SeatTypeType,
 } from './property';

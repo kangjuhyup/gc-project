@@ -37,6 +37,7 @@ import {
   CheckUserIdAvailabilityQueryHandler,
   GetHealthQueryHandler,
   ListMoviesQueryHandler,
+  ListScreeningSeatsQueryHandler,
   ListTheatersQueryHandler,
   SearchAddressesQueryHandler,
 } from '@application/query/handlers';
@@ -45,10 +46,12 @@ import {
   AUTHORIZATION_VERIFIER,
   MEMBER_QUERY,
   MOVIE_QUERY,
+  SEAT_QUERY,
   THEATER_QUERY,
   type AddressSearchPort,
   type MemberQueryPort,
   type MovieQueryPort,
+  type SeatQueryPort,
   type TheaterQueryPort,
 } from '@application/query/ports';
 import {
@@ -61,7 +64,7 @@ import { NestLogEventPublisher } from '@infrastructure/logging';
 import { PersistenceModule } from '@infrastructure/persistence';
 import { JusoAddressSearchAdapter } from '@infrastructure/public-api';
 import { MemberIdAuthorizationVerifier, RedisModule, RedisSeatHoldCache, RedisSeatHoldLock } from '@infrastructure';
-import { AddressController, HealthController, MemberController, MovieController, SeatHoldController, TheaterController } from '@presentation/http';
+import { AddressController, HealthController, MemberController, MovieController, SeatController, TheaterController } from '@presentation/http';
 
 @Module({
   imports: [
@@ -80,7 +83,14 @@ import { AddressController, HealthController, MemberController, MovieController,
       },
     }),
   ],
-  controllers: [HealthController, MemberController, AddressController, MovieController, TheaterController, SeatHoldController],
+  controllers: [
+    HealthController,
+    MemberController,
+    AddressController,
+    MovieController,
+    TheaterController,
+    SeatController,
+  ],
   providers: [
     GetHealthQueryHandler,
     SystemClock,
@@ -147,6 +157,11 @@ import { AddressController, HealthController, MemberController, MovieController,
       provide: ListTheatersQueryHandler,
       useFactory: (theaterQuery: TheaterQueryPort) => new ListTheatersQueryHandler(theaterQuery),
       inject: [THEATER_QUERY],
+    },
+    {
+      provide: ListScreeningSeatsQueryHandler,
+      useFactory: (seatQuery: SeatQueryPort) => new ListScreeningSeatsQueryHandler(seatQuery),
+      inject: [SEAT_QUERY],
     },
     {
       provide: RequestPhoneVerificationCommandHandler,

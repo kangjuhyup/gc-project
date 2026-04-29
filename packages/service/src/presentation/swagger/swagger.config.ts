@@ -18,7 +18,7 @@ export function buildSwaggerConfig() {
     .addTag('Members', '회원가입, 로그인, 비밀번호 및 휴대전화 인증')
     .addTag('Addresses', '공공 주소 API 기반 주소 검색')
     .addTag('Movies', '영화 목록과 상영 정보 조회')
-    .addTag('Seat Holds', '결제 전 좌석 임시점유')
+    .addTag('Seats', '상영 좌석 상태 조회와 결제 전 좌석 임시점유')
     .addTag('Theaters', '영화관 목록과 위치 기반 정렬')
     .build();
 }

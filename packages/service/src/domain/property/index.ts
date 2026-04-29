@@ -5,6 +5,7 @@ export { PhoneVerificationStatus } from './phone-verification-status';
 export { ReservationEventType } from './reservation-event-type';
 export { ReservationStatus } from './reservation-status';
 export { SeatHoldStatus } from './seat-hold-status';
+export { SeatAvailabilityStatus } from './seat-availability-status';
 export { SeatType } from './seat-type';
 
 export type { MemberStatus as MemberStatusType } from './member-status';
@@ -14,4 +15,5 @@ export type { PhoneVerificationStatus as PhoneVerificationStatusType } from './p
 export type { ReservationEventType as ReservationEventTypeType } from './reservation-event-type';
 export type { ReservationStatus as ReservationStatusType } from './reservation-status';
 export type { SeatHoldStatus as SeatHoldStatusType } from './seat-hold-status';
+export type { SeatAvailabilityStatus as SeatAvailabilityStatusType } from './seat-availability-status';
 export type { SeatType as SeatTypeType } from './seat-type';

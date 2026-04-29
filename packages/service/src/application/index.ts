@@ -31,12 +31,15 @@ export {
   CheckUserIdAvailabilityResultDto,
   HealthStatusDto,
   ListMoviesQuery,
+  ListScreeningSeatsQuery,
   ListTheatersQuery,
   MovieListResultDto,
   MovieScreeningSummaryDto,
   MovieSummaryDto,
   MovieTheaterSummaryDto,
   SearchAddressesQuery,
+  ScreeningSeatListResultDto,
+  ScreeningSeatSummaryDto,
   TheaterListResultDto,
   TheaterSummaryDto,
 } from './query/dto';
@@ -44,6 +47,7 @@ export {
   CheckUserIdAvailabilityQueryHandler,
   GetHealthQueryHandler,
   ListMoviesQueryHandler,
+  ListScreeningSeatsQueryHandler,
   ListTheatersQueryHandler,
   SearchAddressesQueryHandler,
 } from './query/handlers';

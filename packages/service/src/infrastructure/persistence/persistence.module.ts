@@ -4,6 +4,7 @@ import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import {
   MEMBER_QUERY,
   MOVIE_QUERY,
+  SEAT_QUERY,
   THEATER_QUERY,
 } from '@application/query/ports';
 import {
@@ -17,6 +18,7 @@ import {
   MikroOrmMovieQueryRepository,
   MikroOrmPhoneVerificationRepository,
   MikroOrmSeatHoldRepository,
+  MikroOrmSeatQueryRepository,
   MikroOrmTheaterQueryRepository,
 } from './repositories';
 
@@ -38,6 +40,7 @@ import {
     MikroOrmMovieQueryRepository,
     MikroOrmPhoneVerificationRepository,
     MikroOrmSeatHoldRepository,
+    MikroOrmSeatQueryRepository,
     MikroOrmTheaterQueryRepository,
     {
       provide: MEMBER_REPOSITORY,
@@ -56,6 +59,10 @@ import {
       useExisting: MikroOrmTheaterQueryRepository,
     },
     {
+      provide: SEAT_QUERY,
+      useExisting: MikroOrmSeatQueryRepository,
+    },
+    {
       provide: PHONE_VERIFICATION_REPOSITORY,
       useExisting: MikroOrmPhoneVerificationRepository,
     },
@@ -70,6 +77,7 @@ import {
     MEMBER_QUERY,
     MOVIE_QUERY,
     THEATER_QUERY,
+    SEAT_QUERY,
     PHONE_VERIFICATION_REPOSITORY,
     SEAT_HOLD_REPOSITORY,
   ],
