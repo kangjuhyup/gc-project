@@ -15,6 +15,9 @@
 - 예매 (Reservation)
 - 좌석 점유 (Seat Hold) — Redis + DB 복합
 - 예매 이벤트 기록 (Reservation Event)
+- 결제 (Payment)
+- 결제 이벤트 로그 (Payment Event Log)
+- 아웃박스 이벤트 (Outbox Event)
 
 ### 1.2 기술 스택
 
@@ -43,6 +46,11 @@ erDiagram
     SCREENING ||--o{ SEAT_HOLD : "상영 좌석 점유"
     SEAT ||--o{ SEAT_HOLD : "점유된다"
     RESERVATION ||--o{ SEAT_HOLD : "확정 연결"
+    MEMBER ||--o{ PAYMENT : "결제 요청"
+    SEAT_HOLD ||--o{ PAYMENT : "결제 기준"
+    RESERVATION ||--o{ PAYMENT : "확정 연결"
+    PAYMENT ||--o{ PAYMENT_EVENT_LOG : "상태 변경 기록"
+    PAYMENT ||--o{ OUTBOX_EVENT : "비동기 작업"
 
     MEMBER {
         bigint id PK
@@ -123,6 +131,37 @@ erDiagram
         bigint reservation_id FK
         varchar event_type
         timestamptz created_at
+    }
+
+    PAYMENT {
+        bigint id PK
+        bigint member_id FK
+        bigint seat_hold_id FK
+        bigint reservation_id FK
+        varchar idempotency_key
+        varchar request_hash
+        varchar provider
+        varchar provider_payment_id
+        int amount
+        varchar status
+    }
+
+    PAYMENT_EVENT_LOG {
+        bigint id PK
+        bigint payment_id FK
+        varchar event_type
+        varchar next_status
+        timestamptz occurred_at
+    }
+
+    OUTBOX_EVENT {
+        bigint id PK
+        varchar aggregate_type
+        varchar aggregate_id
+        varchar event_type
+        varchar status
+        int retry_count
+        timestamptz next_retry_at
     }
 ```
 
@@ -341,7 +380,95 @@ CREATE INDEX idx_reservation_event
 CREATE INDEX idx_phone_verification_phone_status
   ON phone_verification (phone_number, status);
 ```
-- `EXPIRED` — 결제 시간 초과로 자동 취소
+
+### 3.13 payment (결제)
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | BIGSERIAL | PK | 결제 ID |
+| member_id | BIGINT | FK → member.id, NOT NULL | 결제 요청 회원 |
+| seat_hold_id | BIGINT | FK → seat_hold.id, NOT NULL | 결제 기준 좌석 점유 |
+| idempotency_key | VARCHAR(100) | NOT NULL | 결제 요청 멱등성 키 |
+| request_hash | VARCHAR(64) | NOT NULL | 동일 멱등성 키의 요청 본문 비교용 SHA-256 해시 |
+| reservation_id | BIGINT | FK → reservation.id | 결제 승인 후 생성된 예매 |
+| provider | VARCHAR(20) | NOT NULL | LOCAL, KAKAO, TOSS, NAVER 등 |
+| provider_payment_id | VARCHAR(100) | | PG사 결제 ID |
+| amount | INT | NOT NULL | 결제 금액 |
+| status | VARCHAR(30) | NOT NULL | PENDING, APPROVING, APPROVED, FAILED, REFUND_REQUIRED, REFUNDING, REFUNDED, REFUND_FAILED |
+| requested_at | TIMESTAMPTZ | NOT NULL | 결제 요청 시각 |
+| approved_at | TIMESTAMPTZ | | 승인 완료 시각 |
+| failed_at | TIMESTAMPTZ | | 실패 시각 |
+| refunded_at | TIMESTAMPTZ | | 환불 완료 시각 |
+| failure_reason | VARCHAR(255) | | 실패 또는 환불 필요 사유 |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT now() | 생성 시각 |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT now() | 수정 시각 |
+
+**인덱스 / 제약:**
+
+```sql
+CREATE INDEX idx_payment_member_created
+  ON payment (member_id, created_at DESC);
+
+CREATE INDEX idx_payment_seat_hold
+  ON payment (seat_hold_id);
+
+ALTER TABLE payment
+  ADD CONSTRAINT uq_payment_member_idempotency_key
+  UNIQUE (member_id, idempotency_key);
+
+ALTER TABLE payment
+  ADD CONSTRAINT uq_payment_provider_payment_id
+  UNIQUE (provider, provider_payment_id);
+```
+
+### 3.14 payment_event_log (결제 이벤트 로그)
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | BIGSERIAL | PK | 결제 이벤트 로그 ID |
+| payment_id | BIGINT | FK → payment.id, NOT NULL | 결제 ID |
+| event_type | VARCHAR(50) | NOT NULL | PAYMENT_REQUESTED, PAYMENT_APPROVED 등 |
+| previous_status | VARCHAR(30) | | 이전 결제 상태 |
+| next_status | VARCHAR(30) | NOT NULL | 변경 후 결제 상태 |
+| provider | VARCHAR(20) | NOT NULL | 결제 provider |
+| provider_payment_id | VARCHAR(100) | | PG사 결제 ID |
+| amount | INT | NOT NULL | 결제 금액 |
+| reason | VARCHAR(255) | | 상태 변경 사유 |
+| metadata | JSONB | | 추가 감사 정보 |
+| occurred_at | TIMESTAMPTZ | NOT NULL | 이벤트 발생 시각 |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT now() | 저장 시각 |
+
+```sql
+CREATE INDEX idx_payment_event_log_payment_created
+  ON payment_event_log (payment_id, created_at);
+```
+
+### 3.15 outbox_event (아웃박스 이벤트)
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | BIGSERIAL | PK | 아웃박스 이벤트 ID |
+| aggregate_type | VARCHAR(50) | NOT NULL | PAYMENT, RESERVATION 등 |
+| aggregate_id | VARCHAR(50) | NOT NULL | aggregate 식별자 |
+| event_type | VARCHAR(80) | NOT NULL | PAYMENT_REQUESTED, PAYMENT_REFUND_REQUESTED 등 |
+| payload | JSONB | NOT NULL | worker 처리 payload |
+| status | VARCHAR(20) | NOT NULL | PENDING, PROCESSING, PUBLISHED, FAILED |
+| retry_count | INT | NOT NULL | 재시도 횟수 |
+| next_retry_at | TIMESTAMPTZ | | 다음 재시도 가능 시각 |
+| locked_until | TIMESTAMPTZ | | worker 처리 잠금 만료 시각 |
+| last_error | VARCHAR(500) | | 마지막 실패 사유 |
+| occurred_at | TIMESTAMPTZ | NOT NULL | 이벤트 발생 시각 |
+| published_at | TIMESTAMPTZ | | 발행 완료 시각 |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT now() | 생성 시각 |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT now() | 수정 시각 |
+
+```sql
+CREATE INDEX idx_outbox_publishable
+  ON outbox_event (status, next_retry_at, occurred_at);
+
+CREATE INDEX idx_outbox_aggregate
+  ON outbox_event (aggregate_type, aggregate_id);
+```
 
 > **선택 사항:** `event_type`은 `VARCHAR` 대신 PostgreSQL의 `ENUM` 타입으로 정의할 수도 있습니다. 다만 ENUM은 값 추가 시 `ALTER TYPE`이 필요해 운영 유연성이 떨어지므로, `VARCHAR + CHECK 제약` 또는 단순 `VARCHAR`를 권장합니다.
 
@@ -474,6 +601,121 @@ sequenceDiagram
     Note over App,Redis: Redis 락 해제는 반드시 afterCommit 시점에 실행
 ```
 
+**결제 / 환불 프로세스**
+
+결제는 PG별 구현체에 직접 의존하지 않고, `PaymentGatewayPort` 뒤에 local/kakao/toss/naver adapter를 배치합니다. 결제 요청은 `member_id + idempotency_key`로 멱등성을 보장하고, 동일 키로 다른 요청이 들어오는지 `request_hash`로 검증합니다. 결제 상태 변경, 결제 이벤트 로그, 아웃박스 이벤트 저장은 같은 DB 트랜잭션으로 처리하고, 외부 PG 호출이나 환불 요청 같은 부수효과는 outbox worker가 처리합니다.
+
+현재 구현된 결제 API는 다음과 같습니다.
+
+| API | 인증 | 설명 |
+|---|---|---|
+| `POST /payments` | 회원 인증 필요 | 본인이 점유한 좌석 기준으로 결제 요청을 생성 |
+| `GET /payments/:paymentId` | 회원 인증 필요 | 본인 결제 상세 조회 |
+| `POST /payments/callback` | provider callback | PG/local 결제 승인 또는 실패 callback 처리 |
+| `POST /payments/:paymentId/refund` | 내부/운영 보강 필요 | 환불 필요 상태의 결제를 provider adapter로 환불 |
+
+**결제 요청 멱등성**
+
+```mermaid
+flowchart TD
+    A["POST /payments"]
+    B["requestHash 생성<br/>memberId + seatHoldId + provider + amount"]
+    C{"memberId + idempotencyKey<br/>기존 payment 존재?"}
+    D{"stored requestHash == current requestHash?"}
+    E["기존 payment 반환<br/>새 outbox 생성 없음"]
+    F["409 PAYMENT_IDEMPOTENCY_KEY_CONFLICT"]
+    G{"좌석 점유 검증<br/>본인 점유 + HELD + 결제 전?"}
+    H["payment INSERT<br/>status = PENDING<br/>request_hash 저장"]
+    I["payment_event_log INSERT<br/>PAYMENT_REQUESTED"]
+    J["outbox_event INSERT<br/>PAYMENT_REQUESTED"]
+
+    A --> B --> C
+    C -- "있음" --> D
+    D -- "같음" --> E
+    D -- "다름" --> F
+    C -- "없음" --> G
+    G -- "성공" --> H --> I --> J
+```
+
+```mermaid
+flowchart TD
+    A["회원 결제 요청<br/>POST /payments"]
+    B["PaymentCommandHandler"]
+    C{"좌석 점유 검증<br/>본인 점유 + HELD + 결제 전?"}
+    D["payment INSERT<br/>status = PENDING"]
+    E["payment_event_log INSERT<br/>PAYMENT_REQUESTED"]
+    F["outbox_event INSERT<br/>PAYMENT_REQUESTED"]
+    G["DB COMMIT"]
+    H["Outbox Worker"]
+    I{"provider 선택"}
+    J["LocalPaymentAdapter<br/>0.5~3초 지연 후 callback"]
+    K["Kakao/Toss/Naver Adapter<br/>외부 PG 결제 요청"]
+    L["PG/Local Callback<br/>POST /payments/callback"]
+
+    A --> B --> C
+    C -- "실패" --> X["결제 요청 거부"]
+    C -- "성공" --> D --> E --> F --> G --> H --> I
+    I -- "LOCAL" --> J --> L
+    I -- "외부 PG" --> K --> L
+```
+
+`LocalPaymentGateway`는 `providerPaymentId`와 `local:{paymentId}:{providerPaymentId}` 형식의 callback token을 생성합니다. 이후 `LOCAL_PAYMENT_CALLBACK_URL`이 있으면 해당 주소로, 없으면 `http://localhost:${PORT}/payments/callback`으로 지연 callback을 전송합니다.
+
+```mermaid
+sequenceDiagram
+    participant PG as "PG / Local Adapter"
+    participant API as "Payment Callback API"
+    participant App as "Application"
+    participant DB as "PostgreSQL"
+    participant Outbox as "Outbox Worker"
+
+    PG->>API: 결제 callback
+    API->>App: HandlePaymentCallbackCommand
+    App->>DB: BEGIN
+    App->>DB: payment SELECT FOR UPDATE
+    App->>App: provider/token/금액 검증
+
+    alt PG 결제 실패
+        App->>DB: payment UPDATE FAILED
+        App->>DB: payment_event_log INSERT PAYMENT_FAILED
+        App->>DB: COMMIT
+    else PG 승인 + 내부 후처리 성공
+        App->>DB: payment UPDATE APPROVING
+        App->>DB: reservation INSERT CONFIRMED
+        App->>DB: reservation_seat INSERT
+        App->>DB: seat_hold UPDATE CONFIRMED
+        App->>DB: payment UPDATE APPROVED
+        App->>DB: payment_event_log INSERT PAYMENT_APPROVED
+        App->>DB: outbox_event INSERT RESERVATION_CONFIRMED
+        App->>DB: COMMIT
+        Outbox->>PG: 후속 이벤트 발행
+    else PG 승인 + 내부 후처리 실패
+        App->>DB: payment UPDATE REFUND_REQUIRED
+        App->>DB: payment_event_log INSERT PAYMENT_POST_PROCESSING_FAILED
+        App->>DB: outbox_event INSERT PAYMENT_REFUND_REQUESTED
+        App->>DB: COMMIT
+        Outbox->>PG: refund 요청
+    end
+```
+
+```mermaid
+flowchart TD
+    A["PAYMENT_REFUND_REQUESTED<br/>outbox_event"]
+    B["Outbox Worker<br/>PROCESSING 잠금"]
+    C["PaymentGatewayPort.refund()"]
+    D{"환불 성공?"}
+    E["payment UPDATE REFUNDED"]
+    F["payment_event_log INSERT PAYMENT_REFUNDED"]
+    G["outbox_event UPDATE PUBLISHED"]
+    H["payment UPDATE REFUND_FAILED"]
+    I["payment_event_log INSERT PAYMENT_REFUND_FAILED"]
+    J["outbox_event UPDATE FAILED<br/>retry_count 증가 + next_retry_at 설정"]
+
+    A --> B --> C --> D
+    D -- "성공" --> E --> F --> G
+    D -- "실패" --> H --> I --> J
+```
+
 **점유 만료 / 취소**
 
 ```mermaid
@@ -487,7 +729,35 @@ flowchart TD
     A --> C --> D
 ```
 
-### 4.6 정합성 보장 포인트
+### 4.6 결제 이벤트 로그와 아웃박스
+
+결제 건은 상태 변경 이력과 비동기 후속 작업을 분리해서 저장합니다.
+
+- `payment_event_log`: 결제 감사 로그. append-only로 저장하며 운영자가 결제 상태 변경 원인을 추적할 수 있어야 합니다.
+- `outbox_event`: 시스템이 처리해야 하는 비동기 작업. callback 예약, 환불 요청, 예약 확정 이벤트 발행 등 재시도 가능한 작업을 저장합니다.
+- 결제 상태 변경, 결제 이벤트 로그, 아웃박스 이벤트는 반드시 같은 DB 트랜잭션으로 커밋합니다.
+- PG 승인 후 예약 생성이나 좌석 확정이 실패하면 `REFUND_REQUIRED`로 상태를 전환하고 `PAYMENT_REFUND_REQUESTED` 아웃박스 이벤트를 남깁니다.
+- worker는 발행 가능한 outbox를 `PROCESSING`으로 잠근 뒤 성공 시 `PUBLISHED`, 실패 시 `FAILED`와 `retry_count`, `next_retry_at`, `last_error`를 갱신합니다.
+
+주요 결제 이벤트 타입은 `PAYMENT_REQUESTED`, `PAYMENT_CALLBACK_APPROVED`, `PAYMENT_APPROVED`, `PAYMENT_FAILED`, `PAYMENT_POST_PROCESSING_FAILED`, `PAYMENT_REFUNDED`, `PAYMENT_REFUND_FAILED`입니다. 주요 outbox 이벤트 타입은 `PAYMENT_REQUESTED`, `PAYMENT_REFUND_REQUESTED`, `RESERVATION_CONFIRMED`입니다.
+
+```mermaid
+flowchart LR
+    subgraph TX["DB Transaction"]
+        A["payments<br/>current status"]
+        B["payment_event_log<br/>append-only audit"]
+        C["outbox_event<br/>retryable work"]
+    end
+
+    D["Outbox Worker"]
+    E["PaymentGatewayPort"]
+    F["Local / Kakao / Toss / Naver"]
+
+    A --> B --> C
+    C --> D --> E --> F
+```
+
+### 4.7 정합성 보장 포인트
 
 **결제 완료 시 원자성**
 
@@ -534,7 +804,7 @@ RETURNING id;
 
 `RETURNING`이 빈 결과면 중복으로 판단해 예매를 롤백합니다.
 
-### 4.7 만료 처리 스케줄러
+### 4.8 만료 처리 스케줄러
 
 DB만 정리하면 됩니다 (Redis는 TTL로 자동 처리).
 
@@ -625,6 +895,21 @@ stateDiagram-v2
     HELD --> RELEASED: 사용자 취소
 ```
 
+### 6.3 payment.status
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> APPROVING: PG 승인 callback
+    PENDING --> FAILED: PG 실패 callback
+    APPROVING --> APPROVED: 예약 생성 + 좌석 확정 성공
+    APPROVING --> REFUND_REQUIRED: 내부 후처리 실패
+    REFUND_REQUIRED --> REFUNDING: 환불 요청 시작
+    REFUNDING --> REFUNDED: 환불 성공
+    REFUNDING --> REFUND_FAILED: 환불 실패
+    REFUND_FAILED --> REFUNDING: 환불 재시도
+```
+
 ---
 
 ## 7. PostgreSQL 운영 고려사항
@@ -665,14 +950,15 @@ CREATE TABLE seat_hold_2026_04 PARTITION OF seat_hold
 
 ## 8. 향후 확장 고려사항
 
-현재 설계 범위 밖이지만 운영 단계에서 추가 검토할 항목입니다.
+현재 구현 범위 밖이지만 운영 단계에서 추가 검토할 항목입니다.
 
-- **payment**: 결제 수단, PG사 거래번호, 환불 정보
+- **payment provider 확장**: Kakao/Toss/Naver adapter 구현, provider별 callback 검증 강화
+- **payment 운영 인증**: `POST /payments/:paymentId/refund`를 내부 운영자 권한 또는 시스템 간 인증으로 보호
 - **point / coupon**: 적립금·쿠폰 사용 내역
 - **review**: 영화 리뷰 및 평점
 - **읽기 전용 복제본(Read Replica)**: 영화/상영 일정 조회 트래픽이 많아질 경우 분리
 - **PgBouncer**: 커넥션 풀링 미들웨어
-- **시계열 데이터 아카이브**: 1년 이상 된 `seat_hold`, `reservation_event` 콜드 스토리지 이관
+- **시계열 데이터 아카이브**: 1년 이상 된 `seat_hold`, `reservation_event`, `payment_event_log`, `outbox_event` 콜드 스토리지 이관
 
 ---
 
@@ -692,5 +978,8 @@ CREATE TABLE seat_hold_2026_04 PARTITION OF seat_hold
 | reservation_seat | 예매-좌석 매핑 |
 | reservation_event | 예매 상태 변경 이력 |
 | phone_verification | 휴대전화 인증 이력 |
+| payment | 결제 요청, provider 거래 ID, 멱등성 키, 요청 해시, 현재 상태 |
+| payment_event_log | 결제 상태 변경 감사 로그 |
+| outbox_event | 결제 요청, 환불 요청, 예약 확정 등 비동기 후속 작업 |
 
 **인프라:** PostgreSQL 15+ / Redis
