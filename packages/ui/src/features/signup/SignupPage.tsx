@@ -1,190 +1,34 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { type ChangeEvent } from 'react';
 import { ShieldCheck, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  useCheckMemberId,
-  useConfirmPhoneVerification,
-  useCreateMember,
-  useRequestPhoneVerification,
-  useSearchAddresses,
-} from './signupHooks';
-import {
-  hasErrors,
-  normalizePhoneNumber,
-  validateAddressKeyword,
-  validateMemberId,
-  validatePhoneNumber,
-  validateSignupForm,
-  validateVerificationCode,
-  type SignupFormErrors,
-} from './signupValidation';
-import { type AddressSearchItem, type SignupFormValues } from './signupApi';
-
-const initialValues: SignupFormValues = {
-  memberId: '',
-  password: '',
-  name: '',
-  birthDate: '',
-  zipCode: '',
-  roadAddress: '',
-  jibunAddress: '',
-  detailAddress: '',
-  buildingManagementNumber: '',
-  phoneNumber: '',
-  nickname: '',
-  verificationCode: '',
-};
-
-type IdCheckState = 'idle' | 'available' | 'unavailable';
-type PhoneVerificationState = 'idle' | 'requested' | 'verified';
+import { type SignupFormValues } from './signupApi';
+import { useSignupPage } from './useSignupPage';
 
 export function SignupPage() {
-  const [values, setValues] = useState(initialValues);
-  const [errors, setErrors] = useState<SignupFormErrors>({});
-  const [idCheckState, setIdCheckState] = useState<IdCheckState>('idle');
-  const [phoneVerificationState, setPhoneVerificationState] =
-    useState<PhoneVerificationState>('idle');
-  const [phoneVerificationId, setPhoneVerificationId] = useState('');
-  const [submittedMemberId, setSubmittedMemberId] = useState('');
-  const [addressKeyword, setAddressKeyword] = useState('');
-  const [addressKeywordError, setAddressKeywordError] = useState('');
-
-  const checkMemberIdMutation = useCheckMemberId();
-  const searchAddressesMutation = useSearchAddresses();
-  const requestPhoneVerificationMutation = useRequestPhoneVerification();
-  const confirmPhoneVerificationMutation = useConfirmPhoneVerification();
-  const createMemberMutation = useCreateMember();
-
-  const isSubmitting = createMemberMutation.isPending;
-  const canSubmit = idCheckState === 'available' && phoneVerificationState === 'verified';
-  const formErrors = useMemo(() => validateSignupForm(values), [values]);
-
-  const handleChange =
-    (field: keyof SignupFormValues) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const nextValue = event.target.value;
-
-      setValues((current) => ({
-        ...current,
-        [field]: nextValue,
-      }));
-      setErrors((current) => ({
-        ...current,
-        [field]: undefined,
-      }));
-
-      if (field === 'memberId') {
-        setIdCheckState('idle');
-      }
-
-      if (field === 'phoneNumber') {
-        setPhoneVerificationState('idle');
-        setPhoneVerificationId('');
-      }
-
-      if (field === 'verificationCode') {
-        setPhoneVerificationState((current) => (current === 'verified' ? 'requested' : current));
-      }
-    };
-
-  const handleCheckMemberId = async () => {
-    const memberIdError = validateMemberId(values.memberId);
-
-    if (memberIdError) {
-      setErrors((current) => ({ ...current, memberId: memberIdError }));
-      return;
-    }
-
-    const result = await checkMemberIdMutation.mutateAsync(values.memberId);
-    setIdCheckState(result.available ? 'available' : 'unavailable');
-  };
-
-  const handleRequestPhoneVerification = async () => {
-    const phoneNumberError = validatePhoneNumber(values.phoneNumber);
-
-    if (phoneNumberError) {
-      setErrors((current) => ({ ...current, phoneNumber: phoneNumberError }));
-      return;
-    }
-
-    const result = await requestPhoneVerificationMutation.mutateAsync(
-      normalizePhoneNumber(values.phoneNumber),
-    );
-    setPhoneVerificationId(result.verificationId);
-    setPhoneVerificationState('requested');
-  };
-
-  const handleSearchAddress = async () => {
-    const keywordError = validateAddressKeyword(addressKeyword);
-
-    if (keywordError) {
-      setAddressKeywordError(keywordError);
-      return;
-    }
-
-    setAddressKeywordError('');
-    await searchAddressesMutation.mutateAsync(addressKeyword.trim());
-  };
-
-  const handleSelectAddress = (address: AddressSearchItem) => {
-    setValues((current) => ({
-      ...current,
-      zipCode: address.zipCode,
-      roadAddress: address.roadAddress,
-      jibunAddress: address.jibunAddress,
-      buildingManagementNumber: address.buildingManagementNumber,
-      detailAddress: '',
-    }));
-    setErrors((current) => ({
-      ...current,
-      roadAddress: undefined,
-    }));
-  };
-
-  const handleConfirmPhoneVerification = async () => {
-    const phoneNumberError = validatePhoneNumber(values.phoneNumber);
-    const verificationCodeError = validateVerificationCode(values.verificationCode);
-
-    if (phoneNumberError || verificationCodeError) {
-      setErrors((current) => ({
-        ...current,
-        phoneNumber: phoneNumberError,
-        verificationCode: verificationCodeError,
-      }));
-      return;
-    }
-
-    const result = await confirmPhoneVerificationMutation.mutateAsync({
-      phoneNumber: normalizePhoneNumber(values.phoneNumber),
-      verificationCode: values.verificationCode,
-      verificationId: phoneVerificationId,
-    });
-
-    if (result.verified) {
-      setPhoneVerificationState('verified');
-    }
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setErrors(formErrors);
-
-    if (hasErrors(formErrors) || !canSubmit) {
-      return;
-    }
-
-    const result = await createMemberMutation.mutateAsync({
-      memberId: values.memberId,
-      password: values.password,
-      name: values.name,
-      birthDate: values.birthDate,
-      address: `${values.roadAddress} ${values.detailAddress}`.trim(),
-      phoneNumber: normalizePhoneNumber(values.phoneNumber),
-      phoneVerificationId,
-    });
-
-    setSubmittedMemberId(result.memberId);
-  };
+  const {
+    addressKeyword,
+    addressKeywordError,
+    canSubmit,
+    checkMemberIdMutation,
+    confirmPhoneVerificationMutation,
+    errors,
+    handleAddressKeywordChange,
+    handleAddressKeywordKeyDown,
+    handleChange,
+    handleCheckMemberId,
+    handleConfirmPhoneVerification,
+    handleRequestPhoneVerification,
+    handleSearchAddress,
+    handleSelectAddress,
+    handleSubmit,
+    idCheckState,
+    isSubmitting,
+    phoneVerificationState,
+    requestPhoneVerificationMutation,
+    searchAddressesMutation,
+    submittedMemberId,
+    values,
+  } = useSignupPage();
 
   return (
     <section className="signup-layout" aria-labelledby="signup-title">
@@ -263,16 +107,8 @@ export function SignupPage() {
                 aria-invalid={Boolean(addressKeywordError)}
                 autoComplete="street-address"
                 id="addressKeyword"
-                onChange={(event) => {
-                  setAddressKeyword(event.target.value);
-                  setAddressKeywordError('');
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault();
-                    void handleSearchAddress();
-                  }
-                }}
+                onChange={handleAddressKeywordChange}
+                onKeyDown={handleAddressKeywordKeyDown}
                 placeholder="도로명, 건물명, 지번을 입력해 주세요"
                 value={addressKeyword}
               />

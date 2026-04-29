@@ -1,56 +1,12 @@
 import { ArrowLeft, KeyRound } from 'lucide-react';
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/features/auth/AuthProvider';
 import { type PasswordChangeFormValues } from './passwordApi';
-import { useChangePassword } from './passwordHooks';
-import {
-  hasPasswordChangeErrors,
-  validatePasswordChangeForm,
-  type PasswordChangeFormErrors,
-} from './passwordValidation';
-
-const initialValues: PasswordChangeFormValues = {
-  currentPassword: '',
-  newPassword: '',
-};
+import { usePasswordChangePage } from './usePasswordChangePage';
 
 export function PasswordChangePage() {
-  const { member } = useAuth();
-  const [values, setValues] = useState(initialValues);
-  const [errors, setErrors] = useState<PasswordChangeFormErrors>({});
-  const passwordMutation = useChangePassword();
-  const formErrors = useMemo(() => validatePasswordChangeForm(values), [values]);
-
-  const handleChange =
-    (field: keyof PasswordChangeFormValues) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setValues((current) => ({
-        ...current,
-        [field]: event.target.value,
-      }));
-      setErrors((current) => ({
-        ...current,
-        [field]: undefined,
-      }));
-      passwordMutation.reset();
-    };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setErrors(formErrors);
-
-    if (hasPasswordChangeErrors(formErrors)) {
-      return;
-    }
-
-    await passwordMutation.mutateAsync({
-      ...values,
-      userId: member?.memberId ?? '',
-    });
-    setValues(initialValues);
-  };
+  const { errors, handleChange, handleSubmit, passwordMutation, values } = usePasswordChangePage();
 
   return (
     <section className="password-page" aria-labelledby="password-page-title">

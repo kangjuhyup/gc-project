@@ -1,61 +1,16 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import { type ChangeEvent, type ReactNode } from 'react';
 import { LockKeyhole } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { getSocialLoginUrl, type LoginFormValues } from './loginApi';
-import { usePasswordLogin } from './loginHooks';
-import { hasLoginErrors, validateLoginForm, type LoginFormErrors } from './loginValidation';
-import { useAuth } from '@/features/auth/AuthProvider';
-
-const initialValues: LoginFormValues = {
-  memberId: '',
-  password: '',
-};
+import { type LoginFormValues } from './loginApi';
+import { useLoginPage } from './useLoginPage';
 
 interface LoginPageProps {
   signupLink: ReactNode;
 }
 
 export function LoginPage({ signupLink }: LoginPageProps) {
-  const [values, setValues] = useState(initialValues);
-  const [errors, setErrors] = useState<LoginFormErrors>({});
-
-  const { setSession } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const passwordLoginMutation = usePasswordLogin();
-  const formErrors = useMemo(() => validateLoginForm(values), [values]);
-  const redirectTo = getRedirectPath(location.state);
-
-  const handleChange =
-    (field: keyof LoginFormValues) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setValues((current) => ({
-        ...current,
-        [field]: event.target.value,
-      }));
-      setErrors((current) => ({
-        ...current,
-        [field]: undefined,
-      }));
-    };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setErrors(formErrors);
-
-    if (hasLoginErrors(formErrors)) {
-      return;
-    }
-
-    const session = await passwordLoginMutation.mutateAsync(values);
-    setSession(session);
-    navigate(redirectTo, { replace: true });
-  };
-
-  const handleSocialLogin = (provider: 'kakao' | 'naver') => {
-    window.location.assign(getSocialLoginUrl(provider));
-  };
+  const { errors, handleChange, handleSocialLogin, handleSubmit, passwordLoginMutation, values } =
+    useLoginPage();
 
   return (
     <section className="auth-layout login-layout" aria-labelledby="login-title">
@@ -127,20 +82,6 @@ export function LoginPage({ signupLink }: LoginPageProps) {
       </form>
     </section>
   );
-}
-
-function getRedirectPath(state: unknown) {
-  if (
-    state &&
-    typeof state === 'object' &&
-    'from' in state &&
-    typeof state.from === 'string' &&
-    state.from.startsWith('/')
-  ) {
-    return state.from;
-  }
-
-  return '/movies';
 }
 
 interface LoginFieldProps {
