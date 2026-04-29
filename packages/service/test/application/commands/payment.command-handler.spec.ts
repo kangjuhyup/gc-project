@@ -2,14 +2,17 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   OutboxEventModel,
   PaymentModel,
+  ReservationModel,
   SeatHoldModel,
 } from '@domain';
 import {
+  CancelReservationCommand,
   HandlePaymentCallbackCommand,
   RefundPaymentCommand,
   RequestPaymentCommand,
 } from '@application';
 import {
+  CancelReservationCommandHandler,
   HandlePaymentCallbackCommandHandler,
   RefundPaymentCommandHandler,
   RequestPaymentCommandHandler,
@@ -26,13 +29,9 @@ import type {
   ReservationRepositoryPort,
   ReservationSeatRepositoryPort,
   SeatHoldRepositoryPort,
-  TransactionManagerPort,
 } from '@application/commands/ports';
 
 const now = new Date('2026-04-29T01:00:00.000Z');
-const transactionManager: TransactionManagerPort = {
-  runInTransaction: vi.fn(async (work) => await work()),
-};
 const clock: ClockPort = {
   now: vi.fn(() => now),
 };
@@ -73,6 +72,7 @@ describe('RequestPaymentCommandHandler', () => {
       save: vi.fn(async (payment: PaymentModel) => payment.setPersistence('7001', now, now)),
       findById: vi.fn(),
       findByIdForUpdate: vi.fn(),
+      findByReservationIdForUpdate: vi.fn(),
       findByMemberIdAndIdempotencyKey: vi.fn(async () => undefined),
       findBySeatHoldId: vi.fn(async () => undefined),
     };
@@ -91,7 +91,6 @@ describe('RequestPaymentCommandHandler', () => {
       paymentEventLogRepository,
       outboxEventRepository,
       paymentRequestHasher,
-      transactionManager,
       clock,
     );
 
@@ -104,8 +103,6 @@ describe('RequestPaymentCommandHandler', () => {
         amount: 15000,
       }),
     );
-
-    expect(transactionManager.runInTransaction).toHaveBeenCalled();
     expect(result.paymentId).toBe('7001');
     expect(result.idempotencyKey).toBe('pay-test-key');
     expect(result.status).toBe('PENDING');
@@ -121,6 +118,7 @@ describe('RequestPaymentCommandHandler', () => {
       save: vi.fn(),
       findById: vi.fn(),
       findByIdForUpdate: vi.fn(),
+      findByReservationIdForUpdate: vi.fn(),
       findByMemberIdAndIdempotencyKey: vi.fn(async () => existingPayment),
       findBySeatHoldId: vi.fn(),
     } as unknown as PaymentRepositoryPort;
@@ -133,7 +131,6 @@ describe('RequestPaymentCommandHandler', () => {
       { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
       { save: vi.fn() } as unknown as OutboxEventRepositoryPort,
       paymentRequestHasher,
-      transactionManager,
       clock,
     );
 
@@ -165,7 +162,6 @@ describe('RequestPaymentCommandHandler', () => {
       { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
       { save: vi.fn() } as unknown as OutboxEventRepositoryPort,
       paymentRequestHasher,
-      transactionManager,
       clock,
     );
 
@@ -205,7 +201,6 @@ describe('RequestPaymentCommandHandler', () => {
       { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
       { save: vi.fn() } as unknown as OutboxEventRepositoryPort,
       paymentRequestHasher,
-      transactionManager,
       clock,
     );
 
@@ -260,7 +255,6 @@ describe('HandlePaymentCallbackCommandHandler', () => {
       paymentEventLogRepository,
       outboxEventRepository,
       callbackVerifier,
-      transactionManager,
       clock,
     );
 
@@ -303,7 +297,6 @@ describe('HandlePaymentCallbackCommandHandler', () => {
       { save: vi.fn(async (eventLog) => eventLog) } as unknown as PaymentEventLogRepositoryPort,
       outboxEventRepository,
       { verify: vi.fn(() => true) },
-      transactionManager,
       clock,
     );
 
@@ -355,7 +348,6 @@ describe('RefundPaymentCommandHandler', () => {
       paymentRepository,
       { save: vi.fn(async (eventLog) => eventLog) } as unknown as PaymentEventLogRepositoryPort,
       paymentGateway,
-      transactionManager,
       clock,
     );
 
@@ -368,5 +360,107 @@ describe('RefundPaymentCommandHandler', () => {
       amount: 15000,
     });
     expect(result.status).toBe('REFUNDED');
+  });
+});
+
+describe('CancelReservationCommandHandler', () => {
+  function confirmedReservation() {
+    return ReservationModel.of({
+      reservationNumber: 'R20260429001',
+      memberId: '1',
+      screeningId: '101',
+      status: 'CONFIRMED',
+      totalPrice: 15000,
+    }).setPersistence('5001', now, now);
+  }
+
+  function approvedPayment() {
+    return PaymentModel.of({
+      memberId: '1',
+      seatHoldId: '9001',
+      idempotencyKey: 'pay-cancel-key',
+      requestHash: paymentRequestHasher.hash({
+        memberId: '1',
+        seatHoldId: '9001',
+        provider: 'LOCAL',
+        amount: 15000,
+      }),
+      reservationId: '5001',
+      provider: 'LOCAL',
+      providerPaymentId: 'local-payment-7001',
+      amount: 15000,
+      status: 'APPROVED',
+      requestedAt: now,
+      approvedAt: now,
+    }).setPersistence('7001', now, now);
+  }
+
+  it('내가 결제 완료한 예매를 취소하면 예매 취소와 환불 요청 이벤트를 저장한다', async () => {
+    const reservationRepository = {
+      findByIdForUpdate: vi.fn(async () => confirmedReservation()),
+      save: vi.fn(async (reservation: ReservationModel) => reservation),
+    } as unknown as ReservationRepositoryPort;
+    const paymentRepository = {
+      findByReservationIdForUpdate: vi.fn(async () => approvedPayment()),
+      save: vi.fn(async (payment: PaymentModel) => payment),
+    } as unknown as PaymentRepositoryPort;
+    const reservationEventRepository = {
+      save: vi.fn(async (event) => event),
+    } as unknown as ReservationEventRepositoryPort;
+    const paymentEventLogRepository = {
+      save: vi.fn(async (eventLog) => eventLog),
+    } as unknown as PaymentEventLogRepositoryPort;
+    const outboxEventRepository = {
+      save: vi.fn(async (event) => event),
+    } as unknown as OutboxEventRepositoryPort;
+    const handler = new CancelReservationCommandHandler(
+      reservationRepository,
+      paymentRepository,
+      reservationEventRepository,
+      paymentEventLogRepository,
+      outboxEventRepository,
+      clock,
+    );
+
+    const result = await handler.execute(
+      CancelReservationCommand.of({
+        memberId: '1',
+        reservationId: '5001',
+        reason: 'user request',
+      }),
+    );
+
+    expect(result.reservationStatus).toBe('CANCELED');
+    expect(result.paymentStatus).toBe('REFUND_REQUIRED');
+    const savedReservations = vi.mocked(reservationRepository.save).mock.calls.map(([reservation]) => reservation);
+    const savedPayments = vi.mocked(paymentRepository.save).mock.calls.map(([payment]) => payment);
+    const savedOutboxEvents = vi.mocked(outboxEventRepository.save).mock.calls.map(([event]) => event);
+    expect(savedReservations.some((reservation) => reservation.status === 'CANCELED')).toBe(true);
+    expect(savedPayments.some((payment) => payment.status === 'REFUND_REQUIRED')).toBe(true);
+    expect(savedOutboxEvents.some((event) => event.eventType === 'PAYMENT_REFUND_REQUESTED')).toBe(true);
+  });
+
+  it('다른 회원의 예매 취소 요청은 거부한다', async () => {
+    const handler = new CancelReservationCommandHandler(
+      {
+        findByIdForUpdate: vi.fn(async () => confirmedReservation()),
+        save: vi.fn(),
+      } as unknown as ReservationRepositoryPort,
+      { findByReservationIdForUpdate: vi.fn() } as unknown as PaymentRepositoryPort,
+      { save: vi.fn() } as unknown as ReservationEventRepositoryPort,
+      { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
+      { save: vi.fn() } as unknown as OutboxEventRepositoryPort,
+      clock,
+    );
+
+    await expect(
+      handler.execute(
+        CancelReservationCommand.of({
+          memberId: '2',
+          reservationId: '5001',
+          reason: 'user request',
+        }),
+      ),
+    ).rejects.toThrow('RESERVATION_FORBIDDEN');
   });
 });

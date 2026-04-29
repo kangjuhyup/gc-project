@@ -276,6 +276,39 @@ describe('domain persistence models', () => {
     expect(reservationEvent.description).toBe('user request');
   });
 
+  it('확정된 예매를 취소하면 CANCELED 상태와 취소 사유를 기록한다', () => {
+    const createdAt = new Date('2026-04-29T01:00:00.000Z');
+    const canceledAt = new Date('2026-04-29T01:05:00.000Z');
+    const reservation = ReservationModel.of({
+      reservationNumber: 'R20260429001',
+      memberId: '1',
+      screeningId: '2',
+      status: 'CONFIRMED',
+      totalPrice: 15000,
+    }).setPersistence('reservation-1', createdAt, createdAt);
+
+    const canceled = reservation.cancel({ reason: 'user request', now: canceledAt });
+
+    expect(canceled.status).toBe('CANCELED');
+    expect(canceled.canceledAt).toBe(canceledAt);
+    expect(canceled.cancelReason).toBe('user request');
+    expect(canceled.updatedAt).toBe(canceledAt);
+  });
+
+  it('확정 상태가 아닌 예매는 취소할 수 없다', () => {
+    const createdAt = new Date('2026-04-29T01:00:00.000Z');
+    const reservation = ReservationModel.of({
+      reservationNumber: 'R20260429001',
+      memberId: '1',
+      screeningId: '2',
+      status: 'CANCELED',
+      totalPrice: 15000,
+    }).setPersistence('reservation-1', createdAt, createdAt);
+
+    expect(() => reservation.cancel({ reason: 'again', now: new Date('2026-04-29T01:05:00.000Z') }))
+      .toThrow(new DomainError(DomainErrorCode.INVALID_RESERVATION_STATUS));
+  });
+
   it('좌석 선점 persistence 속성으로 도메인 모델을 생성한다', () => {
     const expiresAt = new Date('2026-04-28T09:05:00.000Z');
 
@@ -416,6 +449,30 @@ describe('domain persistence models', () => {
 
     expect(refunded.status).toBe('REFUNDED');
     expect(refunded.refundedAt).toBe(refundedAt);
+  });
+
+  it('결제 완료된 예매를 취소하면 결제를 환불 필요 상태로 전환한다', () => {
+    const createdAt = new Date('2026-04-29T01:00:00.000Z');
+    const now = new Date('2026-04-29T01:05:00.000Z');
+    const payment = PaymentModel.of({
+      memberId: '1',
+      seatHoldId: '10',
+      idempotencyKey: 'pay-test-key',
+      requestHash: 'request-hash',
+      reservationId: 'reservation-1',
+      provider: 'LOCAL',
+      providerPaymentId: 'local-payment-1',
+      amount: 15000,
+      status: 'APPROVED',
+      requestedAt: createdAt,
+      approvedAt: createdAt,
+    }).setPersistence('payment-1', createdAt, createdAt);
+
+    const refundRequired = payment.requestCancelRefund({ reason: 'user request', now });
+
+    expect(refundRequired.status).toBe('REFUND_REQUIRED');
+    expect(refundRequired.failureReason).toBe('user request');
+    expect(refundRequired.updatedAt).toBe(now);
   });
 
   it('결제 이벤트 로그와 아웃박스 이벤트는 persistence 속성으로 생성한다', () => {

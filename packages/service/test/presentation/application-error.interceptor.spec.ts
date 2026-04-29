@@ -73,6 +73,14 @@ describe('ApplicationErrorInterceptor', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
+  it('다른 회원의 예매 취소 에러를 forbidden 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('RESERVATION_FORBIDDEN')) as never)),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
   it('회원 없음 에러를 not found 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 
@@ -86,6 +94,14 @@ describe('ApplicationErrorInterceptor', () => {
 
     await expect(
       lastValueFrom(interceptor.intercept({} as never, next(new Error('SEAT_HOLD_NOT_FOUND')) as never)),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('예매 없음 에러를 not found 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('RESERVATION_NOT_FOUND')) as never)),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 

@@ -7,12 +7,7 @@ import type {
   SeatHoldCachePort,
   SeatHoldLockPort,
   SeatHoldRepositoryPort,
-  TransactionManagerPort,
 } from '@application/commands/ports';
-
-const transactionManager = {
-  runInTransaction: vi.fn(async (work) => await work()),
-} satisfies TransactionManagerPort;
 
 describe('CreateSeatHoldCommandHandler', () => {
   it('좌석 임시점유 시 환경변수로 전달된 TTL 기준으로 DB와 Redis 만료 시간을 저장한다', async () => {
@@ -40,7 +35,6 @@ describe('CreateSeatHoldCommandHandler', () => {
       repository,
       cache,
       lock,
-      transactionManager,
       clock,
       { ttlSeconds: 3 },
     );
@@ -94,7 +88,6 @@ describe('CreateSeatHoldCommandHandler', () => {
       repository,
       cache,
       lock,
-      transactionManager,
       { now: vi.fn(() => now) },
     );
 
@@ -135,7 +128,6 @@ describe('CreateSeatHoldCommandHandler', () => {
       repository,
       cache,
       lock,
-      transactionManager,
       { now: vi.fn(() => now) },
     );
 
@@ -176,7 +168,6 @@ describe('CreateSeatHoldCommandHandler', () => {
       repository,
       cache,
       lock,
-      transactionManager,
       { now: vi.fn(() => now) },
     );
 
@@ -218,7 +209,7 @@ describe('ReleaseSeatHoldCommandHandler', () => {
       hold: vi.fn(),
       release: vi.fn(),
     } satisfies SeatHoldCachePort;
-    const handler = new ReleaseSeatHoldCommandHandler(repository, cache, transactionManager);
+    const handler = new ReleaseSeatHoldCommandHandler(repository, cache);
 
     const result = await handler.execute(ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '1' }));
 
@@ -248,7 +239,7 @@ describe('ReleaseSeatHoldCommandHandler', () => {
       hold: vi.fn(),
       release: vi.fn(),
     } satisfies SeatHoldCachePort;
-    const handler = new ReleaseSeatHoldCommandHandler(repository, cache, transactionManager);
+    const handler = new ReleaseSeatHoldCommandHandler(repository, cache);
 
     await expect(
       handler.execute(ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '2' })),
@@ -280,7 +271,7 @@ describe('ReleaseSeatHoldCommandHandler', () => {
       hold: vi.fn(),
       release: vi.fn(),
     } satisfies SeatHoldCachePort;
-    const handler = new ReleaseSeatHoldCommandHandler(repository, cache, transactionManager);
+    const handler = new ReleaseSeatHoldCommandHandler(repository, cache);
 
     await expect(
       handler.execute(ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '1' })),

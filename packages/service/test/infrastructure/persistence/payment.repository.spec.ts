@@ -63,6 +63,21 @@ describe('MikroOrmPaymentRepository', () => {
       { lockMode: LockMode.PESSIMISTIC_WRITE },
     );
   });
+
+  it('예매 취소 처리를 위해 예매 ID로 결제 row를 비관적 락 조회한다', async () => {
+    const entityManager = {
+      findOne: vi.fn().mockResolvedValue(undefined),
+    };
+    const repository = new MikroOrmPaymentRepository(entityManager as never);
+
+    await repository.findByReservationIdForUpdate('5001');
+
+    expect(entityManager.findOne).toHaveBeenCalledWith(
+      PaymentEntity,
+      { reservation: '5001' },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+  });
 });
 
 describe('MikroOrmOutboxEventRepository', () => {

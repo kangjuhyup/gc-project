@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Transactional } from '@application';
+import {
+  clearTransactionalDecorator,
+  configureTransactionalDecorator,
+  Transactional,
+} from '@application/commands/decorators';
 import type { TransactionManagerPort } from '@application/commands/ports';
 
 describe('Transactional decorator', () => {
@@ -7,23 +11,25 @@ describe('Transactional decorator', () => {
     const transactionManager: TransactionManagerPort = {
       runInTransaction: vi.fn(async (work) => await work()),
     };
-    class TestHandler {
-      constructor(readonly transactionManager: TransactionManagerPort) {}
+    configureTransactionalDecorator(transactionManager);
 
+    class TestHandler {
       @Transactional()
       async execute(value: string): Promise<string> {
         return `handled-${value}`;
       }
     }
 
-    const handler = new TestHandler(transactionManager);
+    const handler = new TestHandler();
     const result = await handler.execute('payment');
 
     expect(transactionManager.runInTransaction).toHaveBeenCalledWith(expect.any(Function), 'REQUIRED');
     expect(result).toBe('handled-payment');
   });
 
-  it('transactionManager 속성이 없으면 명시적인 에러를 던진다', async () => {
+  it('데코레이터용 트랜잭션 매니저가 설정되지 않으면 명시적인 에러를 던진다', async () => {
+    clearTransactionalDecorator();
+
     class TestHandler {
       @Transactional('NEW')
       async execute(): Promise<string> {
@@ -32,7 +38,7 @@ describe('Transactional decorator', () => {
     }
 
     await expect(new TestHandler().execute()).rejects.toThrow(
-      'Transactional method "execute" requires a transactionManager property',
+      'Transactional method "execute" requires a configured transaction manager',
     );
   });
 });

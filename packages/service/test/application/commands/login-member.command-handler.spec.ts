@@ -23,7 +23,6 @@ import type {
   PhoneVerificationRepositoryPort,
   TemporaryPasswordGeneratorPort,
   TokenRepositoryPort,
-  TransactionManagerPort,
 } from '@application/commands/ports';
 import { TokenType } from '@application/commands/ports';
 
@@ -40,10 +39,6 @@ function activeMember(failedLoginCount = 0): MemberModel {
     failedLoginCount,
   }).setPersistence('member-1', createdAt, createdAt);
 }
-
-const transactionManager = {
-  runInTransaction: vi.fn(async (work) => await work()),
-} satisfies TransactionManagerPort;
 
 function tokenRepository(): TokenRepositoryPort {
   return {
@@ -84,7 +79,6 @@ describe('LoginMemberCommandHandler', () => {
       logEventPublisher,
       opaqueTokenGenerator(),
       tokens,
-      transactionManager,
     );
 
     const result = await handler.execute(LoginMemberCommand.of({ userId: 'member_01', password: 'password123!' }));
@@ -140,7 +134,6 @@ describe('LoginMemberCommandHandler', () => {
       logEventPublisher,
       opaqueTokenGenerator(),
       tokenRepository(),
-      transactionManager,
     );
 
     await expect(
@@ -180,7 +173,6 @@ describe('LoginMemberCommandHandler', () => {
       logEventPublisher,
       opaqueTokenGenerator(),
       tokenRepository(),
-      transactionManager,
     );
 
     await expect(
@@ -220,7 +212,6 @@ describe('LoginMemberCommandHandler', () => {
       logEventPublisher,
       opaqueTokenGenerator(),
       tokenRepository(),
-      transactionManager,
     );
 
     await expect(
@@ -252,7 +243,6 @@ describe('LoginMemberCommandHandler', () => {
       logEventPublisher,
       opaqueTokenGenerator(),
       tokenRepository(),
-      transactionManager,
     );
 
     await expect(
@@ -302,7 +292,6 @@ describe('IssueTemporaryPasswordCommandHandler', () => {
       phoneVerificationRepository,
       temporaryPasswordGenerator,
       passwordHasher,
-      transactionManager,
       clock,
     );
 
@@ -321,7 +310,7 @@ describe('LogoutMemberCommandHandler', () => {
   it('로그아웃하면 회원의 활성 refresh token을 모두 폐기한다', async () => {
     const tokens = tokenRepository();
     const clock = { now: vi.fn(() => new Date('2026-04-28T00:06:00.000Z')) } satisfies ClockPort;
-    const handler = new LogoutMemberCommandHandler(tokens, clock, transactionManager);
+    const handler = new LogoutMemberCommandHandler(tokens, clock);
 
     const result = await handler.execute(LogoutMemberCommand.of({ memberId: 'member-1' }));
 
@@ -363,7 +352,6 @@ describe('ChangeMemberPasswordCommandHandler', () => {
       passwordHasher,
       clock,
       logEventPublisher,
-      transactionManager,
     );
 
     const result = await handler.execute(
@@ -409,7 +397,6 @@ describe('ChangeMemberPasswordCommandHandler', () => {
       passwordHasher,
       clock,
       logEventPublisher,
-      transactionManager,
     );
 
     await expect(
@@ -445,7 +432,6 @@ describe('WithdrawMemberCommandHandler', () => {
       tokens,
       clock,
       logEventPublisher,
-      transactionManager,
     );
 
     const result = await handler.execute(WithdrawMemberCommand.of({ memberId: 'member-1' }));
@@ -488,7 +474,6 @@ describe('WithdrawMemberCommandHandler', () => {
       tokens,
       clock,
       logEventPublisher,
-      transactionManager,
     );
 
     await expect(
