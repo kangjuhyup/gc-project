@@ -513,6 +513,57 @@
         ]
       }
     },
+    "/seat-holds/{holdId}": {
+      "delete": {
+        "description": "인증된 회원이 직접 점유한 좌석 임시점유를 해제합니다. 결제가 완료되어 예약과 연결된 점유는 해제할 수 없습니다.",
+        "operationId": "SeatController_releaseHold",
+        "parameters": [
+          {
+            "name": "holdId",
+            "required": true,
+            "in": "path",
+            "description": "해제할 좌석 임시점유 ID",
+            "schema": {
+              "example": "9001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "좌석 임시점유 해제 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeatHoldReleasedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "좌석 임시점유가 이미 해제되었거나 해제할 수 없는 상태인 경우"
+          },
+          "401": {
+            "description": "Authorization 검증에 실패한 경우"
+          },
+          "403": {
+            "description": "다른 회원이 점유한 좌석 임시점유인 경우"
+          },
+          "404": {
+            "description": "좌석 임시점유를 찾을 수 없는 경우"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "영화 좌석 임시점유 해제",
+        "tags": [
+          "Seats"
+        ]
+      }
+    },
     "/theaters": {
       "get": {
         "description": "영화관 목록을 조회합니다. latitude와 longitude를 함께 전달하면 현재 위치와 가까운 영화관 순으로 정렬하고, 위치를 전달하지 않으면 기본 목록 순서로 반환합니다.",
@@ -567,7 +618,7 @@
   },
   "info": {
     "title": "GC Movie Reservation Service API",
-    "description": "영화 예매 서비스 백엔드 API 문서입니다.\n회원가입/로그인, 휴대전화 인증, 주소 검색, 영화 목록, 영화관 목록 API를 제공합니다.\nValidationPipe가 whitelist와 forbidNonWhitelisted를 사용하므로 문서에 없는 요청 필드는 거부됩니다.",
+    "description": "영화 예매 서비스 백엔드 API 문서입니다.\n회원가입/로그인, 휴대전화 인증, 주소 검색, 영화 목록, 영화관 목록, 좌석 조회와 임시점유 API를 제공합니다.\nValidationPipe가 whitelist와 forbidNonWhitelisted를 사용하므로 문서에 없는 요청 필드는 거부됩니다.",
     "version": "1.0.0",
     "contact": {}
   },
@@ -590,7 +641,7 @@
     },
     {
       "name": "Seats",
-      "description": "상영 좌석 상태 조회와 결제 전 좌석 임시점유"
+      "description": "상영 좌석 상태 조회, 결제 전 좌석 임시점유, 임시점유 해제"
     },
     {
       "name": "Theaters",
@@ -1335,6 +1386,25 @@
           "holdIds",
           "ttlSeconds",
           "expiresAt"
+        ]
+      },
+      "SeatHoldReleasedDto": {
+        "type": "object",
+        "properties": {
+          "holdId": {
+            "type": "string",
+            "example": "9001",
+            "description": "해제된 좌석 임시점유 ID"
+          },
+          "released": {
+            "type": "boolean",
+            "example": true,
+            "description": "좌석 임시점유 해제 성공 여부"
+          }
+        },
+        "required": [
+          "holdId",
+          "released"
         ]
       },
       "TheaterSummaryDto": {

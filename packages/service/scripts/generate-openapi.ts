@@ -3,21 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import {
-  ChangeMemberPasswordCommandHandler,
-  CheckUserIdAvailabilityQueryHandler,
-  ConfirmPhoneVerificationCommandHandler,
-  CreateSeatHoldCommandHandler,
-  GetHealthQueryHandler,
-  IssueTemporaryPasswordCommandHandler,
-  ListMoviesQueryHandler,
-  ListScreeningSeatsQueryHandler,
-  ListTheatersQueryHandler,
-  LoginMemberCommandHandler,
-  RequestPhoneVerificationCommandHandler,
-  SearchAddressesQueryHandler,
-  SignupMemberCommandHandler,
-} from '@application';
+import { CommandBus, QueryBus } from '@application';
 import { AUTHORIZATION_VERIFIER } from '@application/query/ports';
 import { AddressController, HealthController, MemberController, MovieController, SeatController, TheaterController } from '@presentation/http';
 import { buildSwaggerConfig } from '@presentation/swagger/swagger.config';
@@ -31,22 +17,8 @@ const documentedControllers = [
   TheaterController,
 ];
 
-const documentedHandlerProviders: Provider[] = [
-  GetHealthQueryHandler,
-  CheckUserIdAvailabilityQueryHandler,
-  RequestPhoneVerificationCommandHandler,
-  ConfirmPhoneVerificationCommandHandler,
-  SignupMemberCommandHandler,
-  LoginMemberCommandHandler,
-  IssueTemporaryPasswordCommandHandler,
-  ChangeMemberPasswordCommandHandler,
-  CreateSeatHoldCommandHandler,
-  SearchAddressesQueryHandler,
-  ListMoviesQueryHandler,
-  ListScreeningSeatsQueryHandler,
-  ListTheatersQueryHandler,
-].map((handler) => ({
-  provide: handler,
+const documentedBusProviders: Provider[] = [QueryBus, CommandBus].map((bus) => ({
+  provide: bus,
   useValue: {
     execute: () => undefined,
   },
@@ -61,7 +33,7 @@ const documentedAuthProvider: Provider = {
 
 @Module({
   controllers: documentedControllers,
-  providers: [...documentedHandlerProviders, documentedAuthProvider],
+  providers: [...documentedBusProviders, documentedAuthProvider],
 })
 class OpenApiDocumentModule {}
 
