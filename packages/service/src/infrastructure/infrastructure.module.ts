@@ -4,6 +4,7 @@ import { CacheModule } from './cache';
 import { CryptoModule } from './crypto';
 import { LoggingModule } from './logging';
 import { PersistenceModule } from './persistence';
+import { PaymentModule } from './payment';
 import { PublicApiModule } from './public-api';
 
 @Module({
@@ -12,6 +13,7 @@ import { PublicApiModule } from './public-api';
     CacheModule,
     CryptoModule,
     LoggingModule,
+    PaymentModule,
     PublicApiModule,
     AuthModule,
   ],
@@ -20,6 +22,7 @@ import { PublicApiModule } from './public-api';
     CacheModule,
     CryptoModule,
     LoggingModule,
+    PaymentModule,
     PublicApiModule,
     AuthModule,
   ],
