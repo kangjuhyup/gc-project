@@ -16,7 +16,7 @@ describe('CreateSeatHoldCommandHandler', () => {
     const repository = {
       save: vi.fn(),
       findById: vi.fn(),
-      saveMany: vi.fn(async (holds) =>
+      saveMany: vi.fn(async (holds: SeatHoldModel[]) =>
         holds.map((hold, index) => hold.setPersistence(`hold-${index + 1}`, now, now)),
       ),
       findActiveHold: vi.fn(),

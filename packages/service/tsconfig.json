@@ -8,8 +8,9 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2022",
     "sourceMap": true,
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
+    "noEmit": true,
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
@@ -27,5 +28,5 @@
     "types": ["node"],
     "ignoreDeprecations": "6.0"
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config.ts", "vitest.e2e.config.ts"]
 }

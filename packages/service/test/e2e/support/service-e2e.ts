@@ -31,6 +31,8 @@ export type E2eSeat = {
   status: string;
 };
 
+type E2eSeatRow = Omit<E2eSeat, 'status'>;
+
 const migrations = [
   '001_create_movie_catalog_tables.sql',
   '002_seed_movie_catalog_temp_data.sql',
@@ -155,12 +157,7 @@ export class ServiceE2eContext {
   }
 
   async availableSeats(screeningId: string, count = 1): Promise<E2eSeat[]> {
-    const rows = await this.orm.em.getConnection().execute<Array<{
-      id: string;
-      row: string;
-      col: number;
-      type: string;
-    }>>(
+    const rows: E2eSeatRow[] = await this.orm.em.getConnection().execute(
       `
         SELECT
           seat.id::text AS id,

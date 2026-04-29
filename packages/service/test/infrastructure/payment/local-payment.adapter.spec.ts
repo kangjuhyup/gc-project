@@ -14,7 +14,6 @@ describe('LocalPaymentGateway', () => {
 
     const result = await gateway.request({
       paymentId: '7001',
-      provider: 'LOCAL',
       amount: 15000,
     });
 
