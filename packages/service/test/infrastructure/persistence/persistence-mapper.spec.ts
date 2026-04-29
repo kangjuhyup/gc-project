@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   MovieImageModel,
+  OutboxEventModel,
+  PaymentEventLogModel,
+  PaymentModel,
   PhoneVerificationModel,
   ReservationModel,
   ScreenModel,
@@ -10,6 +13,9 @@ import {
 import { MemberEntity } from '@infrastructure/persistence/entities/member.entity';
 import { MovieEntity } from '@infrastructure/persistence/entities/movie.entity';
 import { MovieImageEntity } from '@infrastructure/persistence/entities/movie-image.entity';
+import { OutboxEventEntity } from '@infrastructure/persistence/entities/outbox-event.entity';
+import { PaymentEntity } from '@infrastructure/persistence/entities/payment.entity';
+import { PaymentEventLogEntity } from '@infrastructure/persistence/entities/payment-event-log.entity';
 import { PhoneVerificationEntity } from '@infrastructure/persistence/entities/phone-verification.entity';
 import { ReservationEntity } from '@infrastructure/persistence/entities/reservation.entity';
 import { ScreeningEntity } from '@infrastructure/persistence/entities/screening.entity';
@@ -203,5 +209,82 @@ describe('PersistenceMapper', () => {
     expect(entity.expiresAt).toBe(expiresAt);
     expect(entity.createdAt).toBe(createdAt);
     expect(entity.updatedAt).toBe(updatedAt);
+  });
+
+  it('결제 모델을 entity 참조로 변환한 뒤 다시 도메인으로 변환한다', () => {
+    const createdAt = new Date('2026-04-29T01:00:00.000Z');
+    const updatedAt = new Date('2026-04-29T01:01:00.000Z');
+    const requestedAt = new Date('2026-04-29T01:00:00.000Z');
+    const model = PaymentModel.of({
+      memberId: '1',
+      seatHoldId: '2',
+      reservationId: '3',
+      provider: 'LOCAL',
+      providerPaymentId: 'local-payment-1',
+      amount: 15000,
+      status: 'APPROVED',
+      requestedAt,
+      approvedAt: updatedAt,
+    }).setPersistence('4', createdAt, updatedAt);
+
+    const entity = PersistenceMapper.paymentToEntity(model);
+    const mappedModel = PersistenceMapper.paymentToDomain(entity);
+
+    expect(entity).toBeInstanceOf(PaymentEntity);
+    expect(entity.id).toBe('4');
+    expect(entity.member.id).toBe('1');
+    expect(entity.seatHold.id).toBe('2');
+    expect(entity.reservation?.id).toBe('3');
+    expect(entity.provider).toBe('LOCAL');
+    expect(mappedModel).toBeInstanceOf(PaymentModel);
+    expect(mappedModel.providerPaymentId).toBe('local-payment-1');
+    expect(mappedModel.status).toBe('APPROVED');
+    expect(mappedModel.approvedAt).toBe(updatedAt);
+  });
+
+  it('결제 이벤트 로그 모델을 entity로 변환한 뒤 다시 도메인으로 변환한다', () => {
+    const createdAt = new Date('2026-04-29T01:00:00.000Z');
+    const model = PaymentEventLogModel.of({
+      paymentId: '4',
+      eventType: 'PAYMENT_APPROVED',
+      previousStatus: 'APPROVING',
+      nextStatus: 'APPROVED',
+      provider: 'LOCAL',
+      providerPaymentId: 'local-payment-1',
+      amount: 15000,
+      metadata: { reservationId: '3' },
+      occurredAt: createdAt,
+    }).setPersistence('5', createdAt, createdAt);
+
+    const entity = PersistenceMapper.paymentEventLogToEntity(model);
+    const mappedModel = PersistenceMapper.paymentEventLogToDomain(entity);
+
+    expect(entity).toBeInstanceOf(PaymentEventLogEntity);
+    expect(entity.payment.id).toBe('4');
+    expect(entity.eventType).toBe('PAYMENT_APPROVED');
+    expect(mappedModel).toBeInstanceOf(PaymentEventLogModel);
+    expect(mappedModel.previousStatus).toBe('APPROVING');
+    expect(mappedModel.metadata).toEqual({ reservationId: '3' });
+  });
+
+  it('아웃박스 이벤트 모델을 entity로 변환한 뒤 다시 도메인으로 변환한다', () => {
+    const createdAt = new Date('2026-04-29T01:00:00.000Z');
+    const model = OutboxEventModel.pending({
+      aggregateType: 'PAYMENT',
+      aggregateId: '4',
+      eventType: 'PAYMENT_REFUND_REQUESTED',
+      payload: { paymentId: '4' },
+      occurredAt: createdAt,
+    }).setPersistence('6', createdAt, createdAt);
+
+    const entity = PersistenceMapper.outboxEventToEntity(model);
+    const mappedModel = PersistenceMapper.outboxEventToDomain(entity);
+
+    expect(entity).toBeInstanceOf(OutboxEventEntity);
+    expect(entity.aggregateType).toBe('PAYMENT');
+    expect(entity.payload).toEqual({ paymentId: '4' });
+    expect(mappedModel).toBeInstanceOf(OutboxEventModel);
+    expect(mappedModel.eventType).toBe('PAYMENT_REFUND_REQUESTED');
+    expect(mappedModel.status).toBe('PENDING');
   });
 });

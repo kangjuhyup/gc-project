@@ -1,6 +1,10 @@
 export { MikroOrmMemberRepository } from './mikro-orm-member.repository';
 export { MikroOrmMovieQueryRepository } from './mikro-orm-movie-query.repository';
+export { MikroOrmOutboxEventRepository } from './mikro-orm-outbox-event.repository';
+export { MikroOrmPaymentEventLogRepository } from './mikro-orm-payment-event-log.repository';
+export { MikroOrmPaymentRepository } from './mikro-orm-payment.repository';
 export { MikroOrmPhoneVerificationRepository } from './mikro-orm-phone-verification.repository';
 export { MikroOrmSeatHoldRepository } from './mikro-orm-seat-hold.repository';
 export { MikroOrmSeatQueryRepository } from './mikro-orm-seat-query.repository';
 export { MikroOrmTheaterQueryRepository } from './mikro-orm-theater-query.repository';
+export { MikroOrmTransactionManager } from './mikro-orm-transaction-manager';

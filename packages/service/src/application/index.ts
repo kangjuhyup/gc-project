@@ -28,6 +28,7 @@ export { CommandModule } from './commands/command.module';
 export type { CommandHandler } from './commands/command-bus';
 export { QueryBus } from './query/query-bus';
 export { QueryModule } from './query/query.module';
+export { Transactional } from './commands/decorators';
 export type { QueryHandler } from './query/query-bus';
 export {
   ChangeMemberPasswordCommandHandler,

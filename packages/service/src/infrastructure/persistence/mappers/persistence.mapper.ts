@@ -3,6 +3,9 @@ import {
   MemberModel,
   MovieImageModel,
   MovieModel,
+  OutboxEventModel,
+  PaymentEventLogModel,
+  PaymentModel,
   PhoneVerificationModel,
   ReservationEventModel,
   ReservationModel,
@@ -15,6 +18,10 @@ import {
   type MemberStatusType,
   type MovieImageTypeType,
   type MovieRatingType,
+  type OutboxStatusType,
+  type PaymentEventTypeType,
+  type PaymentProviderType,
+  type PaymentStatusType,
   type PhoneVerificationStatusType,
   type ReservationEventTypeType,
   type ReservationStatusType,
@@ -24,6 +31,9 @@ import {
 import { MemberEntity } from '../entities/member.entity';
 import { MovieImageEntity } from '../entities/movie-image.entity';
 import { MovieEntity } from '../entities/movie.entity';
+import { OutboxEventEntity } from '../entities/outbox-event.entity';
+import { PaymentEntity } from '../entities/payment.entity';
+import { PaymentEventLogEntity } from '../entities/payment-event-log.entity';
 import { PhoneVerificationEntity } from '../entities/phone-verification.entity';
 import { ReservationEventEntity } from '../entities/reservation-event.entity';
 import { ReservationSeatEntity } from '../entities/reservation-seat.entity';
@@ -323,6 +333,117 @@ export class PersistenceMapper {
     entity.description = model.description;
     if (model.createdAt !== undefined) {
       entity.createdAt = model.createdAt;
+    }
+    return entity;
+  }
+
+  static paymentToDomain(entity: PaymentEntity): PaymentModel {
+    return PaymentModel.of({
+      memberId: entity.member.id,
+      seatHoldId: entity.seatHold.id,
+      reservationId: entity.reservation?.id,
+      provider: entity.provider as PaymentProviderType,
+      providerPaymentId: entity.providerPaymentId,
+      amount: entity.amount,
+      status: entity.status as PaymentStatusType,
+      requestedAt: entity.requestedAt,
+      approvedAt: entity.approvedAt,
+      failedAt: entity.failedAt,
+      refundedAt: entity.refundedAt,
+      failureReason: entity.failureReason,
+    }).setPersistence(entity.id, entity.createdAt, entity.updatedAt);
+  }
+
+  static paymentToEntity(model: PaymentModel): PaymentEntity {
+    const entity = assignId(new PaymentEntity(), currentId(model.id));
+    entity.member = ref<MemberEntity>(model.memberId);
+    entity.seatHold = ref<SeatHoldEntity>(model.seatHoldId);
+    entity.reservation = model.reservationId === undefined ? undefined : ref<ReservationEntity>(model.reservationId);
+    entity.provider = model.provider;
+    entity.providerPaymentId = model.providerPaymentId;
+    entity.amount = model.amount;
+    entity.status = model.status;
+    entity.requestedAt = model.requestedAt;
+    entity.approvedAt = model.approvedAt;
+    entity.failedAt = model.failedAt;
+    entity.refundedAt = model.refundedAt;
+    entity.failureReason = model.failureReason;
+    if (model.createdAt !== undefined) {
+      entity.createdAt = model.createdAt;
+    }
+    if (model.updatedAt !== undefined) {
+      entity.updatedAt = model.updatedAt;
+    }
+    return entity;
+  }
+
+  static paymentEventLogToDomain(entity: PaymentEventLogEntity): PaymentEventLogModel {
+    return PaymentEventLogModel.of({
+      paymentId: entity.payment.id,
+      eventType: entity.eventType as PaymentEventTypeType,
+      previousStatus: entity.previousStatus as PaymentStatusType | undefined,
+      nextStatus: entity.nextStatus as PaymentStatusType,
+      provider: entity.provider as PaymentProviderType,
+      providerPaymentId: entity.providerPaymentId,
+      amount: entity.amount,
+      reason: entity.reason,
+      metadata: entity.metadata,
+      occurredAt: entity.occurredAt,
+    }).setPersistence(entity.id, entity.createdAt, entity.createdAt);
+  }
+
+  static paymentEventLogToEntity(model: PaymentEventLogModel): PaymentEventLogEntity {
+    const entity = assignId(new PaymentEventLogEntity(), currentId(model.id));
+    entity.payment = ref<PaymentEntity>(model.paymentId);
+    entity.eventType = model.eventType;
+    entity.previousStatus = model.previousStatus;
+    entity.nextStatus = model.nextStatus;
+    entity.provider = model.provider;
+    entity.providerPaymentId = model.providerPaymentId;
+    entity.amount = model.amount;
+    entity.reason = model.reason;
+    entity.metadata = model.metadata;
+    entity.occurredAt = model.occurredAt;
+    if (model.createdAt !== undefined) {
+      entity.createdAt = model.createdAt;
+    }
+    return entity;
+  }
+
+  static outboxEventToDomain(entity: OutboxEventEntity): OutboxEventModel {
+    return OutboxEventModel.of({
+      aggregateType: entity.aggregateType,
+      aggregateId: entity.aggregateId,
+      eventType: entity.eventType,
+      payload: entity.payload,
+      status: entity.status as OutboxStatusType,
+      retryCount: entity.retryCount,
+      nextRetryAt: entity.nextRetryAt,
+      lockedUntil: entity.lockedUntil,
+      lastError: entity.lastError,
+      occurredAt: entity.occurredAt,
+      publishedAt: entity.publishedAt,
+    }).setPersistence(entity.id, entity.createdAt, entity.updatedAt);
+  }
+
+  static outboxEventToEntity(model: OutboxEventModel): OutboxEventEntity {
+    const entity = assignId(new OutboxEventEntity(), currentId(model.id));
+    entity.aggregateType = model.aggregateType;
+    entity.aggregateId = model.aggregateId;
+    entity.eventType = model.eventType;
+    entity.payload = model.payload;
+    entity.status = model.status;
+    entity.retryCount = model.retryCount;
+    entity.nextRetryAt = model.nextRetryAt;
+    entity.lockedUntil = model.lockedUntil;
+    entity.lastError = model.lastError;
+    entity.occurredAt = model.occurredAt;
+    entity.publishedAt = model.publishedAt;
+    if (model.createdAt !== undefined) {
+      entity.createdAt = model.createdAt;
+    }
+    if (model.updatedAt !== undefined) {
+      entity.updatedAt = model.updatedAt;
     }
     return entity;
   }

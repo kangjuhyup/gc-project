@@ -1,6 +1,9 @@
 export { MemberEntity } from './member.entity';
 export { MovieImageEntity } from './movie-image.entity';
 export { MovieEntity } from './movie.entity';
+export { OutboxEventEntity } from './outbox-event.entity';
+export { PaymentEntity } from './payment.entity';
+export { PaymentEventLogEntity } from './payment-event-log.entity';
 export { PhoneVerificationEntity } from './phone-verification.entity';
 export { ReservationEntity } from './reservation.entity';
 export { ReservationEventEntity } from './reservation-event.entity';
@@ -14,6 +17,9 @@ export { TheaterEntity } from './theater.entity';
 import { MemberEntity } from './member.entity';
 import { MovieImageEntity } from './movie-image.entity';
 import { MovieEntity } from './movie.entity';
+import { OutboxEventEntity } from './outbox-event.entity';
+import { PaymentEntity } from './payment.entity';
+import { PaymentEventLogEntity } from './payment-event-log.entity';
 import { PhoneVerificationEntity } from './phone-verification.entity';
 import { ReservationEntity } from './reservation.entity';
 import { ReservationEventEntity } from './reservation-event.entity';
@@ -28,6 +34,9 @@ export const persistenceEntities = [
   MemberEntity,
   MovieImageEntity,
   MovieEntity,
+  OutboxEventEntity,
+  PaymentEntity,
+  PaymentEventLogEntity,
   PhoneVerificationEntity,
   ReservationEntity,
   ReservationEventEntity,
