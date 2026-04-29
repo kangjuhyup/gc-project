@@ -429,6 +429,53 @@
         ]
       }
     },
+    "/seat-holds": {
+      "post": {
+        "description": "결제 진입 전 선택 좌석을 임시점유합니다. 응답 TTL은 10분이지만, 결제 콜백 지연을 고려해 Redis와 DB에는 13분 만료 상태로 저장합니다.",
+        "operationId": "SeatHoldController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSeatHoldRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "좌석 임시점유 생성 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeatHoldCreatedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "상영/좌석 파라미터가 유효하지 않거나 상영에 포함되지 않은 좌석인 경우"
+          },
+          "401": {
+            "description": "Authorization 검증에 실패한 경우"
+          },
+          "409": {
+            "description": "이미 예약되었거나 다른 임시점유가 활성 상태인 좌석인 경우"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "영화 좌석 임시점유",
+        "tags": [
+          "Seat Holds"
+        ]
+      }
+    },
     "/theaters": {
       "get": {
         "description": "영화관 목록을 조회합니다. latitude와 longitude를 함께 전달하면 현재 위치와 가까운 영화관 순으로 정렬하고, 위치를 전달하지 않으면 기본 목록 순서로 반환합니다.",
@@ -503,6 +550,10 @@
     {
       "name": "Movies",
       "description": "영화 목록과 상영 정보 조회"
+    },
+    {
+      "name": "Seat Holds",
+      "description": "결제 전 좌석 임시점유"
     },
     {
       "name": "Theaters",
@@ -1107,6 +1158,83 @@
         "required": [
           "items",
           "hasNext"
+        ]
+      },
+      "CreateSeatHoldRequestDto": {
+        "type": "object",
+        "properties": {
+          "screeningId": {
+            "type": "string",
+            "example": "101",
+            "description": "좌석을 임시점유할 상영 ID"
+          },
+          "seatIds": {
+            "example": [
+              "1001",
+              "1002"
+            ],
+            "minItems": 1,
+            "maxItems": 8,
+            "description": "임시점유할 좌석 ID 목록. 중복 좌석은 허용하지 않음",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "screeningId",
+          "seatIds"
+        ]
+      },
+      "SeatHoldCreatedDto": {
+        "type": "object",
+        "properties": {
+          "screeningId": {
+            "type": "string",
+            "example": "101",
+            "description": "임시점유 대상 상영 ID"
+          },
+          "seatIds": {
+            "example": [
+              "1001",
+              "1002"
+            ],
+            "description": "임시점유된 좌석 ID 목록",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "holdIds": {
+            "example": [
+              "9001",
+              "9002"
+            ],
+            "description": "DB에 저장된 좌석별 임시점유 ID 목록",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ttlSeconds": {
+            "type": "number",
+            "example": 600,
+            "description": "클라이언트에 노출되는 임시점유 TTL(초). 실제 Redis/DB TTL은 결제 콜백 지연을 고려해 더 길게 저장"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-04-29T01:10:00.000Z",
+            "description": "클라이언트 기준 임시점유 만료 시각. 실제 저장 만료 시각은 13분 후"
+          }
+        },
+        "required": [
+          "screeningId",
+          "seatIds",
+          "holdIds",
+          "ttlSeconds",
+          "expiresAt"
         ]
       },
       "TheaterSummaryDto": {

@@ -7,6 +7,7 @@ import {
   ChangeMemberPasswordCommandHandler,
   CheckUserIdAvailabilityQueryHandler,
   ConfirmPhoneVerificationCommandHandler,
+  CreateSeatHoldCommandHandler,
   GetHealthQueryHandler,
   IssueTemporaryPasswordCommandHandler,
   ListMoviesQueryHandler,
@@ -16,7 +17,8 @@ import {
   SearchAddressesQueryHandler,
   SignupMemberCommandHandler,
 } from '@application';
-import { AddressController, HealthController, MemberController, MovieController, TheaterController } from '@presentation/http';
+import { AUTHORIZATION_VERIFIER } from '@application/query/ports';
+import { AddressController, HealthController, MemberController, MovieController, SeatHoldController, TheaterController } from '@presentation/http';
 import { buildSwaggerConfig } from '@presentation/swagger/swagger.config';
 
 const documentedControllers = [
@@ -24,6 +26,7 @@ const documentedControllers = [
   MemberController,
   AddressController,
   MovieController,
+  SeatHoldController,
   TheaterController,
 ];
 
@@ -36,6 +39,7 @@ const documentedHandlerProviders: Provider[] = [
   LoginMemberCommandHandler,
   IssueTemporaryPasswordCommandHandler,
   ChangeMemberPasswordCommandHandler,
+  CreateSeatHoldCommandHandler,
   SearchAddressesQueryHandler,
   ListMoviesQueryHandler,
   ListTheatersQueryHandler,
@@ -46,9 +50,16 @@ const documentedHandlerProviders: Provider[] = [
   },
 }));
 
+const documentedAuthProvider: Provider = {
+  provide: AUTHORIZATION_VERIFIER,
+  useValue: {
+    verify: () => undefined,
+  },
+};
+
 @Module({
   controllers: documentedControllers,
-  providers: documentedHandlerProviders,
+  providers: [...documentedHandlerProviders, documentedAuthProvider],
 })
 class OpenApiDocumentModule {}
 
