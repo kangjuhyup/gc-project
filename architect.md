@@ -25,6 +25,81 @@
 - Cache / Lock: Redis
 - 애플리케이션: NestJS
 
+### 1.3 바운디드 컨텍스트
+
+영화 예매 서비스는 기능 단위가 아니라 도메인 언어와 책임 경계를 기준으로 바운디드 컨텍스트를 나눕니다. 특히 `member`와 `payment`는 다른 도메인에서 참조는 가능하지만 내부 정책을 공유하지 않는 독립 컨텍스트로 관리해야 합니다.
+
+```mermaid
+flowchart LR
+    subgraph MemberContext["Member Context<br/>인증 / 회원"]
+        M1["회원 가입"]
+        M2["로그인 / 인증"]
+        M3["회원 상태<br/>ACTIVE, LOCKED, WITHDRAWN"]
+        M4["휴대전화 인증"]
+    end
+
+    subgraph CatalogContext["Catalog Context<br/>영화 / 극장 / 상영"]
+        C1["영화"]
+        C2["극장 / 상영관 / 좌석"]
+        C3["상영 일정"]
+    end
+
+    subgraph ReservationContext["Reservation Context<br/>예매 / 좌석 점유"]
+        R1["좌석 가용성"]
+        R2["좌석 임시점유"]
+        R3["예매 확정"]
+        R4["예매 이벤트"]
+    end
+
+    subgraph PaymentContext["Payment Context<br/>결제 / 정산"]
+        P1["결제 요청"]
+        P2["Provider 승인 / 실패 Callback"]
+        P3["환불"]
+        P4["정산 기준 데이터"]
+        P5["결제 이벤트 로그"]
+    end
+
+    MemberContext -->|"memberId 참조"| ReservationContext
+    MemberContext -->|"payer 식별자 참조"| PaymentContext
+    CatalogContext -->|"screeningId, seatId 참조"| ReservationContext
+    ReservationContext -->|"seatHoldId 기준 결제 요청"| PaymentContext
+    PaymentContext -->|"승인 결과로 예매 확정 요청"| ReservationContext
+```
+
+| 컨텍스트 | 책임 | 소유 데이터 | 외부에 노출하는 식별자/계약 |
+|---|---|---|---|
+| Member Context | 인증, 회원 가입, 회원 상태, 휴대전화 인증 | `member`, `phone_verification` | `memberId`, 인증 토큰, 회원 상태 |
+| Catalog Context | 영화, 이미지, 극장, 상영관, 물리 좌석, 상영 일정 조회 | `movie`, `movie_image`, `theater`, `screen`, `seat`, `screening` | `movieId`, `screeningId`, `seatId` |
+| Reservation Context | 좌석 가용성, 좌석 임시점유, 예매 확정/취소, 예매 이력 | `seat_hold`, `reservation`, `reservation_seat`, `reservation_event` | `seatHoldId`, `reservationId`, `reservationNumber` |
+| Payment Context | 결제 요청, PG callback 처리, 환불, 결제 감사 로그, 정산 기준 데이터 | `payment`, `payment_event_log`, 결제/환불 outbox | `paymentId`, `providerPaymentId`, 결제 상태, 정산 이벤트 |
+
+**Member Context 분리 원칙**
+
+- 회원 인증/회원 도메인은 `member` 컨텍스트에서만 회원 상태 전이, 비밀번호 검증, 로그인 실패 잠금, 휴대전화 인증 정책을 소유합니다.
+- 예매와 결제 컨텍스트는 회원 상세 정보나 인증 정책을 직접 변경하지 않고, 인증된 요청의 `memberId`와 필요한 최소 상태만 참조합니다.
+- 회원 탈퇴, 잠금, 휴면 같은 정책 변경은 Member Context의 도메인 이벤트 또는 조회 계약을 통해 다른 컨텍스트에 전달합니다.
+
+**Opaque Token 선택 이유**
+
+- 현재 인증 토큰은 JWT가 아니라 Opaque token을 사용합니다. Access token은 Redis에 저장하고, Refresh token은 DB에 저장합니다.
+- 토큰 생성은 단일 `OpaqueTokenGenerator`로 통일하고, 저장은 `TokenRepository`가 `TokenType.ACCESS`는 Redis repository, `TokenType.REFRESH`는 DB repository로 분기합니다. TTL은 `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_TOKEN_TTL_SECONDS` 환경변수에서 주입받습니다.
+- Opaque token은 서버 저장소에서 토큰 상태를 조회하므로 로그아웃, 회원탈퇴, 관리자 강제 만료 같은 이벤트가 발생하면 즉시 세션을 만료할 수 있습니다. JWT는 자체 서명 토큰 특성상 만료 시간 전까지 이미 발급된 토큰을 즉시 무효화하려면 별도의 denylist나 세션 저장소가 필요합니다.
+- 현재 서비스는 분산된 마이크로서비스 구조가 아니며, 단일 service가 인증과 업무 API를 함께 처리합니다. 따라서 모든 요청이 같은 인증 저장소를 조회해도 서비스 간 공개키 배포, 토큰 클레임 동기화, clock skew 조정 같은 JWT 운영 복잡도를 감수할 필요가 없습니다.
+- 추후 Gateway를 도입하거나 Member, Reservation, Payment 서비스가 분리되면 Gateway 또는 Auth 서비스가 Opaque token을 검증한 뒤 내부 통신용 JWT로 변환하는 구조로 확장할 수 있습니다. 이때 외부 클라이언트 계약은 유지하면서 내부 서비스 간 인증만 JWT 기반으로 전환할 수 있습니다.
+
+**Payment Context 분리 원칙**
+
+- `payment`는 단순 예매 하위 기능이 아니라 결제/정산 컨텍스트로 분리합니다.
+- Payment Context는 결제 요청 멱등성, provider 거래 ID, callback 검증, 환불, 결제 이벤트 로그, 정산에 필요한 금액/상태 기준 데이터를 소유합니다.
+- Reservation Context는 좌석 점유와 예매 확정의 진실을 소유하고, Payment Context는 `seatHoldId`를 기준으로 결제 가능 여부를 검증한 뒤 승인 결과를 통해 예매 확정을 요청합니다.
+- 정산 데이터는 예매 테이블에서 역산하지 않고, Payment Context의 결제 이벤트와 provider 거래 정보를 기준으로 생성합니다.
+
+**컨텍스트 간 의존 규칙**
+
+- 다른 컨텍스트의 테이블을 직접 UPDATE하지 않습니다. 필요한 변경은 application command, domain event, outbox event를 통해 요청합니다.
+- 컨텍스트 간 참조는 내부 객체 전체가 아니라 `memberId`, `screeningId`, `seatHoldId`, `paymentId` 같은 안정적인 식별자로 제한합니다.
+- 외부 PG 연동, 환불, 정산 같은 부수효과는 Payment Context의 port/adapter 뒤에 두고 Reservation Context가 PG 구현체를 알지 않도록 합니다.
+
 ---
 
 ## 2. 도메인 관계도
@@ -496,9 +571,9 @@ ALTER TABLE reservation_event
 
 ```mermaid
 flowchart LR
-    A["Redis Key<br/>seat:hold:{screening_id}:{seat_id}"]
+    A["Redis Key<br/>seat-hold:{screening_id}:{seat_id}"]
     B["Value<br/>{member_id}:{hold_id}"]
-    C["TTL<br/>600초 (10분)"]
+    C["TTL<br/>SEAT_HOLD_TTL_SECONDS<br/>기본 3초"]
 
     A --> B
     A --> C
@@ -512,7 +587,7 @@ flowchart LR
 flowchart TD
     A["좌석 점유 요청"]
     B["MULTI 시작"]
-    C["SET seat:hold:456:11<br/>값: 789:1001<br/>TTL: 600초"]
+    C["SET seat-hold:456:11<br/>값: 789:1001<br/>TTL: 환경변수 기준"]
     D["SADD screening:456:held_seats 11"]
     E["EXEC"]
     F["상영별 점유 좌석 조회"]
@@ -573,10 +648,10 @@ COMMIT;
 ```mermaid
 flowchart TD
     A["좌석 선택 요청"]
-    B{"Redis SET NX EX 600<br/>락 획득 성공?"}
+    B{"Redis SET NX EX<br/>SEAT_HOLD_TTL_SECONDS<br/>점유 성공?"}
     C["이미 선택된 좌석 응답"]
     D["DB seat_hold INSERT<br/>status = HELD"]
-    E["점유 성공 응답<br/>10분 타이머 시작"]
+    E["점유 성공 응답<br/>TTL 타이머 시작"]
 
     A --> B
     B -- "실패" --> C
