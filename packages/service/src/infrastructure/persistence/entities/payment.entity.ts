@@ -21,6 +21,9 @@ export class PaymentEntity {
   @Property({ fieldName: 'idempotency_key', length: 100 })
   idempotencyKey!: string;
 
+  @Property({ fieldName: 'request_hash', length: 64 })
+  requestHash!: string;
+
   @ManyToOne({ entity: () => ReservationEntity, fieldName: 'reservation_id', nullable: true })
   reservation?: Rel<ReservationEntity>;
 

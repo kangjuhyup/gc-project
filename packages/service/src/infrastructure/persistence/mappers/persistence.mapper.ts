@@ -342,6 +342,7 @@ export class PersistenceMapper {
       memberId: entity.member.id,
       seatHoldId: entity.seatHold.id,
       idempotencyKey: entity.idempotencyKey,
+      requestHash: entity.requestHash,
       reservationId: entity.reservation?.id,
       provider: entity.provider as PaymentProviderType,
       providerPaymentId: entity.providerPaymentId,
@@ -360,6 +361,7 @@ export class PersistenceMapper {
     entity.member = ref<MemberEntity>(model.memberId);
     entity.seatHold = ref<SeatHoldEntity>(model.seatHoldId);
     entity.idempotencyKey = model.idempotencyKey;
+    entity.requestHash = model.requestHash;
     entity.reservation = model.reservationId === undefined ? undefined : ref<ReservationEntity>(model.reservationId);
     entity.provider = model.provider;
     entity.providerPaymentId = model.providerPaymentId;

@@ -219,6 +219,7 @@ describe('PersistenceMapper', () => {
       memberId: '1',
       seatHoldId: '2',
       idempotencyKey: 'pay-test-key',
+      requestHash: 'request-hash',
       reservationId: '3',
       provider: 'LOCAL',
       providerPaymentId: 'local-payment-1',
@@ -236,10 +237,12 @@ describe('PersistenceMapper', () => {
     expect(entity.member.id).toBe('1');
     expect(entity.seatHold.id).toBe('2');
     expect(entity.idempotencyKey).toBe('pay-test-key');
+    expect(entity.requestHash).toBe('request-hash');
     expect(entity.reservation?.id).toBe('3');
     expect(entity.provider).toBe('LOCAL');
     expect(mappedModel).toBeInstanceOf(PaymentModel);
     expect(mappedModel.idempotencyKey).toBe('pay-test-key');
+    expect(mappedModel.requestHash).toBe('request-hash');
     expect(mappedModel.providerPaymentId).toBe('local-payment-1');
     expect(mappedModel.status).toBe('APPROVED');
     expect(mappedModel.approvedAt).toBe(updatedAt);

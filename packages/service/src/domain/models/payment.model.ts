@@ -6,6 +6,7 @@ export interface PaymentPersistenceProps {
   readonly memberId: string;
   readonly seatHoldId: string;
   readonly idempotencyKey: string;
+  readonly requestHash: string;
   readonly reservationId?: string;
   readonly provider: PaymentProviderType;
   readonly providerPaymentId?: string;
@@ -31,6 +32,7 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
     memberId: string;
     seatHoldId: string;
     idempotencyKey: string;
+    requestHash: string;
     provider: PaymentProviderType;
     amount: number;
     now: Date;
@@ -43,6 +45,7 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       memberId: params.memberId,
       seatHoldId: params.seatHoldId,
       idempotencyKey: params.idempotencyKey,
+      requestHash: params.requestHash,
       provider: params.provider,
       amount: params.amount,
       status: PaymentStatus.PENDING,
@@ -170,6 +173,10 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
 
   get idempotencyKey(): string {
     return this.etc.idempotencyKey;
+  }
+
+  get requestHash(): string {
+    return this.etc.requestHash;
   }
 
   get reservationId(): string | undefined {

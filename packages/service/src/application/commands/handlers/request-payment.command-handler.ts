@@ -13,6 +13,7 @@ import type {
   ClockPort,
   OutboxEventRepositoryPort,
   PaymentEventLogRepositoryPort,
+  PaymentRequestHasherPort,
   PaymentRepositoryPort,
   SeatHoldRepositoryPort,
   TransactionManagerPort,
@@ -25,6 +26,7 @@ export class RequestPaymentCommandHandler {
     private readonly seatHoldRepository: SeatHoldRepositoryPort,
     private readonly paymentEventLogRepository: PaymentEventLogRepositoryPort,
     private readonly outboxEventRepository: OutboxEventRepositoryPort,
+    private readonly paymentRequestHasher: PaymentRequestHasherPort,
     readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
@@ -32,17 +34,19 @@ export class RequestPaymentCommandHandler {
   @Transactional()
   async execute(command: RequestPaymentCommand): Promise<PaymentResultDto> {
     const now = this.clock.now();
+    const requestHash = this.paymentRequestHasher.hash({
+      memberId: command.memberId,
+      seatHoldId: command.seatHoldId,
+      provider: command.provider,
+      amount: command.amount,
+    });
     const existingIdempotentPayment = await this.paymentRepository.findByMemberIdAndIdempotencyKey(
       command.memberId,
       command.idempotencyKey,
     );
 
     if (existingIdempotentPayment !== undefined) {
-      if (
-        existingIdempotentPayment.seatHoldId !== command.seatHoldId ||
-        existingIdempotentPayment.provider !== command.provider ||
-        existingIdempotentPayment.amount !== command.amount
-      ) {
+      if (existingIdempotentPayment.requestHash !== requestHash) {
         throw new Error('PAYMENT_IDEMPOTENCY_KEY_CONFLICT');
       }
 
@@ -74,6 +78,7 @@ export class RequestPaymentCommandHandler {
         memberId: command.memberId,
         seatHoldId: command.seatHoldId,
         idempotencyKey: command.idempotencyKey,
+        requestHash,
         provider: command.provider,
         amount: command.amount,
         now,
@@ -87,7 +92,11 @@ export class RequestPaymentCommandHandler {
         nextStatus: payment.status,
         provider: payment.provider,
         amount: payment.amount,
-        metadata: { seatHoldId: payment.seatHoldId, idempotencyKey: payment.idempotencyKey },
+        metadata: {
+          seatHoldId: payment.seatHoldId,
+          idempotencyKey: payment.idempotencyKey,
+          requestHash: payment.requestHash,
+        },
         occurredAt: now,
       }),
     );
@@ -100,6 +109,7 @@ export class RequestPaymentCommandHandler {
         payload: {
           paymentId: payment.id,
           idempotencyKey: payment.idempotencyKey,
+          requestHash: payment.requestHash,
           provider: payment.provider,
           amount: payment.amount,
         },

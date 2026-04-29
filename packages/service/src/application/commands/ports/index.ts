@@ -6,6 +6,7 @@ export { PASSWORD_HASHER } from './password-hasher.port';
 export { PAYMENT_CALLBACK_VERIFIER } from './payment-callback-verifier.port';
 export { PAYMENT_EVENT_LOG_REPOSITORY } from './payment-event-log.repository.port';
 export { PAYMENT_GATEWAY } from './payment-gateway.port';
+export { PAYMENT_REQUEST_HASHER } from './payment-request-hasher.port';
 export { PAYMENT_REPOSITORY } from './payment.repository.port';
 export { PHONE_VERIFICATION_REPOSITORY } from './phone-verification.repository.port';
 export { RESERVATION_EVENT_REPOSITORY } from './reservation-event.repository.port';
@@ -32,6 +33,7 @@ export type {
   PaymentRefundRequestDto,
   PaymentRefundResultDto as PaymentGatewayRefundResultDto,
 } from './payment-gateway.port';
+export type { PaymentRequestHasherPort, PaymentRequestHashParams } from './payment-request-hasher.port';
 export type { PaymentRepositoryPort } from './payment.repository.port';
 export type { PhoneVerificationRepositoryPort } from './phone-verification.repository.port';
 export type { RepositoryPort } from './repository.port';

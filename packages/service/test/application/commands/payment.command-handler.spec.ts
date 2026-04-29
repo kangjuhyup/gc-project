@@ -20,6 +20,7 @@ import type {
   PaymentCallbackVerifierPort,
   PaymentEventLogRepositoryPort,
   PaymentGatewayPort,
+  PaymentRequestHasherPort,
   PaymentRepositoryPort,
   ReservationEventRepositoryPort,
   ReservationRepositoryPort,
@@ -34,6 +35,9 @@ const transactionManager: TransactionManagerPort = {
 };
 const clock: ClockPort = {
   now: vi.fn(() => now),
+};
+const paymentRequestHasher: PaymentRequestHasherPort = {
+  hash: vi.fn((params) => JSON.stringify(params)),
 };
 
 function heldSeatHold() {
@@ -51,6 +55,12 @@ function pendingPayment() {
     memberId: '1',
     seatHoldId: '9001',
     idempotencyKey: 'pay-test-key',
+    requestHash: paymentRequestHasher.hash({
+      memberId: '1',
+      seatHoldId: '9001',
+      provider: 'LOCAL',
+      amount: 15000,
+    }),
     provider: 'LOCAL',
     amount: 15000,
     now,
@@ -80,6 +90,7 @@ describe('RequestPaymentCommandHandler', () => {
       seatHoldRepository,
       paymentEventLogRepository,
       outboxEventRepository,
+      paymentRequestHasher,
       transactionManager,
       clock,
     );
@@ -121,6 +132,7 @@ describe('RequestPaymentCommandHandler', () => {
       seatHoldRepository,
       { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
       { save: vi.fn() } as unknown as OutboxEventRepositoryPort,
+      paymentRequestHasher,
       transactionManager,
       clock,
     );
@@ -152,6 +164,7 @@ describe('RequestPaymentCommandHandler', () => {
       { findById: vi.fn() } as unknown as SeatHoldRepositoryPort,
       { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
       { save: vi.fn() } as unknown as OutboxEventRepositoryPort,
+      paymentRequestHasher,
       transactionManager,
       clock,
     );
@@ -191,6 +204,7 @@ describe('RequestPaymentCommandHandler', () => {
       seatHoldRepository,
       { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
       { save: vi.fn() } as unknown as OutboxEventRepositoryPort,
+      paymentRequestHasher,
       transactionManager,
       clock,
     );
@@ -317,6 +331,12 @@ describe('RefundPaymentCommandHandler', () => {
       memberId: '1',
       seatHoldId: '9001',
       idempotencyKey: 'pay-test-key',
+      requestHash: paymentRequestHasher.hash({
+        memberId: '1',
+        seatHoldId: '9001',
+        provider: 'LOCAL',
+        amount: 15000,
+      }),
       provider: 'LOCAL',
       providerPaymentId: 'local-payment-7001',
       amount: 15000,

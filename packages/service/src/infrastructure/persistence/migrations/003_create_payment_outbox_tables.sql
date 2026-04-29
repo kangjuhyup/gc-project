@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS payment (
   member_id BIGINT NOT NULL REFERENCES member(id),
   seat_hold_id BIGINT NOT NULL REFERENCES seat_hold(id),
   idempotency_key VARCHAR(100) NOT NULL,
+  request_hash VARCHAR(64) NOT NULL,
   reservation_id BIGINT NULL REFERENCES reservation(id),
   provider VARCHAR(20) NOT NULL,
   provider_payment_id VARCHAR(100) NULL,
