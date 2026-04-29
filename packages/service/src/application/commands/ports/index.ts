@@ -1,6 +1,7 @@
 export { CLOCK } from './clock.port';
 export { LOG_EVENT_PUBLISHER } from './log-event-publisher.port';
 export { MEMBER_REPOSITORY } from './member.repository.port';
+export { OPAQUE_TOKEN_GENERATOR } from './opaque-token-generator.port';
 export { OUTBOX_EVENT_REPOSITORY } from './outbox-event.repository.port';
 export { PASSWORD_HASHER } from './password-hasher.port';
 export { PAYMENT_CALLBACK_VERIFIER } from './payment-callback-verifier.port';
@@ -16,6 +17,7 @@ export { SEAT_HOLD_CACHE } from './seat-hold-cache.port';
 export { SEAT_HOLD_LOCK } from './seat-hold-lock.port';
 export { SEAT_HOLD_REPOSITORY } from './seat-hold.repository.port';
 export { TEMPORARY_PASSWORD_GENERATOR } from './temporary-password-generator.port';
+export { TOKEN_REPOSITORY, TokenType } from './token.repository.port';
 export { TRANSACTION_MANAGER } from './transaction-manager.port';
 export { VERIFICATION_CODE_GENERATOR } from './verification-code-generator.port';
 export type { ClockPort } from './clock.port';
@@ -23,6 +25,7 @@ export type { LogEventPublisherPort } from './log-event-publisher.port';
 export type { MemberRepositoryPort } from './member.repository.port';
 export type { MovieImageRepositoryPort } from './movie-image.repository.port';
 export type { MovieRepositoryPort } from './movie.repository.port';
+export type { OpaqueTokenGeneratorPort } from './opaque-token-generator.port';
 export type { OutboxEventRepositoryPort } from './outbox-event.repository.port';
 export type { PasswordHasherPort } from './password-hasher.port';
 export type { PaymentCallbackVerifierPort } from './payment-callback-verifier.port';
@@ -48,5 +51,12 @@ export type { SeatHoldRepositoryPort } from './seat-hold.repository.port';
 export type { SeatRepositoryPort } from './seat.repository.port';
 export type { TheaterRepositoryPort } from './theater.repository.port';
 export type { TemporaryPasswordGeneratorPort } from './temporary-password-generator.port';
+export type {
+  FindTokenMemberParams,
+  RevokeMemberTokensParams,
+  SaveTokenParams,
+  TokenRepositoryPort,
+  TokenType as TokenTypeType,
+} from './token.repository.port';
 export type { TransactionManagerPort, TransactionPropagation } from './transaction-manager.port';
 export type { VerificationCodeGeneratorPort } from './verification-code-generator.port';

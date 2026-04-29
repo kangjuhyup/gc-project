@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import {
   CLOCK,
+  OPAQUE_TOKEN_GENERATOR,
   PASSWORD_HASHER,
   PAYMENT_REQUEST_HASHER,
   TEMPORARY_PASSWORD_GENERATOR,
@@ -8,6 +9,7 @@ import {
 } from '@application/commands/ports';
 import { NumericVerificationCodeGenerator } from './numeric-verification-code-generator';
 import { Pbkdf2PasswordHasher } from './pbkdf2-password-hasher';
+import { RandomOpaqueTokenGenerator } from './random-opaque-token-generator';
 import { RandomTemporaryPasswordGenerator } from './random-temporary-password-generator';
 import { Sha256PaymentRequestHasher } from './sha256-payment-request-hasher';
 import { SystemClock } from './system-clock';
@@ -15,6 +17,7 @@ import { SystemClock } from './system-clock';
 @Module({
   providers: [
     SystemClock,
+    RandomOpaqueTokenGenerator,
     NumericVerificationCodeGenerator,
     Pbkdf2PasswordHasher,
     RandomTemporaryPasswordGenerator,
@@ -22,6 +25,10 @@ import { SystemClock } from './system-clock';
     {
       provide: CLOCK,
       useExisting: SystemClock,
+    },
+    {
+      provide: OPAQUE_TOKEN_GENERATOR,
+      useExisting: RandomOpaqueTokenGenerator,
     },
     {
       provide: VERIFICATION_CODE_GENERATOR,
@@ -42,6 +49,7 @@ import { SystemClock } from './system-clock';
   ],
   exports: [
     CLOCK,
+    OPAQUE_TOKEN_GENERATOR,
     VERIFICATION_CODE_GENERATOR,
     PASSWORD_HASHER,
     TEMPORARY_PASSWORD_GENERATOR,
