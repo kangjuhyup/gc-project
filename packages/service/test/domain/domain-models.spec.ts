@@ -269,6 +269,49 @@ describe('domain persistence models', () => {
     expect(seatHold.expiresAt).toBe(expiresAt);
   });
 
+  it('내가 점유했고 결제 완료되지 않은 좌석 선점은 RELEASED 상태로 해제한다', () => {
+    const createdAt = new Date('2026-04-28T09:00:00.000Z');
+    const seatHold = SeatHoldModel.of({
+      screeningId: '1',
+      seatId: '2',
+      memberId: '3',
+      status: 'HELD',
+      expiresAt: new Date('2026-04-28T09:13:00.000Z'),
+    }).setPersistence('hold-1', createdAt, createdAt);
+
+    const released = seatHold.release({ memberId: '3' });
+
+    expect(released.id).toBe('hold-1');
+    expect(released.status).toBe('RELEASED');
+  });
+
+  it('다른 회원의 좌석 선점은 해제할 수 없다', () => {
+    const createdAt = new Date('2026-04-28T09:00:00.000Z');
+    const seatHold = SeatHoldModel.of({
+      screeningId: '1',
+      seatId: '2',
+      memberId: '3',
+      status: 'HELD',
+      expiresAt: new Date('2026-04-28T09:13:00.000Z'),
+    }).setPersistence('hold-1', createdAt, createdAt);
+
+    expect(() => seatHold.release({ memberId: '4' })).toThrow('SEAT_HOLD_FORBIDDEN');
+  });
+
+  it('결제 완료되어 예약과 연결된 좌석 선점은 해제할 수 없다', () => {
+    const createdAt = new Date('2026-04-28T09:00:00.000Z');
+    const seatHold = SeatHoldModel.of({
+      screeningId: '1',
+      seatId: '2',
+      memberId: '3',
+      reservationId: '4',
+      status: 'CONFIRMED',
+      expiresAt: new Date('2026-04-28T09:13:00.000Z'),
+    }).setPersistence('hold-1', createdAt, createdAt);
+
+    expect(() => seatHold.release({ memberId: '3' })).toThrow('SEAT_HOLD_PAYMENT_COMPLETED');
+  });
+
   it('휴대전화 인증을 발급한 뒤 올바른 코드로 인증을 완료한다', () => {
     const createdAt = new Date('2026-04-28T00:00:00.000Z');
     const now = new Date('2026-04-28T00:01:00.000Z');

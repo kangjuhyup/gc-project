@@ -8,5 +8,6 @@ export { ListScreeningSeatsRequestDto } from './list-screening-seats.request.dto
 export { ListTheatersRequestDto } from './list-theaters.request.dto';
 export { LoginMemberRequestDto } from './login-member.request.dto';
 export { RequestPhoneVerificationRequestDto } from './request-phone-verification.request.dto';
+export { ReleaseSeatHoldRequestDto } from './release-seat-hold.request.dto';
 export { SearchAddressesRequestDto } from './search-addresses.request.dto';
 export { SignupMemberRequestDto } from './signup-member.request.dto';

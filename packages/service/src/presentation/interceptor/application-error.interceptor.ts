@@ -35,14 +35,18 @@ const badRequestErrors = new Set([
   'PHONE_VERIFICATION_REQUIRED',
   'INVALID_SEAT_HOLD_REQUEST',
   'SEAT_NOT_FOUND',
+  'SEAT_HOLD_NOT_RELEASABLE',
 ]);
 
 const forbiddenErrors = new Set([
   'MEMBER_LOCKED',
+  'SEAT_HOLD_FORBIDDEN',
+  'SEAT_HOLD_PAYMENT_COMPLETED',
 ]);
 
 const notFoundErrors = new Set([
   'MEMBER_NOT_FOUND',
+  'SEAT_HOLD_NOT_FOUND',
 ]);
 
 @Injectable()

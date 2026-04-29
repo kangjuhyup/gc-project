@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -14,13 +16,15 @@ import {
   CreateSeatHoldCommand,
   ListScreeningSeatsQuery,
   QueryBus,
+  ReleaseSeatHoldCommand,
   ScreeningSeatListResultDto,
   SeatHoldCreatedDto,
+  SeatHoldReleasedDto,
 } from '@application';
 import { AuthenticatedUserDto } from '@application/query/dto';
 import { User } from '@presentation/decorator';
 import { MemberAuthGuard } from '@presentation/guard';
-import { CreateSeatHoldRequestDto, ListScreeningSeatsRequestDto } from '../dto';
+import { CreateSeatHoldRequestDto, ListScreeningSeatsRequestDto, ReleaseSeatHoldRequestDto } from '../dto';
 
 @ApiTags('Seats')
 @Controller()
@@ -67,6 +71,29 @@ export class SeatController {
         memberId: user.memberId,
         screeningId: request.screeningId,
         seatIds: request.seatIds,
+      }),
+    );
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '영화 좌석 임시점유 해제',
+    description:
+      '인증된 회원이 직접 점유한 좌석 임시점유를 해제합니다. 결제가 완료되어 예약과 연결된 점유는 해제할 수 없습니다.',
+  })
+  @ApiOkResponse({ type: SeatHoldReleasedDto, description: '좌석 임시점유 해제 결과' })
+  @ApiBadRequestResponse({ description: '좌석 임시점유가 이미 해제되었거나 해제할 수 없는 상태인 경우' })
+  @ApiForbiddenResponse({ description: '다른 회원이 점유한 좌석 임시점유인 경우' })
+  @ApiNotFoundResponse({ description: '좌석 임시점유를 찾을 수 없는 경우' })
+  @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
+  @UseGuards(MemberAuthGuard)
+  @Delete('/seat-holds/:holdId')
+  releaseHold(@Param() params: ReleaseSeatHoldRequestDto, @User() user: AuthenticatedUserDto) {
+    const request = ReleaseSeatHoldRequestDto.of(params);
+    return this.commandBus.execute(
+      ReleaseSeatHoldCommand.of({
+        holdId: request.holdId,
+        memberId: user.memberId,
       }),
     );
   }

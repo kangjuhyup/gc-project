@@ -9,7 +9,9 @@ export {
   PhoneVerificationConfirmedDto,
   PhoneVerificationIssuedDto,
   RequestPhoneVerificationCommand,
+  ReleaseSeatHoldCommand,
   SeatHoldCreatedDto,
+  SeatHoldReleasedDto,
   SignupMemberCommand,
   SignupMemberResultDto,
   TemporaryPasswordIssuedDto,
@@ -25,6 +27,7 @@ export {
   IssueTemporaryPasswordCommandHandler,
   LoginMemberCommandHandler,
   RequestPhoneVerificationCommandHandler,
+  ReleaseSeatHoldCommandHandler,
   SignupMemberCommandHandler,
 } from './commands/handlers';
 export {

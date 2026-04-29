@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CreateSeatHoldCommand } from '@application/commands/dto';
+import { CreateSeatHoldCommand, ReleaseSeatHoldCommand } from '@application/commands/dto';
 import { AuthenticatedUserDto } from '@application/query/dto';
 import { ListScreeningSeatsQuery } from '@application/query/dto';
 import { SeatController } from '@presentation/http';
@@ -47,6 +47,29 @@ describe('SeatController', () => {
         memberId: '1',
         screeningId: '101',
         seatIds: ['1001'],
+      }),
+    );
+    expect(result).toBe(expected);
+  });
+
+  it('인증된 회원의 좌석 임시점유 해제 요청을 command bus에 위임한다', async () => {
+    const expected = {
+      holdId: '9001',
+      released: true,
+    };
+    const queryBus = { execute: vi.fn() };
+    const commandBus = { execute: vi.fn().mockResolvedValue(expected) };
+    const controller = new SeatController(queryBus as never, commandBus as never);
+
+    const result = await controller.releaseHold(
+      { holdId: '9001' } as never,
+      AuthenticatedUserDto.of({ memberId: '1', userId: 'movie_user' }),
+    );
+
+    expect(commandBus.execute).toHaveBeenCalledWith(
+      ReleaseSeatHoldCommand.of({
+        holdId: '9001',
+        memberId: '1',
       }),
     );
     expect(result).toBe(expected);

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CreateSeatHoldCommand } from '@application/commands/dto';
-import { CreateSeatHoldCommandHandler } from '@application/commands/handlers';
+import { SeatHoldModel } from '@domain';
+import { CreateSeatHoldCommand, ReleaseSeatHoldCommand } from '@application/commands/dto';
+import { CreateSeatHoldCommandHandler, ReleaseSeatHoldCommandHandler } from '@application/commands/handlers';
 import type { ClockPort, SeatHoldCachePort, SeatHoldLockPort, SeatHoldRepositoryPort } from '@application/commands/ports';
 
 describe('CreateSeatHoldCommandHandler', () => {
@@ -157,5 +158,100 @@ describe('CreateSeatHoldCommandHandler', () => {
     expect(repository.findUnavailableSeatIds).not.toHaveBeenCalled();
     expect(cache.hold).not.toHaveBeenCalled();
     expect(lock.release).not.toHaveBeenCalled();
+  });
+});
+
+describe('ReleaseSeatHoldCommandHandler', () => {
+  it('내가 점유했고 결제 완료되지 않은 좌석 선점을 DB와 Redis에서 해제한다', async () => {
+    const createdAt = new Date('2026-04-29T00:00:00.000Z');
+    const hold = SeatHoldModel.of({
+      screeningId: '101',
+      seatId: '1001',
+      memberId: '1',
+      status: 'HELD',
+      expiresAt: new Date('2026-04-29T00:13:00.000Z'),
+    }).setPersistence('hold-1', createdAt, createdAt);
+    const repository = {
+      save: vi.fn(async (model) => model),
+      findById: vi.fn().mockResolvedValue(hold),
+      saveMany: vi.fn(),
+      findActiveHold: vi.fn(),
+      findUnavailableSeatIds: vi.fn(),
+      findSeatIdsInScreening: vi.fn(),
+    } satisfies SeatHoldRepositoryPort;
+    const cache = {
+      hold: vi.fn(),
+      release: vi.fn(),
+    } satisfies SeatHoldCachePort;
+    const handler = new ReleaseSeatHoldCommandHandler(repository, cache);
+
+    const result = await handler.execute(ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '1' }));
+
+    expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'RELEASED' }));
+    expect(cache.release).toHaveBeenCalledWith('101', '1001');
+    expect(result).toEqual({ holdId: 'hold-1', released: true });
+  });
+
+  it('다른 회원이 점유한 좌석 선점이면 해제를 거부한다', async () => {
+    const createdAt = new Date('2026-04-29T00:00:00.000Z');
+    const hold = SeatHoldModel.of({
+      screeningId: '101',
+      seatId: '1001',
+      memberId: '1',
+      status: 'HELD',
+      expiresAt: new Date('2026-04-29T00:13:00.000Z'),
+    }).setPersistence('hold-1', createdAt, createdAt);
+    const repository = {
+      save: vi.fn(),
+      findById: vi.fn().mockResolvedValue(hold),
+      saveMany: vi.fn(),
+      findActiveHold: vi.fn(),
+      findUnavailableSeatIds: vi.fn(),
+      findSeatIdsInScreening: vi.fn(),
+    } satisfies SeatHoldRepositoryPort;
+    const cache = {
+      hold: vi.fn(),
+      release: vi.fn(),
+    } satisfies SeatHoldCachePort;
+    const handler = new ReleaseSeatHoldCommandHandler(repository, cache);
+
+    await expect(
+      handler.execute(ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '2' })),
+    ).rejects.toThrow('SEAT_HOLD_FORBIDDEN');
+
+    expect(repository.save).not.toHaveBeenCalled();
+    expect(cache.release).not.toHaveBeenCalled();
+  });
+
+  it('결제가 완료되어 예약과 연결된 좌석 선점이면 해제를 거부한다', async () => {
+    const createdAt = new Date('2026-04-29T00:00:00.000Z');
+    const hold = SeatHoldModel.of({
+      screeningId: '101',
+      seatId: '1001',
+      memberId: '1',
+      reservationId: 'reservation-1',
+      status: 'CONFIRMED',
+      expiresAt: new Date('2026-04-29T00:13:00.000Z'),
+    }).setPersistence('hold-1', createdAt, createdAt);
+    const repository = {
+      save: vi.fn(),
+      findById: vi.fn().mockResolvedValue(hold),
+      saveMany: vi.fn(),
+      findActiveHold: vi.fn(),
+      findUnavailableSeatIds: vi.fn(),
+      findSeatIdsInScreening: vi.fn(),
+    } satisfies SeatHoldRepositoryPort;
+    const cache = {
+      hold: vi.fn(),
+      release: vi.fn(),
+    } satisfies SeatHoldCachePort;
+    const handler = new ReleaseSeatHoldCommandHandler(repository, cache);
+
+    await expect(
+      handler.execute(ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '1' })),
+    ).rejects.toThrow('SEAT_HOLD_PAYMENT_COMPLETED');
+
+    expect(repository.save).not.toHaveBeenCalled();
+    expect(cache.release).not.toHaveBeenCalled();
   });
 });

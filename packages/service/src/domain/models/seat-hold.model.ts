@@ -1,5 +1,5 @@
 import { PersistenceModel } from '@domain/shared';
-import type { SeatHoldStatusType } from '@domain/property';
+import { SeatHoldStatus, type SeatHoldStatusType } from '@domain/property';
 
 export interface SeatHoldPersistenceProps {
   readonly screeningId: string;
@@ -17,6 +17,28 @@ export class SeatHoldModel extends PersistenceModel<string, SeatHoldPersistenceP
 
   static of(props: SeatHoldPersistenceProps): SeatHoldModel {
     return new SeatHoldModel(props);
+  }
+
+  release(params: { memberId: string }): SeatHoldModel {
+    if (this.memberId !== params.memberId) {
+      throw new Error('SEAT_HOLD_FORBIDDEN');
+    }
+
+    if (this.reservationId !== undefined || this.status === SeatHoldStatus.CONFIRMED) {
+      throw new Error('SEAT_HOLD_PAYMENT_COMPLETED');
+    }
+
+    if (this.status !== SeatHoldStatus.HELD) {
+      throw new Error('SEAT_HOLD_NOT_RELEASABLE');
+    }
+
+    return new SeatHoldModel(
+      {
+        ...this.etc,
+        status: SeatHoldStatus.RELEASED,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, this.updatedAt);
   }
 
   get screeningId(): string {

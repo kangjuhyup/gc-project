@@ -65,11 +65,27 @@ describe('ApplicationErrorInterceptor', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
+  it('다른 회원의 좌석 선점 해제 에러를 forbidden 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('SEAT_HOLD_FORBIDDEN')) as never)),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
   it('회원 없음 에러를 not found 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
       lastValueFrom(interceptor.intercept({} as never, next(new Error('MEMBER_NOT_FOUND')) as never)),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('좌석 선점 없음 에러를 not found 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('SEAT_HOLD_NOT_FOUND')) as never)),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
