@@ -1,9 +1,11 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import {
   ConfirmPhoneVerificationCommand,
   PhoneVerificationConfirmedDto,
 } from '../dto';
 import type { ClockPort, PhoneVerificationRepositoryPort } from '../ports';
 
+@Logging
 export class ConfirmPhoneVerificationCommandHandler {
   constructor(
     private readonly phoneVerificationRepository: PhoneVerificationRepositoryPort,

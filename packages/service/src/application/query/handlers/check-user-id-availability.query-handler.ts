@@ -1,9 +1,11 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import {
   CheckUserIdAvailabilityQuery,
   CheckUserIdAvailabilityResultDto,
 } from '../dto';
 import type { MemberQueryPort } from '../ports';
 
+@Logging
 export class CheckUserIdAvailabilityQueryHandler {
   constructor(private readonly memberQuery: MemberQueryPort) {}
 

@@ -1,7 +1,9 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { LoginFailedLogEvent, LoginSucceededLogEvent, MemberStatus } from '@domain';
 import { LoginMemberCommand, LoginMemberResultDto } from '../dto';
 import type { ClockPort, LogEventPublisherPort, MemberRepositoryPort, PasswordHasherPort } from '../ports';
 
+@Logging
 export class LoginMemberCommandHandler {
   constructor(
     private readonly memberRepository: MemberRepositoryPort,

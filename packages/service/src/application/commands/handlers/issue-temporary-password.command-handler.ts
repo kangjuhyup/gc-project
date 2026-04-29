@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { IssueTemporaryPasswordCommand, TemporaryPasswordIssuedDto } from '../dto';
 import type {
   ClockPort,
@@ -7,6 +8,7 @@ import type {
   TemporaryPasswordGeneratorPort,
 } from '../ports';
 
+@Logging
 export class IssueTemporaryPasswordCommandHandler {
   constructor(
     private readonly memberRepository: MemberRepositoryPort,

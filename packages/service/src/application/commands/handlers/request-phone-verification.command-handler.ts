@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { PhoneVerificationModel } from '@domain';
 import {
   PhoneVerificationIssuedDto,
@@ -11,6 +12,7 @@ import type {
 
 const VERIFICATION_TTL_MS = 5 * 60 * 1000;
 
+@Logging
 export class RequestPhoneVerificationCommandHandler {
   constructor(
     private readonly phoneVerificationRepository: PhoneVerificationRepositoryPort,

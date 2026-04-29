@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { SeatHoldModel, SeatHoldStatus } from '@domain';
 import { CreateSeatHoldCommand, SeatHoldCreatedDto } from '../dto';
 import type { ClockPort, SeatHoldCachePort, SeatHoldLock, SeatHoldLockPort, SeatHoldRepositoryPort } from '../ports';
@@ -6,6 +7,7 @@ const RESPONSE_HOLD_TTL_SECONDS = 10 * 60;
 const ACTUAL_HOLD_TTL_SECONDS = 13 * 60;
 const SEAT_HOLD_LOCK_TTL_MILLISECONDS = 3000;
 
+@Logging
 export class CreateSeatHoldCommandHandler {
   constructor(
     private readonly seatHoldRepository: SeatHoldRepositoryPort,

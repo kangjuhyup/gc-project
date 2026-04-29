@@ -1,7 +1,9 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { MemberPasswordChangedLogEvent } from '@domain';
 import { ChangeMemberPasswordCommand, MemberPasswordChangedDto } from '../dto';
 import type { ClockPort, LogEventPublisherPort, MemberRepositoryPort, PasswordHasherPort } from '../ports';
 
+@Logging
 export class ChangeMemberPasswordCommandHandler {
   constructor(
     private readonly memberRepository: MemberRepositoryPort,

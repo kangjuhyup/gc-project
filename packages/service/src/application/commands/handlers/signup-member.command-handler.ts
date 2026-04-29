@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import { MemberModel, MemberSignedUpLogEvent } from '@domain';
 import { SignupMemberCommand, SignupMemberResultDto } from '../dto';
 import type {
@@ -8,6 +9,7 @@ import type {
   PhoneVerificationRepositoryPort,
 } from '../ports';
 
+@Logging
 export class SignupMemberCommandHandler {
   constructor(
     private readonly memberRepository: MemberRepositoryPort,
