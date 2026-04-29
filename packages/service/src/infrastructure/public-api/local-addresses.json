@@ -1,0 +1,47 @@
+[
+  {
+    "roadAddress": "서울특별시 강남구 테헤란로 427",
+    "roadAddressPart1": "서울특별시 강남구 테헤란로 427",
+    "roadAddressPart2": "",
+    "jibunAddress": "서울특별시 강남구 삼성동 143-48",
+    "englishAddress": "427, Teheran-ro, Gangnam-gu, Seoul",
+    "zipCode": "06159",
+    "administrativeCode": "1168010500",
+    "roadNameCode": "116803122001",
+    "buildingManagementNumber": "1168010500101430048000001",
+    "buildingName": "GC타워",
+    "city": "서울특별시",
+    "district": "강남구",
+    "town": "삼성동"
+  },
+  {
+    "roadAddress": "서울특별시 강남구 테헤란로 123",
+    "roadAddressPart1": "서울특별시 강남구 테헤란로 123",
+    "roadAddressPart2": "",
+    "jibunAddress": "서울특별시 강남구 역삼동 123",
+    "englishAddress": "123, Teheran-ro, Gangnam-gu, Seoul",
+    "zipCode": "06234",
+    "administrativeCode": "1168010100",
+    "roadNameCode": "116803122001",
+    "buildingManagementNumber": "1168010100101230000000001",
+    "buildingName": "테스트빌딩",
+    "city": "서울특별시",
+    "district": "강남구",
+    "town": "역삼동"
+  },
+  {
+    "roadAddress": "서울특별시 서초구 강남대로 465",
+    "roadAddressPart1": "서울특별시 서초구 강남대로 465",
+    "roadAddressPart2": "",
+    "jibunAddress": "서울특별시 서초구 서초동 1303-37",
+    "englishAddress": "465, Gangnam-daero, Seocho-gu, Seoul",
+    "zipCode": "06611",
+    "administrativeCode": "1165010800",
+    "roadNameCode": "116503121006",
+    "buildingManagementNumber": "1165010800113030037000001",
+    "buildingName": "교보타워",
+    "city": "서울특별시",
+    "district": "서초구",
+    "town": "서초동"
+  }
+]

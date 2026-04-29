@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LogLevel } from '@kangjuhyup/rvlog';
 import { RvlogNestModule } from '@kangjuhyup/rvlog-nest';
 import {
@@ -62,7 +62,7 @@ import {
 } from '@infrastructure/crypto';
 import { NestLogEventPublisher } from '@infrastructure/logging';
 import { PersistenceModule } from '@infrastructure/persistence';
-import { JusoAddressSearchAdapter } from '@infrastructure/public-api';
+import { JusoAddressSearchAdapter, LocalAddressSearchAdapter } from '@infrastructure/public-api';
 import { MemberIdAuthorizationVerifier, RedisModule, RedisSeatHoldCache, RedisSeatHoldLock } from '@infrastructure';
 import { AddressController, HealthController, MemberController, MovieController, SeatController, TheaterController } from '@presentation/http';
 
@@ -99,6 +99,7 @@ import { AddressController, HealthController, MemberController, MovieController,
     RandomTemporaryPasswordGenerator,
     NestLogEventPublisher,
     JusoAddressSearchAdapter,
+    LocalAddressSearchAdapter,
     RedisSeatHoldCache,
     RedisSeatHoldLock,
     {
@@ -136,7 +137,15 @@ import { AddressController, HealthController, MemberController, MovieController,
     },
     {
       provide: ADDRESS_SEARCH,
-      useExisting: JusoAddressSearchAdapter,
+      useFactory: (
+        configService: ConfigService,
+        jusoAddressSearchAdapter: JusoAddressSearchAdapter,
+        localAddressSearchAdapter: LocalAddressSearchAdapter,
+      ): AddressSearchPort =>
+        configService.get<string>('ADDRESS_SEARCH_ADAPTER') === 'local'
+          ? localAddressSearchAdapter
+          : jusoAddressSearchAdapter,
+      inject: [ConfigService, JusoAddressSearchAdapter, LocalAddressSearchAdapter],
     },
     {
       provide: CheckUserIdAvailabilityQueryHandler,
