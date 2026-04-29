@@ -3,7 +3,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import type { PaymentEventLogModel } from '@domain';
 import type { PaymentEventLogRepositoryPort } from '@application/commands/ports';
-import { PaymentEventLogEntity } from '../entities';
+import { PaymentEntity, PaymentEventLogEntity } from '../entities';
 import { PersistenceMapper } from '../mappers';
 
 @Injectable()
@@ -13,8 +13,8 @@ export class MikroOrmPaymentEventLogRepository implements PaymentEventLogReposit
 
   async save(model: PaymentEventLogModel): Promise<PaymentEventLogModel> {
     const entity = PersistenceMapper.paymentEventLogToEntity(model);
-    this.entityManager.persist(entity);
-    await this.entityManager.flush();
+    entity.payment = this.entityManager.getReference(PaymentEntity, entity.payment.id);
+    entity.id = String(await this.entityManager.insert(PaymentEventLogEntity, entity));
     return PersistenceMapper.paymentEventLogToDomain(entity);
   }
 

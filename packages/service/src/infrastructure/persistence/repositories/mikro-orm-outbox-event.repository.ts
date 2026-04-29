@@ -13,8 +13,7 @@ export class MikroOrmOutboxEventRepository implements OutboxEventRepositoryPort 
 
   async save(model: OutboxEventModel): Promise<OutboxEventModel> {
     const entity = PersistenceMapper.outboxEventToEntity(model);
-    this.entityManager.persist(entity);
-    await this.entityManager.flush();
+    entity.id = String(await this.entityManager.insert(OutboxEventEntity, entity));
     return PersistenceMapper.outboxEventToDomain(entity);
   }
 

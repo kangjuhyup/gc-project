@@ -127,6 +127,7 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
             m.running_time,
             m.release_date,
             m.poster_url,
+            mi.url,
             m.description,
             s.id,
             t.id,

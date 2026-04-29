@@ -14,9 +14,17 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
 
   async save(model: MemberModel): Promise<MemberModel> {
     const entity = PersistenceMapper.memberToEntity(model);
-    this.entityManager.persist(entity);
-    await this.entityManager.flush();
-    return PersistenceMapper.memberToDomain(entity);
+    const existing = model.id === undefined
+      ? undefined
+      : await this.entityManager.findOne(MemberEntity, { id: model.id });
+
+    if (existing === undefined || existing === null) {
+      entity.id = String(await this.entityManager.insert(MemberEntity, entity));
+      return PersistenceMapper.memberToDomain(entity);
+    }
+
+    Object.assign(existing, entity);
+    return PersistenceMapper.memberToDomain(existing);
   }
 
   async findById(id: string): Promise<MemberModel | undefined> {

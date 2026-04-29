@@ -3,7 +3,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import type { ReservationSeatModel } from '@domain';
 import type { ReservationSeatRepositoryPort } from '@application/commands/ports';
-import { ReservationSeatEntity } from '../entities';
+import { ReservationEntity, ReservationSeatEntity, ScreeningEntity, SeatEntity } from '../entities';
 import { PersistenceMapper } from '../mappers';
 
 @Injectable()
@@ -13,8 +13,10 @@ export class MikroOrmReservationSeatRepository implements ReservationSeatReposit
 
   async save(model: ReservationSeatModel): Promise<ReservationSeatModel> {
     const entity = PersistenceMapper.reservationSeatToEntity(model);
-    this.entityManager.persist(entity);
-    await this.entityManager.flush();
+    entity.reservation = this.entityManager.getReference(ReservationEntity, entity.reservation.id);
+    entity.screening = this.entityManager.getReference(ScreeningEntity, entity.screening.id);
+    entity.seat = this.entityManager.getReference(SeatEntity, entity.seat.id);
+    entity.id = String(await this.entityManager.insert(ReservationSeatEntity, entity));
     return PersistenceMapper.reservationSeatToDomain(entity);
   }
 

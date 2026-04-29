@@ -13,9 +13,17 @@ export class MikroOrmPhoneVerificationRepository implements PhoneVerificationRep
 
   async save(model: PhoneVerificationModel): Promise<PhoneVerificationModel> {
     const entity = PersistenceMapper.phoneVerificationToEntity(model);
-    this.entityManager.persist(entity);
-    await this.entityManager.flush();
-    return PersistenceMapper.phoneVerificationToDomain(entity);
+    const existing = model.id === undefined
+      ? undefined
+      : await this.entityManager.findOne(PhoneVerificationEntity, { id: model.id });
+
+    if (existing === undefined || existing === null) {
+      entity.id = String(await this.entityManager.insert(PhoneVerificationEntity, entity));
+      return PersistenceMapper.phoneVerificationToDomain(entity);
+    }
+
+    Object.assign(existing, entity);
+    return PersistenceMapper.phoneVerificationToDomain(existing);
   }
 
   async findById(id: string): Promise<PhoneVerificationModel | undefined> {

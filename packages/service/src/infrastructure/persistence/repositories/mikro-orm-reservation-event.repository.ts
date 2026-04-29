@@ -3,7 +3,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import type { ReservationEventModel } from '@domain';
 import type { ReservationEventRepositoryPort } from '@application/commands/ports';
-import { ReservationEventEntity } from '../entities';
+import { ReservationEntity, ReservationEventEntity } from '../entities';
 import { PersistenceMapper } from '../mappers';
 
 @Injectable()
@@ -13,8 +13,8 @@ export class MikroOrmReservationEventRepository implements ReservationEventRepos
 
   async save(model: ReservationEventModel): Promise<ReservationEventModel> {
     const entity = PersistenceMapper.reservationEventToEntity(model);
-    this.entityManager.persist(entity);
-    await this.entityManager.flush();
+    entity.reservation = this.entityManager.getReference(ReservationEntity, entity.reservation.id);
+    entity.id = String(await this.entityManager.insert(ReservationEventEntity, entity));
     return PersistenceMapper.reservationEventToDomain(entity);
   }
 

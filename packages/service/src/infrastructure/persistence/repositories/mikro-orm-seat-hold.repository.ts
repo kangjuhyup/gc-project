@@ -3,7 +3,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import type { SeatHoldModel } from '@domain';
 import type { SeatHoldRepositoryPort } from '@application/commands/ports';
-import { SeatHoldEntity } from '../entities';
+import { MemberEntity, ReservationEntity, ScreeningEntity, SeatEntity, SeatHoldEntity } from '../entities';
 import { PersistenceMapper } from '../mappers';
 
 interface SeatIdRow {
@@ -26,9 +26,25 @@ export class MikroOrmSeatHoldRepository implements SeatHoldRepositoryPort {
   }
 
   async saveMany(models: SeatHoldModel[]): Promise<SeatHoldModel[]> {
-    const entities = models.map((model) => PersistenceMapper.seatHoldToEntity(model));
-    this.entityManager.persist(entities);
-    await this.entityManager.flush();
+    const entities = [];
+
+    for (const model of models) {
+      const entity = PersistenceMapper.seatHoldToEntity(model);
+      this.applyReferences(entity);
+      const existing = model.id === undefined
+        ? undefined
+        : await this.entityManager.findOne(SeatHoldEntity, { id: model.id });
+
+      if (existing === undefined || existing === null) {
+        entity.id = String(await this.entityManager.insert(SeatHoldEntity, entity));
+        entities.push(entity);
+        continue;
+      }
+
+      Object.assign(existing, entity);
+      entities.push(existing);
+    }
+
     return entities.map((entity) => PersistenceMapper.seatHoldToDomain(entity));
   }
 
@@ -115,5 +131,14 @@ export class MikroOrmSeatHoldRepository implements SeatHoldRepositoryPort {
 
   private placeholders(values: string[]): string {
     return values.map(() => '?').join(', ');
+  }
+
+  private applyReferences(entity: SeatHoldEntity): void {
+    entity.screening = this.entityManager.getReference(ScreeningEntity, entity.screening.id);
+    entity.seat = this.entityManager.getReference(SeatEntity, entity.seat.id);
+    entity.member = this.entityManager.getReference(MemberEntity, entity.member.id);
+    entity.reservation = entity.reservation === undefined
+      ? undefined
+      : this.entityManager.getReference(ReservationEntity, entity.reservation.id);
   }
 }

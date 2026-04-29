@@ -6,7 +6,7 @@ import type { PaymentModel } from '@domain';
 import { PaymentResultDto } from '@application/commands/dto';
 import type { PaymentQueryPort } from '@application/query/ports';
 import type { PaymentRepositoryPort } from '@application/commands/ports';
-import { PaymentEntity } from '../entities';
+import { MemberEntity, PaymentEntity, ReservationEntity, SeatHoldEntity } from '../entities';
 import { PersistenceMapper } from '../mappers';
 
 @Injectable()
@@ -16,9 +16,18 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
 
   async save(model: PaymentModel): Promise<PaymentModel> {
     const entity = PersistenceMapper.paymentToEntity(model);
-    this.entityManager.persist(entity);
-    await this.entityManager.flush();
-    return PersistenceMapper.paymentToDomain(entity);
+    this.applyReferences(entity);
+    const existing = model.id === undefined
+      ? undefined
+      : await this.entityManager.findOne(PaymentEntity, { id: model.id });
+
+    if (existing === undefined || existing === null) {
+      entity.id = String(await this.entityManager.insert(PaymentEntity, entity));
+      return PersistenceMapper.paymentToDomain(entity);
+    }
+
+    Object.assign(existing, entity);
+    return PersistenceMapper.paymentToDomain(existing);
   }
 
   async findById(id: string): Promise<PaymentModel | undefined> {
@@ -67,5 +76,13 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
       status: payment.status,
       amount: payment.amount,
     });
+  }
+
+  private applyReferences(entity: PaymentEntity): void {
+    entity.member = this.entityManager.getReference(MemberEntity, entity.member.id);
+    entity.seatHold = this.entityManager.getReference(SeatHoldEntity, entity.seatHold.id);
+    entity.reservation = entity.reservation === undefined
+      ? undefined
+      : this.entityManager.getReference(ReservationEntity, entity.reservation.id);
   }
 }
