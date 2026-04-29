@@ -15,5 +15,8 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     setupFiles: ['./test/setup.ts'],
+    coverage: {
+      exclude: ['src/lib/mockApi.ts'],
+    },
   },
 });
