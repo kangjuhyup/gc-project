@@ -1,3 +1,4 @@
+export { ApplicationModule } from './application.module';
 export {
   ChangeMemberPasswordCommand,
   ConfirmPhoneVerificationCommand,
@@ -17,8 +18,10 @@ export {
   TemporaryPasswordIssuedDto,
 } from './commands/dto';
 export { CommandBus } from './commands/command-bus';
+export { CommandModule } from './commands/command.module';
 export type { CommandHandler } from './commands/command-bus';
 export { QueryBus } from './query/query-bus';
+export { QueryModule } from './query/query.module';
 export type { QueryHandler } from './query/query-bus';
 export {
   ChangeMemberPasswordCommandHandler,
