@@ -1,0 +1,161 @@
+import { describe, expect, it, vi } from 'vitest';
+import { CreateSeatHoldCommand } from '@application/commands/dto';
+import { CreateSeatHoldCommandHandler } from '@application/commands/handlers';
+import type { ClockPort, SeatHoldCachePort, SeatHoldLockPort, SeatHoldRepositoryPort } from '@application/commands/ports';
+
+describe('CreateSeatHoldCommandHandler', () => {
+  it('좌석 임시점유 시 DB에는 13분 만료 상태를 저장하고 응답 TTL은 10분으로 반환한다', async () => {
+    const now = new Date('2026-04-29T00:00:00.000Z');
+    const clock = { now: vi.fn(() => now) } satisfies ClockPort;
+    const repository = {
+      save: vi.fn(),
+      findById: vi.fn(),
+      saveMany: vi.fn(async (holds) =>
+        holds.map((hold, index) => hold.setPersistence(`hold-${index + 1}`, now, now)),
+      ),
+      findActiveHold: vi.fn(),
+      findUnavailableSeatIds: vi.fn().mockResolvedValue([]),
+      findSeatIdsInScreening: vi.fn().mockResolvedValue(['1001', '1002']),
+    } satisfies SeatHoldRepositoryPort;
+    const cache = {
+      hold: vi.fn().mockResolvedValue(true),
+      release: vi.fn(),
+    } satisfies SeatHoldCachePort;
+    const lock = {
+      acquire: vi.fn().mockResolvedValue({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' }),
+      release: vi.fn(),
+    } satisfies SeatHoldLockPort;
+    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, clock);
+
+    const result = await handler.execute(
+      CreateSeatHoldCommand.of({
+        memberId: '1',
+        screeningId: '101',
+        seatIds: ['1001', '1002'],
+      }),
+    );
+
+    expect(cache.hold).toHaveBeenCalledTimes(2);
+    expect(lock.acquire).toHaveBeenCalledWith({
+      screeningId: '101',
+      seatIds: ['1001', '1002'],
+      ttlMilliseconds: 3000,
+    });
+    expect(repository.findUnavailableSeatIds).toHaveBeenCalledOnce();
+    expect(cache.hold.mock.calls[0][1]).toBe(13 * 60);
+    expect(lock.release).toHaveBeenCalledWith({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' });
+    expect(repository.saveMany.mock.calls[0][0][0].expiresAt).toEqual(new Date('2026-04-29T00:13:00.000Z'));
+    expect(result).toEqual({
+      screeningId: '101',
+      seatIds: ['1001', '1002'],
+      holdIds: ['hold-1', 'hold-2'],
+      ttlSeconds: 10 * 60,
+      expiresAt: new Date('2026-04-29T00:10:00.000Z'),
+    });
+  });
+
+  it('이미 점유된 좌석이 있으면 Redis와 DB 저장을 시도하지 않는다', async () => {
+    const now = new Date('2026-04-29T00:00:00.000Z');
+    const repository = {
+      save: vi.fn(),
+      findById: vi.fn(),
+      saveMany: vi.fn(),
+      findActiveHold: vi.fn(),
+      findUnavailableSeatIds: vi.fn().mockResolvedValue(['1001']),
+      findSeatIdsInScreening: vi.fn().mockResolvedValue(['1001']),
+    } satisfies SeatHoldRepositoryPort;
+    const cache = {
+      hold: vi.fn(),
+      release: vi.fn(),
+    } satisfies SeatHoldCachePort;
+    const lock = {
+      acquire: vi.fn().mockResolvedValue({ screeningId: '101', seatIds: ['1001'], token: 'lock-token' }),
+      release: vi.fn(),
+    } satisfies SeatHoldLockPort;
+    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, { now: vi.fn(() => now) });
+
+    await expect(
+      handler.execute(
+        CreateSeatHoldCommand.of({
+          memberId: '1',
+          screeningId: '101',
+          seatIds: ['1001'],
+        }),
+      ),
+    ).rejects.toThrow('SEAT_ALREADY_HELD');
+
+    expect(cache.hold).not.toHaveBeenCalled();
+    expect(repository.saveMany).not.toHaveBeenCalled();
+    expect(lock.release).toHaveBeenCalledWith({ screeningId: '101', seatIds: ['1001'], token: 'lock-token' });
+  });
+
+  it('일부 Redis 임시점유가 실패하면 이미 잡은 Redis 키를 해제한다', async () => {
+    const now = new Date('2026-04-29T00:00:00.000Z');
+    const repository = {
+      save: vi.fn(),
+      findById: vi.fn(),
+      saveMany: vi.fn(),
+      findActiveHold: vi.fn(),
+      findUnavailableSeatIds: vi.fn().mockResolvedValue([]),
+      findSeatIdsInScreening: vi.fn().mockResolvedValue(['1001', '1002']),
+    } satisfies SeatHoldRepositoryPort;
+    const cache = {
+      hold: vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false),
+      release: vi.fn(),
+    } satisfies SeatHoldCachePort;
+    const lock = {
+      acquire: vi.fn().mockResolvedValue({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' }),
+      release: vi.fn(),
+    } satisfies SeatHoldLockPort;
+    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, { now: vi.fn(() => now) });
+
+    await expect(
+      handler.execute(
+        CreateSeatHoldCommand.of({
+          memberId: '1',
+          screeningId: '101',
+          seatIds: ['1001', '1002'],
+        }),
+      ),
+    ).rejects.toThrow('SEAT_ALREADY_HELD');
+
+    expect(cache.release).toHaveBeenCalledWith('101', '1001');
+    expect(lock.release).toHaveBeenCalledWith({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' });
+    expect(repository.saveMany).not.toHaveBeenCalled();
+  });
+
+  it('RedLock 획득에 실패하면 기존 점유 확인과 저장을 진행하지 않는다', async () => {
+    const now = new Date('2026-04-29T00:00:00.000Z');
+    const repository = {
+      save: vi.fn(),
+      findById: vi.fn(),
+      saveMany: vi.fn(),
+      findActiveHold: vi.fn(),
+      findUnavailableSeatIds: vi.fn(),
+      findSeatIdsInScreening: vi.fn(),
+    } satisfies SeatHoldRepositoryPort;
+    const cache = {
+      hold: vi.fn(),
+      release: vi.fn(),
+    } satisfies SeatHoldCachePort;
+    const lock = {
+      acquire: vi.fn().mockResolvedValue(undefined),
+      release: vi.fn(),
+    } satisfies SeatHoldLockPort;
+    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, { now: vi.fn(() => now) });
+
+    await expect(
+      handler.execute(
+        CreateSeatHoldCommand.of({
+          memberId: '1',
+          screeningId: '101',
+          seatIds: ['1001'],
+        }),
+      ),
+    ).rejects.toThrow('SEAT_ALREADY_HELD');
+
+    expect(repository.findUnavailableSeatIds).not.toHaveBeenCalled();
+    expect(cache.hold).not.toHaveBeenCalled();
+    expect(lock.release).not.toHaveBeenCalled();
+  });
+});

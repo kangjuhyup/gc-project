@@ -25,6 +25,14 @@ describe('ApplicationErrorInterceptor', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
+  it('이미 임시점유된 좌석 에러를 conflict 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('SEAT_ALREADY_HELD')) as never)),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
   it('휴대전화 인증 에러를 bad request 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 
