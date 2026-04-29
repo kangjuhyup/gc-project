@@ -27,8 +27,8 @@ describe('SeatController', () => {
       screeningId: '101',
       seatIds: ['1001'],
       holdIds: ['9001'],
-      ttlSeconds: 600,
-      expiresAt: new Date('2026-04-29T00:10:00.000Z'),
+      ttlSeconds: 3,
+      expiresAt: new Date('2026-04-29T00:00:03.000Z'),
     };
     const queryBus = { execute: vi.fn() };
     const commandBus = { execute: vi.fn().mockResolvedValue(expected) };

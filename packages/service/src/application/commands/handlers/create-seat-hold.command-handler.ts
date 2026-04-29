@@ -11,9 +11,12 @@ import type {
   TransactionManagerPort,
 } from '../ports';
 
-const RESPONSE_HOLD_TTL_SECONDS = 10 * 60;
-const ACTUAL_HOLD_TTL_SECONDS = 13 * 60;
+const DEFAULT_SEAT_HOLD_TTL_SECONDS = 3;
 const SEAT_HOLD_LOCK_TTL_MILLISECONDS = 3000;
+
+export interface SeatHoldTtlOptions {
+  readonly ttlSeconds: number;
+}
 
 @Logging
 export class CreateSeatHoldCommandHandler {
@@ -23,6 +26,7 @@ export class CreateSeatHoldCommandHandler {
     private readonly seatHoldLock: SeatHoldLockPort,
     readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
+    private readonly ttlOptions: SeatHoldTtlOptions = { ttlSeconds: DEFAULT_SEAT_HOLD_TTL_SECONDS },
   ) {}
 
   @Transactional()
@@ -33,8 +37,7 @@ export class CreateSeatHoldCommandHandler {
 
     try {
       const now = this.clock.now();
-      const responseExpiresAt = new Date(now.getTime() + RESPONSE_HOLD_TTL_SECONDS * 1000);
-      const actualExpiresAt = new Date(now.getTime() + ACTUAL_HOLD_TTL_SECONDS * 1000);
+      const expiresAt = new Date(now.getTime() + this.ttlOptions.ttlSeconds * 1000);
 
       await this.ensureSeatsBelongToScreening(command.screeningId, seatIds);
       await this.ensureSeatsAvailable(command.screeningId, seatIds, now);
@@ -45,11 +48,11 @@ export class CreateSeatHoldCommandHandler {
           seatId,
           memberId: command.memberId,
           status: SeatHoldStatus.HELD,
-          expiresAt: actualExpiresAt,
+          expiresAt,
         }),
       );
       for (const hold of holds) {
-        const cached = await this.seatHoldCache.hold(hold, ACTUAL_HOLD_TTL_SECONDS);
+        const cached = await this.seatHoldCache.hold(hold, this.ttlOptions.ttlSeconds);
 
         if (!cached) {
           throw new Error('SEAT_ALREADY_HELD');
@@ -64,8 +67,8 @@ export class CreateSeatHoldCommandHandler {
         screeningId: command.screeningId,
         seatIds,
         holdIds: savedHolds.map((hold) => hold.id),
-        ttlSeconds: RESPONSE_HOLD_TTL_SECONDS,
-        expiresAt: responseExpiresAt,
+        ttlSeconds: this.ttlOptions.ttlSeconds,
+        expiresAt,
       });
     } catch (error) {
       await Promise.all(

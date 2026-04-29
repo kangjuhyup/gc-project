@@ -15,7 +15,7 @@ const transactionManager = {
 } satisfies TransactionManagerPort;
 
 describe('CreateSeatHoldCommandHandler', () => {
-  it('좌석 임시점유 시 DB에는 13분 만료 상태를 저장하고 응답 TTL은 10분으로 반환한다', async () => {
+  it('좌석 임시점유 시 환경변수로 전달된 TTL 기준으로 DB와 Redis 만료 시간을 저장한다', async () => {
     const now = new Date('2026-04-29T00:00:00.000Z');
     const clock = { now: vi.fn(() => now) } satisfies ClockPort;
     const repository = {
@@ -36,7 +36,14 @@ describe('CreateSeatHoldCommandHandler', () => {
       acquire: vi.fn().mockResolvedValue({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' }),
       release: vi.fn(),
     } satisfies SeatHoldLockPort;
-    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, transactionManager, clock);
+    const handler = new CreateSeatHoldCommandHandler(
+      repository,
+      cache,
+      lock,
+      transactionManager,
+      clock,
+      { ttlSeconds: 3 },
+    );
 
     const result = await handler.execute(
       CreateSeatHoldCommand.of({
@@ -53,15 +60,15 @@ describe('CreateSeatHoldCommandHandler', () => {
       ttlMilliseconds: 3000,
     });
     expect(repository.findUnavailableSeatIds).toHaveBeenCalledOnce();
-    expect(cache.hold.mock.calls[0][1]).toBe(13 * 60);
+    expect(cache.hold.mock.calls[0][1]).toBe(3);
     expect(lock.release).toHaveBeenCalledWith({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' });
-    expect(repository.saveMany.mock.calls[0][0][0].expiresAt).toEqual(new Date('2026-04-29T00:13:00.000Z'));
+    expect(repository.saveMany.mock.calls[0][0][0].expiresAt).toEqual(new Date('2026-04-29T00:00:03.000Z'));
     expect(result).toEqual({
       screeningId: '101',
       seatIds: ['1001', '1002'],
       holdIds: ['hold-1', 'hold-2'],
-      ttlSeconds: 10 * 60,
-      expiresAt: new Date('2026-04-29T00:10:00.000Z'),
+      ttlSeconds: 3,
+      expiresAt: new Date('2026-04-29T00:00:03.000Z'),
     });
   });
 

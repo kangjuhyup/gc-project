@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { MikroOrmSeatHoldRepository } from '@infrastructure/persistence/repositories';
 
 describe('MikroOrmSeatHoldRepository', () => {
-  it('예약 좌석과 13분 실제 TTL이 남은 임시점유 좌석을 사용 불가 좌석으로 조회한다', async () => {
+  it('예약 좌석과 아직 만료되지 않은 임시점유 좌석을 사용 불가 좌석으로 조회한다', async () => {
     const entityManager = {
       execute: vi.fn().mockResolvedValue([{ seatId: '1001' }]),
     };

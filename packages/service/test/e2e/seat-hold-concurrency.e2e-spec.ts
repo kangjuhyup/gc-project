@@ -24,7 +24,7 @@ describe('좌석 임시점유 경쟁 e2e', () => {
 
     const holdByA = await e2e.createSeatHold(memberA, screeningId, [seatForA.id]);
     expect(holdByA.status).toBe(201);
-    expect(holdByA.body.ttlSeconds).toBe(600);
+    expect(holdByA.body.ttlSeconds).toBe(1);
     expect(holdByA.body.holdIds).toHaveLength(1);
 
     const redisKeys = await e2e.redis.keys(`seat-hold:${screeningId}:*`);

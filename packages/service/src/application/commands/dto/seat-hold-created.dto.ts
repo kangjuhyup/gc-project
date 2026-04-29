@@ -10,10 +10,10 @@ export class SeatHoldCreatedDto {
   @ApiProperty({ example: ['9001', '9002'], description: 'DB에 저장된 좌석별 임시점유 ID 목록' })
   readonly holdIds: string[];
 
-  @ApiProperty({ example: 600, description: '클라이언트에 노출되는 임시점유 TTL(초). 실제 Redis/DB TTL은 결제 콜백 지연을 고려해 더 길게 저장' })
+  @ApiProperty({ example: 3, description: '좌석 임시점유 TTL(초). SEAT_HOLD_TTL_SECONDS 환경변수로 조정' })
   readonly ttlSeconds: number;
 
-  @ApiProperty({ example: '2026-04-29T01:10:00.000Z', description: '클라이언트 기준 임시점유 만료 시각. 실제 저장 만료 시각은 13분 후' })
+  @ApiProperty({ example: '2026-04-29T01:00:03.000Z', description: '좌석 임시점유 만료 시각' })
   readonly expiresAt: Date;
 
   private constructor(

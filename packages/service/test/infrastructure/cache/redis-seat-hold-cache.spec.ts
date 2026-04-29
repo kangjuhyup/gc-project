@@ -3,7 +3,7 @@ import { RedisSeatHoldCache } from '@infrastructure/cache';
 import { SeatHoldModel, SeatHoldStatus } from '@domain';
 
 describe('RedisSeatHoldCache', () => {
-  it('좌석 임시점유 키를 NX와 13분 TTL로 저장한다', async () => {
+  it('좌석 임시점유 키를 NX와 전달받은 TTL로 저장한다', async () => {
     const redis = {
       set: vi.fn().mockResolvedValue('OK'),
       del: vi.fn(),
@@ -17,7 +17,7 @@ describe('RedisSeatHoldCache', () => {
       expiresAt: new Date('2026-04-29T00:13:00.000Z'),
     });
 
-    const result = await cache.hold(hold, 13 * 60);
+    const result = await cache.hold(hold, 3);
 
     expect(result).toBe(true);
     expect(redis.set).toHaveBeenCalledWith(
@@ -29,7 +29,7 @@ describe('RedisSeatHoldCache', () => {
         expiresAt: '2026-04-29T00:13:00.000Z',
       }),
       'EX',
-      13 * 60,
+      3,
       'NX',
     );
   });
