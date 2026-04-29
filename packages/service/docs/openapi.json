@@ -215,6 +215,37 @@
         ]
       }
     },
+    "/members/logout": {
+      "post": {
+        "description": "인증된 회원의 활성 refresh token을 폐기합니다.",
+        "operationId": "MemberController_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "로그아웃 완료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberLoggedOutDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization 검증에 실패한 경우"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "로그아웃",
+        "tags": [
+          "Members"
+        ]
+      }
+    },
     "/members/temporary-password": {
       "post": {
         "description": "휴대전화 인증이 완료된 회원에게 임시비밀번호를 발급하고 잠금 상태를 해제합니다.",
@@ -288,6 +319,43 @@
           }
         },
         "summary": "비밀번호 변경",
+        "tags": [
+          "Members"
+        ]
+      }
+    },
+    "/members/me": {
+      "delete": {
+        "description": "인증된 회원 본인을 탈퇴 처리합니다. 탈퇴한 회원은 이후 로그인과 인증 API 사용이 거부됩니다.",
+        "operationId": "MemberController_withdraw",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "회원탈퇴 완료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberWithdrawnDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization 검증에 실패한 경우"
+          },
+          "403": {
+            "description": "이미 탈퇴한 회원인 경우"
+          },
+          "404": {
+            "description": "회원을 찾을 수 없는 경우"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회원탈퇴",
         "tags": [
           "Members"
         ]
@@ -642,7 +710,7 @@
     },
     "/seat-holds": {
       "post": {
-        "description": "결제 진입 전 선택 좌석을 임시점유합니다. 응답 TTL은 10분이지만, 결제 콜백 지연을 고려해 Redis와 DB에는 13분 만료 상태로 저장합니다.",
+        "description": "결제 진입 전 선택 좌석을 임시점유합니다. TTL은 SEAT_HOLD_TTL_SECONDS 환경변수로 조정하며, 기본값은 3초입니다.",
         "operationId": "SeatController_createHold",
         "parameters": [],
         "requestBody": {
@@ -1047,11 +1115,62 @@
             "type": "string",
             "example": "movie_user",
             "description": "회원 로그인 ID"
+          },
+          "accessToken": {
+            "type": "string",
+            "example": "member:1:1d6a6de7-bf58-4f11-8f42-a83ff755b0e8",
+            "description": "API 인증에 사용할 access token"
+          },
+          "accessTokenExpiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-04-29T00:15:00.000Z",
+            "description": "access token 만료 시각"
+          },
+          "refreshToken": {
+            "type": "string",
+            "example": "b8b6f989-3e5f-4f7b-9c12-41d9f7b0a411",
+            "description": "DB에 저장된 refresh token"
+          },
+          "refreshTokenExpiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-05-13T00:00:00.000Z",
+            "description": "refresh token 만료 시각"
           }
         },
         "required": [
           "memberId",
-          "userId"
+          "userId",
+          "accessToken",
+          "accessTokenExpiresAt",
+          "refreshToken",
+          "refreshTokenExpiresAt"
+        ]
+      },
+      "MemberLoggedOutDto": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "example": "1",
+            "description": "로그아웃된 회원 ID"
+          },
+          "loggedOut": {
+            "type": "boolean",
+            "example": true,
+            "description": "로그아웃 완료 여부"
+          },
+          "revokedRefreshTokenCount": {
+            "type": "number",
+            "example": 1,
+            "description": "폐기된 refresh token 수"
+          }
+        },
+        "required": [
+          "memberId",
+          "loggedOut",
+          "revokedRefreshTokenCount"
         ]
       },
       "IssueTemporaryPasswordRequestDto": {
@@ -1140,6 +1259,31 @@
         "required": [
           "userId",
           "changed"
+        ]
+      },
+      "MemberWithdrawnDto": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "example": "1",
+            "description": "탈퇴 처리된 회원 ID"
+          },
+          "userId": {
+            "type": "string",
+            "example": "movie_user",
+            "description": "탈퇴 처리된 회원 로그인 ID"
+          },
+          "withdrawn": {
+            "type": "boolean",
+            "example": true,
+            "description": "회원탈퇴 완료 여부"
+          }
+        },
+        "required": [
+          "memberId",
+          "userId",
+          "withdrawn"
         ]
       },
       "AddressSearchItemDto": {
@@ -1740,14 +1884,14 @@
           },
           "ttlSeconds": {
             "type": "number",
-            "example": 600,
-            "description": "클라이언트에 노출되는 임시점유 TTL(초). 실제 Redis/DB TTL은 결제 콜백 지연을 고려해 더 길게 저장"
+            "example": 3,
+            "description": "좌석 임시점유 TTL(초). SEAT_HOLD_TTL_SECONDS 환경변수로 조정"
           },
           "expiresAt": {
             "format": "date-time",
             "type": "string",
-            "example": "2026-04-29T01:10:00.000Z",
-            "description": "클라이언트 기준 임시점유 만료 시각. 실제 저장 만료 시각은 13분 후"
+            "example": "2026-04-29T01:00:03.000Z",
+            "description": "좌석 임시점유 만료 시각"
           }
         },
         "required": [

@@ -9,6 +9,7 @@ import {
   PaymentEventLogModel,
   PaymentModel,
   PhoneVerificationModel,
+  RefreshTokenModel,
   ReservationEventModel,
   ReservationModel,
   ReservationSeatModel,
@@ -134,6 +135,29 @@ describe('domain persistence models', () => {
     expect(changed.passwordHash).toBe('new-hash');
     expect(changed.status).toBe('ACTIVE');
     expect(changed.failedLoginCount).toBe(2);
+  });
+
+  it('회원탈퇴를 하면 회원 상태를 WITHDRAWN으로 변경하고 잠금 정보를 초기화한다', () => {
+    const createdAt = new Date('2026-04-28T00:00:00.000Z');
+    const now = new Date('2026-04-28T00:05:00.000Z');
+    const member = MemberModel.of({
+      userId: 'member_01',
+      passwordHash: 'old-hash',
+      name: 'Member',
+      birthDate: new Date('1990-01-01T00:00:00.000Z'),
+      phoneNumber: '01000000000',
+      address: 'Seoul',
+      status: 'LOCKED',
+      failedLoginCount: 5,
+      lockedAt: createdAt,
+    }).setPersistence('member-1', createdAt, createdAt);
+
+    const withdrawn = member.withdraw(now);
+
+    expect(withdrawn.status).toBe('WITHDRAWN');
+    expect(withdrawn.failedLoginCount).toBe(0);
+    expect(withdrawn.lockedAt).toBeUndefined();
+    expect(withdrawn.updatedAt).toBe(now);
   });
 
   it('영화와 상영 persistence 속성으로 도메인 모델을 생성한다', () => {
@@ -500,6 +524,23 @@ describe('domain persistence models', () => {
     expect(confirmed.id).toBe('verification-1');
     expect(confirmed.status).toBe('VERIFIED');
     expect(confirmed.verifiedAt).toBe(now);
+  });
+
+  it('refresh token을 폐기하면 revokedAt을 기록한다', () => {
+    const createdAt = new Date('2026-04-28T00:00:00.000Z');
+    const now = new Date('2026-04-28T00:10:00.000Z');
+    const refreshToken = RefreshTokenModel.issue({
+      memberId: 'member-1',
+      token: 'refresh-token-0001',
+      expiresAt: new Date('2026-05-12T00:00:00.000Z'),
+    }).setPersistence('refresh-token-1', createdAt, createdAt);
+
+    const revoked = refreshToken.revoke(now);
+
+    expect(revoked.memberId).toBe('member-1');
+    expect(revoked.token).toBe('refresh-token-0001');
+    expect(revoked.revokedAt).toBe(now);
+    expect(revoked.updatedAt).toBe(now);
   });
 
   it('만료된 휴대전화 인증 코드를 확인하면 도메인 에러를 던진다', () => {

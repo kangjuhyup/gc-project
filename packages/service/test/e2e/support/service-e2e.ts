@@ -19,6 +19,8 @@ export type HttpResult<TBody extends JsonObject = JsonObject> = {
 export type E2eMember = {
   memberId: string;
   userId: string;
+  accessToken: string;
+  refreshToken: string;
 };
 
 export type E2eSeat = {
@@ -34,6 +36,7 @@ const migrations = [
   '002_seed_movie_catalog_temp_data.sql',
   '003_add_theater_location.sql',
   '004_create_payment_outbox_tables.sql',
+  '005_create_member_refresh_token_table.sql',
 ];
 
 let userSequence = 0;
@@ -55,6 +58,7 @@ export class ServiceE2eContext {
     process.env.DB_PASSWORD = 'gc_password';
     process.env.REDIS_URL = 'redis://:gc_redis_password@localhost:56379';
     process.env.ADDRESS_ADAPTER = 'local';
+    process.env.SEAT_HOLD_TTL_SECONDS = '1';
 
     faker.seed(20260429);
 
@@ -125,10 +129,16 @@ export class ServiceE2eContext {
     });
     expect(login.status).toBe(201);
     expect(login.body.memberId).toBe(signup.body.memberId);
+    expect(login.body.accessToken).toEqual(expect.any(String));
+    expect(login.body.accessTokenExpiresAt).toEqual(expect.any(String));
+    expect(login.body.refreshToken).toEqual(expect.any(String));
+    expect(login.body.refreshTokenExpiresAt).toEqual(expect.any(String));
 
     return {
       memberId: String(login.body.memberId),
       userId: String(login.body.userId),
+      accessToken: String(login.body.accessToken),
+      refreshToken: String(login.body.refreshToken),
     };
   }
 
@@ -271,7 +281,7 @@ export class ServiceE2eContext {
   }
 
   auth(member: E2eMember): Record<string, string> {
-    return { Authorization: `Bearer ${member.memberId}` };
+    return { Authorization: `Bearer ${member.accessToken}` };
   }
 
   get(path: string, headers: Record<string, string> = {}): Promise<HttpResult> {
