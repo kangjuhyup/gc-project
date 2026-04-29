@@ -429,6 +429,180 @@
         ]
       }
     },
+    "/payments": {
+      "post": {
+        "description": "인증된 회원이 자신이 점유한 좌석 임시점유를 기준으로 결제를 요청합니다. 결제 요청은 이벤트 로그와 outbox 이벤트로 기록됩니다.",
+        "operationId": "PaymentController_request",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPaymentRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "결제 요청 생성 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 금액/provider/좌석 임시점유 상태가 유효하지 않은 경우"
+          },
+          "401": {
+            "description": "Authorization 검증에 실패한 경우"
+          },
+          "403": {
+            "description": "다른 회원이 점유한 좌석 임시점유로 결제를 요청한 경우"
+          },
+          "404": {
+            "description": "좌석 임시점유를 찾을 수 없는 경우"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "결제 요청",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/payments/{paymentId}": {
+      "get": {
+        "description": "인증된 회원 본인의 결제 상태, provider 결제 ID, 예약 연결 여부를 조회합니다.",
+        "operationId": "PaymentController_get",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "required": true,
+            "in": "path",
+            "description": "조회할 결제 ID",
+            "schema": {
+              "example": "7001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "결제 상세",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization 검증에 실패한 경우"
+          },
+          "404": {
+            "description": "본인 결제를 찾을 수 없는 경우"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "결제 상세 조회",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/payments/callback": {
+      "post": {
+        "description": "PG 또는 local payment adapter callback을 처리합니다. 승인 callback 후 예약 생성, 좌석 확정, 결제 승인을 같은 application flow에서 처리합니다.",
+        "operationId": "PaymentController_callback",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HandlePaymentCallbackRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "callback 처리 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentCallbackResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "callback 검증 실패, provider 불일치, 승인 금액 불일치 등 처리 불가한 경우"
+          },
+          "404": {
+            "description": "결제를 찾을 수 없는 경우"
+          }
+        },
+        "summary": "결제 provider callback 처리",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/payments/{paymentId}/refund": {
+      "post": {
+        "description": "환불 필요 상태의 결제를 provider adapter를 통해 환불합니다. 환불 결과는 결제 이벤트 로그에 기록됩니다.",
+        "operationId": "PaymentController_refund",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "required": true,
+            "in": "path",
+            "description": "환불할 결제 ID",
+            "schema": {
+              "example": "7001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "환불 처리 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRefundResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "환불 가능한 결제 상태가 아니거나 provider 결제 ID가 없는 경우"
+          },
+          "404": {
+            "description": "결제를 찾을 수 없는 경우"
+          }
+        },
+        "summary": "결제 환불 요청",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
     "/screenings/{screeningId}/seats": {
       "get": {
         "description": "상영 ID 기준으로 좌석 목록을 조회합니다. 각 좌석은 AVAILABLE(예매 가능), HELD(임시 점유), RESERVED(예매 완료/진행 중) 상태를 가집니다.",
@@ -1246,6 +1420,202 @@
         "required": [
           "items",
           "hasNext"
+        ]
+      },
+      "RequestPaymentRequestDto": {
+        "type": "object",
+        "properties": {
+          "seatHoldId": {
+            "type": "string",
+            "example": "9001",
+            "description": "결제를 요청할 좌석 임시점유 ID"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "example": "pay-20260429-0001",
+            "minLength": 8,
+            "maxLength": 100,
+            "description": "중복 결제 요청 방지를 위한 회원별 멱등성 키"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "LOCAL",
+              "KAKAO",
+              "TOSS",
+              "NAVER"
+            ],
+            "example": "LOCAL",
+            "description": "결제 provider"
+          },
+          "amount": {
+            "type": "number",
+            "example": 15000,
+            "minimum": 1,
+            "description": "결제 요청 금액"
+          }
+        },
+        "required": [
+          "seatHoldId",
+          "idempotencyKey",
+          "provider",
+          "amount"
+        ]
+      },
+      "PaymentResultDto": {
+        "type": "object",
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "example": "7001",
+            "description": "결제 ID"
+          },
+          "seatHoldId": {
+            "type": "string",
+            "example": "9001",
+            "description": "좌석 임시점유 ID"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "example": "pay-20260429-0001",
+            "description": "결제 요청 멱등성 키"
+          },
+          "reservationId": {
+            "type": "string",
+            "example": "5001",
+            "description": "결제 완료 후 연결된 예매 ID"
+          },
+          "provider": {
+            "type": "string",
+            "example": "LOCAL",
+            "description": "결제 provider"
+          },
+          "providerPaymentId": {
+            "type": "string",
+            "example": "local-7001-20260429120000",
+            "description": "provider 결제 ID"
+          },
+          "status": {
+            "type": "string",
+            "example": "PENDING",
+            "description": "결제 상태"
+          },
+          "amount": {
+            "type": "number",
+            "example": 30000,
+            "description": "결제 금액"
+          },
+          "approvalUrl": {
+            "type": "string",
+            "example": "http://localhost:4000/local-payment/7001",
+            "description": "PG 승인 URL. local adapter는 생략 가능"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-04-29T01:10:00.000Z",
+            "description": "결제 만료 시각"
+          }
+        },
+        "required": [
+          "paymentId",
+          "seatHoldId",
+          "idempotencyKey",
+          "provider",
+          "status",
+          "amount"
+        ]
+      },
+      "HandlePaymentCallbackRequestDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "LOCAL",
+              "KAKAO",
+              "TOSS",
+              "NAVER"
+            ],
+            "example": "LOCAL",
+            "description": "callback을 보낸 결제 provider"
+          },
+          "providerPaymentId": {
+            "type": "string",
+            "example": "local-payment-7001",
+            "description": "provider 결제 ID"
+          },
+          "paymentId": {
+            "type": "string",
+            "example": "7001",
+            "description": "서비스 결제 ID"
+          },
+          "amount": {
+            "type": "number",
+            "example": 15000,
+            "minimum": 1,
+            "description": "provider 승인 금액"
+          },
+          "approved": {
+            "type": "boolean",
+            "example": true,
+            "description": "provider 승인 성공 여부"
+          },
+          "failureReason": {
+            "type": "string",
+            "example": "INSUFFICIENT_BALANCE",
+            "description": "provider 실패 사유"
+          },
+          "token": {
+            "type": "string",
+            "example": "local:7001:local-payment-7001",
+            "description": "callback 검증 token"
+          }
+        },
+        "required": [
+          "provider",
+          "providerPaymentId",
+          "paymentId",
+          "amount",
+          "approved"
+        ]
+      },
+      "PaymentCallbackResultDto": {
+        "type": "object",
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "example": "7001",
+            "description": "처리한 결제 ID"
+          },
+          "handled": {
+            "type": "boolean",
+            "example": true,
+            "description": "callback 처리 성공 여부"
+          }
+        },
+        "required": [
+          "paymentId",
+          "handled"
+        ]
+      },
+      "PaymentRefundResultDto": {
+        "type": "object",
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "example": "7001",
+            "description": "환불 처리한 결제 ID"
+          },
+          "status": {
+            "type": "string",
+            "example": "REFUNDED",
+            "description": "환불 처리 후 결제 상태"
+          }
+        },
+        "required": [
+          "paymentId",
+          "status"
         ]
       },
       "ScreeningSeatSummaryDto": {

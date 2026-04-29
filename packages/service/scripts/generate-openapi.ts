@@ -5,7 +5,15 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { CommandBus, QueryBus } from '@application';
 import { AUTHORIZATION_VERIFIER } from '@application/query/ports';
-import { AddressController, HealthController, MemberController, MovieController, SeatController, TheaterController } from '@presentation/http';
+import {
+  AddressController,
+  HealthController,
+  MemberController,
+  MovieController,
+  PaymentController,
+  SeatController,
+  TheaterController,
+} from '@presentation/http';
 import { buildSwaggerConfig } from '@presentation/swagger/swagger.config';
 
 const documentedControllers = [
@@ -13,6 +21,7 @@ const documentedControllers = [
   MemberController,
   AddressController,
   MovieController,
+  PaymentController,
   SeatController,
   TheaterController,
 ];
