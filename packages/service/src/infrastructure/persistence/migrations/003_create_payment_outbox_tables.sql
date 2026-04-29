@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS payment (
   id BIGSERIAL PRIMARY KEY,
   member_id BIGINT NOT NULL REFERENCES member(id),
   seat_hold_id BIGINT NOT NULL REFERENCES seat_hold(id),
+  idempotency_key VARCHAR(100) NOT NULL,
   reservation_id BIGINT NULL REFERENCES reservation(id),
   provider VARCHAR(20) NOT NULL,
   provider_payment_id VARCHAR(100) NULL,
@@ -21,6 +22,9 @@ CREATE INDEX IF NOT EXISTS idx_payment_member_created
 
 CREATE INDEX IF NOT EXISTS idx_payment_seat_hold
   ON payment (seat_hold_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_member_idempotency_key
+  ON payment (member_id, idempotency_key);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_provider_payment_id
   ON payment (provider, provider_payment_id)

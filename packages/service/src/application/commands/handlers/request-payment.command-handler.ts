@@ -32,6 +32,23 @@ export class RequestPaymentCommandHandler {
   @Transactional()
   async execute(command: RequestPaymentCommand): Promise<PaymentResultDto> {
     const now = this.clock.now();
+    const existingIdempotentPayment = await this.paymentRepository.findByMemberIdAndIdempotencyKey(
+      command.memberId,
+      command.idempotencyKey,
+    );
+
+    if (existingIdempotentPayment !== undefined) {
+      if (
+        existingIdempotentPayment.seatHoldId !== command.seatHoldId ||
+        existingIdempotentPayment.provider !== command.provider ||
+        existingIdempotentPayment.amount !== command.amount
+      ) {
+        throw new Error('PAYMENT_IDEMPOTENCY_KEY_CONFLICT');
+      }
+
+      return this.toResult(existingIdempotentPayment);
+    }
+
     const seatHold = await this.seatHoldRepository.findById(command.seatHoldId);
 
     if (seatHold === undefined) {
@@ -56,6 +73,7 @@ export class RequestPaymentCommandHandler {
       PaymentModel.request({
         memberId: command.memberId,
         seatHoldId: command.seatHoldId,
+        idempotencyKey: command.idempotencyKey,
         provider: command.provider,
         amount: command.amount,
         now,
@@ -69,7 +87,7 @@ export class RequestPaymentCommandHandler {
         nextStatus: payment.status,
         provider: payment.provider,
         amount: payment.amount,
-        metadata: { seatHoldId: payment.seatHoldId },
+        metadata: { seatHoldId: payment.seatHoldId, idempotencyKey: payment.idempotencyKey },
         occurredAt: now,
       }),
     );
@@ -81,6 +99,7 @@ export class RequestPaymentCommandHandler {
         eventType: PaymentEventType.PAYMENT_REQUESTED,
         payload: {
           paymentId: payment.id,
+          idempotencyKey: payment.idempotencyKey,
           provider: payment.provider,
           amount: payment.amount,
         },
@@ -88,10 +107,17 @@ export class RequestPaymentCommandHandler {
       }),
     );
 
+    return this.toResult(payment);
+  }
+
+  private toResult(payment: PaymentModel): PaymentResultDto {
     return PaymentResultDto.of({
       paymentId: payment.id,
       seatHoldId: payment.seatHoldId,
+      idempotencyKey: payment.idempotencyKey,
       provider: payment.provider,
+      providerPaymentId: payment.providerPaymentId,
+      reservationId: payment.reservationId,
       status: payment.status,
       amount: payment.amount,
     });

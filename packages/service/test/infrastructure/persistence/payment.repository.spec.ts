@@ -10,6 +10,7 @@ describe('MikroOrmPaymentRepository', () => {
     entity.id = '7001';
     entity.member = { id: '1' } as never;
     entity.seatHold = { id: '9001' } as never;
+    entity.idempotencyKey = 'pay-test-key';
     entity.provider = 'LOCAL';
     entity.providerPaymentId = 'local-payment-7001';
     entity.amount = 15000;
@@ -27,10 +28,25 @@ describe('MikroOrmPaymentRepository', () => {
     expect(entityManager.findOne).toHaveBeenCalledWith(PaymentEntity, { id: '7001', member: '1' });
     expect(result?.paymentId).toBe('7001');
     expect(result?.seatHoldId).toBe('9001');
+    expect(result?.idempotencyKey).toBe('pay-test-key');
     expect(result?.provider).toBe('LOCAL');
     expect(result?.providerPaymentId).toBe('local-payment-7001');
     expect(result?.status).toBe('PENDING');
     expect(result?.amount).toBe(15000);
+  });
+
+  it('회원과 멱등성 키로 기존 결제를 조회한다', async () => {
+    const entityManager = {
+      findOne: vi.fn().mockResolvedValue(undefined),
+    };
+    const repository = new MikroOrmPaymentRepository(entityManager as never);
+
+    await repository.findByMemberIdAndIdempotencyKey('1', 'pay-test-key');
+
+    expect(entityManager.findOne).toHaveBeenCalledWith(PaymentEntity, {
+      member: '1',
+      idempotencyKey: 'pay-test-key',
+    });
   });
 
   it('결제 callback 처리를 위해 비관적 락으로 결제 row를 조회한다', async () => {

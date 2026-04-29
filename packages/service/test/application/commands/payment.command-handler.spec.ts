@@ -50,6 +50,7 @@ function pendingPayment() {
   return PaymentModel.request({
     memberId: '1',
     seatHoldId: '9001',
+    idempotencyKey: 'pay-test-key',
     provider: 'LOCAL',
     amount: 15000,
     now,
@@ -62,6 +63,7 @@ describe('RequestPaymentCommandHandler', () => {
       save: vi.fn(async (payment: PaymentModel) => payment.setPersistence('7001', now, now)),
       findById: vi.fn(),
       findByIdForUpdate: vi.fn(),
+      findByMemberIdAndIdempotencyKey: vi.fn(async () => undefined),
       findBySeatHoldId: vi.fn(async () => undefined),
     };
     const seatHoldRepository = {
@@ -86,6 +88,7 @@ describe('RequestPaymentCommandHandler', () => {
       RequestPaymentCommand.of({
         memberId: '1',
         seatHoldId: '9001',
+        idempotencyKey: 'pay-test-key',
         provider: 'LOCAL',
         amount: 15000,
       }),
@@ -93,6 +96,7 @@ describe('RequestPaymentCommandHandler', () => {
 
     expect(transactionManager.runInTransaction).toHaveBeenCalled();
     expect(result.paymentId).toBe('7001');
+    expect(result.idempotencyKey).toBe('pay-test-key');
     expect(result.status).toBe('PENDING');
     const savedEventLogs = vi.mocked(paymentEventLogRepository.save).mock.calls.map(([eventLog]) => eventLog);
     const savedOutboxEvents = vi.mocked(outboxEventRepository.save).mock.calls.map(([event]) => event);
@@ -100,10 +104,76 @@ describe('RequestPaymentCommandHandler', () => {
     expect(savedOutboxEvents.some((event) => event.eventType === 'PAYMENT_REQUESTED')).toBe(true);
   });
 
+  it('같은 멱등성 키로 동일한 결제 요청이 재전송되면 기존 결제 결과를 반환한다', async () => {
+    const existingPayment = pendingPayment();
+    const paymentRepository = {
+      save: vi.fn(),
+      findById: vi.fn(),
+      findByIdForUpdate: vi.fn(),
+      findByMemberIdAndIdempotencyKey: vi.fn(async () => existingPayment),
+      findBySeatHoldId: vi.fn(),
+    } as unknown as PaymentRepositoryPort;
+    const seatHoldRepository = {
+      findById: vi.fn(),
+    } as unknown as SeatHoldRepositoryPort;
+    const handler = new RequestPaymentCommandHandler(
+      paymentRepository,
+      seatHoldRepository,
+      { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
+      { save: vi.fn() } as unknown as OutboxEventRepositoryPort,
+      transactionManager,
+      clock,
+    );
+
+    const result = await handler.execute(
+      RequestPaymentCommand.of({
+        memberId: '1',
+        seatHoldId: '9001',
+        idempotencyKey: 'pay-test-key',
+        provider: 'LOCAL',
+        amount: 15000,
+      }),
+    );
+
+    expect(result.paymentId).toBe('7001');
+    expect(paymentRepository.save).not.toHaveBeenCalled();
+    expect(seatHoldRepository.findById).not.toHaveBeenCalled();
+  });
+
+  it('같은 멱등성 키로 다른 결제 요청이 들어오면 중복 결제 방지를 위해 거부한다', async () => {
+    const existingPayment = pendingPayment();
+    const paymentRepository = {
+      save: vi.fn(),
+      findByMemberIdAndIdempotencyKey: vi.fn(async () => existingPayment),
+      findBySeatHoldId: vi.fn(),
+    } as unknown as PaymentRepositoryPort;
+    const handler = new RequestPaymentCommandHandler(
+      paymentRepository,
+      { findById: vi.fn() } as unknown as SeatHoldRepositoryPort,
+      { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
+      { save: vi.fn() } as unknown as OutboxEventRepositoryPort,
+      transactionManager,
+      clock,
+    );
+
+    await expect(
+      handler.execute(
+        RequestPaymentCommand.of({
+          memberId: '1',
+          seatHoldId: '9002',
+          idempotencyKey: 'pay-test-key',
+          provider: 'LOCAL',
+          amount: 15000,
+        }),
+      ),
+    ).rejects.toThrow('PAYMENT_IDEMPOTENCY_KEY_CONFLICT');
+  });
+
   it('다른 회원이 점유한 좌석으로 결제를 요청하면 거부한다', async () => {
     const paymentRepository = {
       save: vi.fn(),
       findBySeatHoldId: vi.fn(),
+      findByMemberIdAndIdempotencyKey: vi.fn(async () => undefined),
     } as unknown as PaymentRepositoryPort;
     const seatHoldRepository = {
       findById: vi.fn(async () =>
@@ -130,6 +200,7 @@ describe('RequestPaymentCommandHandler', () => {
         RequestPaymentCommand.of({
           memberId: '1',
           seatHoldId: '9001',
+          idempotencyKey: 'pay-test-key',
           provider: 'LOCAL',
           amount: 15000,
         }),
@@ -245,6 +316,7 @@ describe('RefundPaymentCommandHandler', () => {
     const payment = PaymentModel.of({
       memberId: '1',
       seatHoldId: '9001',
+      idempotencyKey: 'pay-test-key',
       provider: 'LOCAL',
       providerPaymentId: 'local-payment-7001',
       amount: 15000,

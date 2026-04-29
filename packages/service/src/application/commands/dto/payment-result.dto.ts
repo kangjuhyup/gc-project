@@ -8,6 +8,9 @@ export class PaymentResultDto {
   @ApiProperty({ example: '9001', description: '좌석 임시점유 ID' })
   readonly seatHoldId: string;
 
+  @ApiProperty({ example: 'pay-20260429-0001', description: '결제 요청 멱등성 키' })
+  readonly idempotencyKey: string;
+
   @ApiPropertyOptional({ example: '5001', description: '결제 완료 후 연결된 예매 ID' })
   readonly reservationId?: string;
 
@@ -32,6 +35,7 @@ export class PaymentResultDto {
   private constructor(params: {
     paymentId: string;
     seatHoldId: string;
+    idempotencyKey: string;
     reservationId?: string;
     provider: PaymentProviderType;
     providerPaymentId?: string;
@@ -42,6 +46,7 @@ export class PaymentResultDto {
   }) {
     this.paymentId = params.paymentId;
     this.seatHoldId = params.seatHoldId;
+    this.idempotencyKey = params.idempotencyKey;
     this.reservationId = params.reservationId;
     this.provider = params.provider;
     this.providerPaymentId = params.providerPaymentId;
@@ -54,6 +59,7 @@ export class PaymentResultDto {
   static of(params: {
     paymentId: string;
     seatHoldId: string;
+    idempotencyKey: string;
     reservationId?: string;
     provider: PaymentProviderType;
     providerPaymentId?: string;

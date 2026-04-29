@@ -31,6 +31,14 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
     return entity ? PersistenceMapper.paymentToDomain(entity) : undefined;
   }
 
+  async findByMemberIdAndIdempotencyKey(memberId: string, idempotencyKey: string): Promise<PaymentModel | undefined> {
+    const entity = await this.entityManager.findOne(PaymentEntity, {
+      member: memberId,
+      idempotencyKey,
+    });
+    return entity ? PersistenceMapper.paymentToDomain(entity) : undefined;
+  }
+
   async findByIdForUpdate(id: string): Promise<PaymentModel | undefined> {
     const entity = await this.entityManager.findOne(
       PaymentEntity,
@@ -52,6 +60,7 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
     return PaymentResultDto.of({
       paymentId: payment.id,
       seatHoldId: payment.seatHoldId,
+      idempotencyKey: payment.idempotencyKey,
       reservationId: payment.reservationId,
       provider: payment.provider,
       providerPaymentId: payment.providerPaymentId,

@@ -8,6 +8,7 @@ describe('GetPaymentQueryHandler', () => {
     const payment = PaymentResultDto.of({
       paymentId: '7001',
       seatHoldId: '9001',
+      idempotencyKey: 'pay-test-key',
       provider: 'LOCAL',
       status: 'PENDING',
       amount: 15000,

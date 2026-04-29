@@ -218,6 +218,7 @@ describe('PersistenceMapper', () => {
     const model = PaymentModel.of({
       memberId: '1',
       seatHoldId: '2',
+      idempotencyKey: 'pay-test-key',
       reservationId: '3',
       provider: 'LOCAL',
       providerPaymentId: 'local-payment-1',
@@ -234,9 +235,11 @@ describe('PersistenceMapper', () => {
     expect(entity.id).toBe('4');
     expect(entity.member.id).toBe('1');
     expect(entity.seatHold.id).toBe('2');
+    expect(entity.idempotencyKey).toBe('pay-test-key');
     expect(entity.reservation?.id).toBe('3');
     expect(entity.provider).toBe('LOCAL');
     expect(mappedModel).toBeInstanceOf(PaymentModel);
+    expect(mappedModel.idempotencyKey).toBe('pay-test-key');
     expect(mappedModel.providerPaymentId).toBe('local-payment-1');
     expect(mappedModel.status).toBe('APPROVED');
     expect(mappedModel.approvedAt).toBe(updatedAt);

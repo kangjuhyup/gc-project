@@ -278,6 +278,7 @@ describe('domain persistence models', () => {
     const payment = PaymentModel.request({
       memberId: '1',
       seatHoldId: '10',
+      idempotencyKey: 'pay-test-key',
       provider: 'LOCAL',
       amount: 15000,
       now: requestedAt,
@@ -285,6 +286,7 @@ describe('domain persistence models', () => {
 
     expect(payment.memberId).toBe('1');
     expect(payment.seatHoldId).toBe('10');
+    expect(payment.idempotencyKey).toBe('pay-test-key');
     expect(payment.provider).toBe('LOCAL');
     expect(payment.amount).toBe(15000);
     expect(payment.status).toBe('PENDING');
@@ -296,6 +298,7 @@ describe('domain persistence models', () => {
     const payment = PaymentModel.request({
       memberId: '1',
       seatHoldId: '10',
+      idempotencyKey: 'pay-test-key',
       provider: 'LOCAL',
       amount: 15000,
       now: createdAt,
@@ -316,6 +319,7 @@ describe('domain persistence models', () => {
     const payment = PaymentModel.request({
       memberId: '1',
       seatHoldId: '10',
+      idempotencyKey: 'pay-test-key',
       provider: 'LOCAL',
       amount: 15000,
       now: createdAt,
@@ -340,6 +344,7 @@ describe('domain persistence models', () => {
     const payment = PaymentModel.request({
       memberId: '1',
       seatHoldId: '10',
+      idempotencyKey: 'pay-test-key',
       provider: 'LOCAL',
       amount: 15000,
       now: createdAt,
@@ -366,6 +371,7 @@ describe('domain persistence models', () => {
     const payment = PaymentModel.of({
       memberId: '1',
       seatHoldId: '10',
+      idempotencyKey: 'pay-test-key',
       provider: 'LOCAL',
       providerPaymentId: 'local-payment-1',
       amount: 15000,

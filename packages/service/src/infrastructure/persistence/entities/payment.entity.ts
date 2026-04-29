@@ -6,6 +6,7 @@ import { SeatHoldEntity } from './seat-hold.entity';
 @Entity({ tableName: 'payment' })
 @Index({ name: 'idx_payment_member_created', properties: ['member', 'createdAt'] })
 @Index({ name: 'idx_payment_seat_hold', properties: ['seatHold'] })
+@Unique({ name: 'uq_payment_member_idempotency_key', properties: ['member', 'idempotencyKey'] })
 @Unique({ name: 'uq_payment_provider_payment_id', properties: ['provider', 'providerPaymentId'] })
 export class PaymentEntity {
   @PrimaryKey({ type: 'bigint' })
@@ -16,6 +17,9 @@ export class PaymentEntity {
 
   @ManyToOne({ entity: () => SeatHoldEntity, fieldName: 'seat_hold_id' })
   seatHold!: Rel<SeatHoldEntity>;
+
+  @Property({ fieldName: 'idempotency_key', length: 100 })
+  idempotencyKey!: string;
 
   @ManyToOne({ entity: () => ReservationEntity, fieldName: 'reservation_id', nullable: true })
   reservation?: Rel<ReservationEntity>;

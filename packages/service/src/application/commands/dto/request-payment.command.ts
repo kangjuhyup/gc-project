@@ -4,6 +4,7 @@ export class RequestPaymentCommand {
   private constructor(
     readonly memberId: string,
     readonly seatHoldId: string,
+    readonly idempotencyKey: string,
     readonly provider: PaymentProviderType,
     readonly amount: number,
   ) {}
@@ -11,9 +12,16 @@ export class RequestPaymentCommand {
   static of(params: {
     memberId: string;
     seatHoldId: string;
+    idempotencyKey: string;
     provider: PaymentProviderType;
     amount: number;
   }): RequestPaymentCommand {
-    return new RequestPaymentCommand(params.memberId, params.seatHoldId, params.provider, params.amount);
+    return new RequestPaymentCommand(
+      params.memberId,
+      params.seatHoldId,
+      params.idempotencyKey,
+      params.provider,
+      params.amount,
+    );
   }
 }

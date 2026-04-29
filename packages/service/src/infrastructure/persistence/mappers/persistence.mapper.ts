@@ -341,6 +341,7 @@ export class PersistenceMapper {
     return PaymentModel.of({
       memberId: entity.member.id,
       seatHoldId: entity.seatHold.id,
+      idempotencyKey: entity.idempotencyKey,
       reservationId: entity.reservation?.id,
       provider: entity.provider as PaymentProviderType,
       providerPaymentId: entity.providerPaymentId,
@@ -358,6 +359,7 @@ export class PersistenceMapper {
     const entity = assignId(new PaymentEntity(), currentId(model.id));
     entity.member = ref<MemberEntity>(model.memberId);
     entity.seatHold = ref<SeatHoldEntity>(model.seatHoldId);
+    entity.idempotencyKey = model.idempotencyKey;
     entity.reservation = model.reservationId === undefined ? undefined : ref<ReservationEntity>(model.reservationId);
     entity.provider = model.provider;
     entity.providerPaymentId = model.providerPaymentId;

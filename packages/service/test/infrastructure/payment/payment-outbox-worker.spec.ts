@@ -49,6 +49,7 @@ describe('PaymentOutboxWorker', () => {
         PaymentModel.request({
           memberId: '1',
           seatHoldId: '9001',
+          idempotencyKey: 'pay-test-key',
           provider: 'LOCAL',
           amount: 15000,
           now,
@@ -84,6 +85,7 @@ describe('PaymentOutboxWorker', () => {
     const payment = PaymentModel.of({
       memberId: '1',
       seatHoldId: '9001',
+      idempotencyKey: 'pay-test-key',
       provider: 'LOCAL',
       providerPaymentId: 'local-payment-7001',
       amount: 15000,
