@@ -452,6 +452,24 @@ describe('domain persistence models', () => {
     expect(() => seatHold.release({ memberId: '3' })).toThrow('SEAT_HOLD_PAYMENT_COMPLETED');
   });
 
+  it('결제 완료 시 좌석 선점을 CONFIRMED 상태로 예약과 연결한다', () => {
+    const createdAt = new Date('2026-04-28T09:00:00.000Z');
+    const now = new Date('2026-04-28T09:03:00.000Z');
+    const seatHold = SeatHoldModel.of({
+      screeningId: '1',
+      seatId: '2',
+      memberId: '3',
+      status: 'HELD',
+      expiresAt: new Date('2026-04-28T09:13:00.000Z'),
+    }).setPersistence('hold-1', createdAt, createdAt);
+
+    const confirmed = seatHold.confirm({ reservationId: 'reservation-1', now });
+
+    expect(confirmed.status).toBe('CONFIRMED');
+    expect(confirmed.reservationId).toBe('reservation-1');
+    expect(confirmed.updatedAt).toBe(now);
+  });
+
   it('휴대전화 인증을 발급한 뒤 올바른 코드로 인증을 완료한다', () => {
     const createdAt = new Date('2026-04-28T00:00:00.000Z');
     const now = new Date('2026-04-28T00:01:00.000Z');
