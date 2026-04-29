@@ -1,9 +1,9 @@
 import { Logging } from '@kangjuhyup/rvlog';
-import { HealthStatusDto } from '../dto';
+import { GetHealthQuery, HealthStatusDto } from '../dto';
 
 @Logging
 export class GetHealthQueryHandler {
-  execute(): HealthStatusDto {
+  execute(_query: GetHealthQuery): HealthStatusDto {
     return HealthStatusDto.of({
       ok: true,
       service: 'gc-project-service',

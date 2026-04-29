@@ -2,6 +2,7 @@ export { AddressSearchItemDto, AddressSearchResultDto } from './address-search-r
 export { AuthenticatedUserDto } from './authenticated-user.dto';
 export { CheckUserIdAvailabilityQuery } from './check-user-id-availability.query';
 export { CheckUserIdAvailabilityResultDto } from './check-user-id-availability-result.dto';
+export { GetHealthQuery } from './get-health.query';
 export { HealthStatusDto } from './health-status.dto';
 export { ListMoviesQuery } from './list-movies.query';
 export { ListScreeningSeatsQuery } from './list-screening-seats.query';

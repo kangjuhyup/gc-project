@@ -14,6 +14,10 @@ export {
   SignupMemberResultDto,
   TemporaryPasswordIssuedDto,
 } from './commands/dto';
+export { CommandBus } from './commands/command-bus';
+export type { CommandHandler } from './commands/command-bus';
+export { QueryBus } from './query/query-bus';
+export type { QueryHandler } from './query/query-bus';
 export {
   ChangeMemberPasswordCommandHandler,
   ConfirmPhoneVerificationCommandHandler,
@@ -29,6 +33,7 @@ export {
   AuthenticatedUserDto,
   CheckUserIdAvailabilityQuery,
   CheckUserIdAvailabilityResultDto,
+  GetHealthQuery,
   HealthStatusDto,
   ListMoviesQuery,
   ListScreeningSeatsQuery,

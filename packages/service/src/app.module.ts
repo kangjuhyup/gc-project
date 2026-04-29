@@ -3,6 +3,23 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LogLevel } from '@kangjuhyup/rvlog';
 import { RvlogNestModule } from '@kangjuhyup/rvlog-nest';
 import {
+  ChangeMemberPasswordCommand,
+  CheckUserIdAvailabilityQuery,
+  CommandBus,
+  ConfirmPhoneVerificationCommand,
+  CreateSeatHoldCommand,
+  GetHealthQuery,
+  IssueTemporaryPasswordCommand,
+  ListMoviesQuery,
+  ListScreeningSeatsQuery,
+  ListTheatersQuery,
+  LoginMemberCommand,
+  QueryBus,
+  RequestPhoneVerificationCommand,
+  SearchAddressesQuery,
+  SignupMemberCommand,
+} from '@application';
+import {
   CLOCK,
   ClockPort,
   LOG_EVENT_PUBLISHER,
@@ -272,6 +289,63 @@ import { AddressController, HealthController, MemberController, MovieController,
         clock: ClockPort,
       ) => new CreateSeatHoldCommandHandler(seatHoldRepository, seatHoldCache, seatHoldLock, clock),
       inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, SEAT_HOLD_LOCK, CLOCK],
+    },
+    {
+      provide: QueryBus,
+      useFactory: (
+        getHealthQueryHandler: GetHealthQueryHandler,
+        checkUserIdAvailabilityQueryHandler: CheckUserIdAvailabilityQueryHandler,
+        searchAddressesQueryHandler: SearchAddressesQueryHandler,
+        listMoviesQueryHandler: ListMoviesQueryHandler,
+        listTheatersQueryHandler: ListTheatersQueryHandler,
+        listScreeningSeatsQueryHandler: ListScreeningSeatsQueryHandler,
+      ) =>
+        QueryBus.of([
+          { query: CheckUserIdAvailabilityQuery, handler: checkUserIdAvailabilityQueryHandler },
+          { query: SearchAddressesQuery, handler: searchAddressesQueryHandler },
+          { query: ListMoviesQuery, handler: listMoviesQueryHandler },
+          { query: ListTheatersQuery, handler: listTheatersQueryHandler },
+          { query: ListScreeningSeatsQuery, handler: listScreeningSeatsQueryHandler },
+          { query: GetHealthQuery, handler: getHealthQueryHandler },
+        ]),
+      inject: [
+        GetHealthQueryHandler,
+        CheckUserIdAvailabilityQueryHandler,
+        SearchAddressesQueryHandler,
+        ListMoviesQueryHandler,
+        ListTheatersQueryHandler,
+        ListScreeningSeatsQueryHandler,
+      ],
+    },
+    {
+      provide: CommandBus,
+      useFactory: (
+        requestPhoneVerificationCommandHandler: RequestPhoneVerificationCommandHandler,
+        confirmPhoneVerificationCommandHandler: ConfirmPhoneVerificationCommandHandler,
+        signupMemberCommandHandler: SignupMemberCommandHandler,
+        loginMemberCommandHandler: LoginMemberCommandHandler,
+        issueTemporaryPasswordCommandHandler: IssueTemporaryPasswordCommandHandler,
+        changeMemberPasswordCommandHandler: ChangeMemberPasswordCommandHandler,
+        createSeatHoldCommandHandler: CreateSeatHoldCommandHandler,
+      ) =>
+        CommandBus.of([
+          { command: RequestPhoneVerificationCommand, handler: requestPhoneVerificationCommandHandler },
+          { command: ConfirmPhoneVerificationCommand, handler: confirmPhoneVerificationCommandHandler },
+          { command: SignupMemberCommand, handler: signupMemberCommandHandler },
+          { command: LoginMemberCommand, handler: loginMemberCommandHandler },
+          { command: IssueTemporaryPasswordCommand, handler: issueTemporaryPasswordCommandHandler },
+          { command: ChangeMemberPasswordCommand, handler: changeMemberPasswordCommandHandler },
+          { command: CreateSeatHoldCommand, handler: createSeatHoldCommandHandler },
+        ]),
+      inject: [
+        RequestPhoneVerificationCommandHandler,
+        ConfirmPhoneVerificationCommandHandler,
+        SignupMemberCommandHandler,
+        LoginMemberCommandHandler,
+        IssueTemporaryPasswordCommandHandler,
+        ChangeMemberPasswordCommandHandler,
+        CreateSeatHoldCommandHandler,
+      ],
     },
   ],
 })
