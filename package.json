@@ -21,6 +21,7 @@
     "compose:logs": "docker compose logs -f",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "service:test:e2e": "sh scripts/service-e2e.sh",
     "lint": "pnpm -r lint"
   },
   "devDependencies": {

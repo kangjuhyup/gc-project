@@ -11,6 +11,7 @@
     "build": "nest build",
     "docs:openapi": "ts-node -r tsconfig-paths/register scripts/generate-openapi.ts",
     "test": "vitest run --reporter=verbose",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts --reporter=verbose",
     "test:coverage": "vitest run --coverage --reporter=verbose",
     "lint": "echo \"No service lint configured\""
   },
