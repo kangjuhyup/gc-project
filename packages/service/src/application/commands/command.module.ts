@@ -6,16 +6,19 @@ import {
   HandlePaymentCallbackCommand,
   IssueTemporaryPasswordCommand,
   LoginMemberCommand,
+  LogoutMemberCommand,
   ReleaseSeatHoldCommand,
   RefundPaymentCommand,
   RequestPhoneVerificationCommand,
   RequestPaymentCommand,
   SignupMemberCommand,
+  WithdrawMemberCommand,
 } from './dto';
 import {
   CLOCK,
   LOG_EVENT_PUBLISHER,
   MEMBER_REPOSITORY,
+  OPAQUE_TOKEN_GENERATOR,
   OUTBOX_EVENT_REPOSITORY,
   PASSWORD_HASHER,
   PAYMENT_CALLBACK_VERIFIER,
@@ -31,11 +34,13 @@ import {
   SEAT_HOLD_LOCK,
   SEAT_HOLD_REPOSITORY,
   TEMPORARY_PASSWORD_GENERATOR,
+  TOKEN_REPOSITORY,
   TRANSACTION_MANAGER,
   VERIFICATION_CODE_GENERATOR,
   type ClockPort,
   type LogEventPublisherPort,
   type MemberRepositoryPort,
+  type OpaqueTokenGeneratorPort,
   type OutboxEventRepositoryPort,
   type PasswordHasherPort,
   type PaymentCallbackVerifierPort,
@@ -51,6 +56,7 @@ import {
   type SeatHoldLockPort,
   type SeatHoldRepositoryPort,
   type TemporaryPasswordGeneratorPort,
+  type TokenRepositoryPort,
   type TransactionManagerPort,
   type VerificationCodeGeneratorPort,
 } from '@application/commands/ports';
@@ -63,11 +69,13 @@ import {
   HandlePaymentCallbackCommandHandler,
   IssueTemporaryPasswordCommandHandler,
   LoginMemberCommandHandler,
+  LogoutMemberCommandHandler,
   ReleaseSeatHoldCommandHandler,
   RefundPaymentCommandHandler,
   RequestPhoneVerificationCommandHandler,
   RequestPaymentCommandHandler,
   SignupMemberCommandHandler,
+  WithdrawMemberCommandHandler,
 } from './handlers';
 
 @Module({
@@ -132,9 +140,28 @@ import {
         passwordHasher: PasswordHasherPort,
         clock: ClockPort,
         logEventPublisher: LogEventPublisherPort,
+        opaqueTokenGenerator: OpaqueTokenGeneratorPort,
+        tokenRepository: TokenRepositoryPort,
         transactionManager: TransactionManagerPort,
-      ) => new LoginMemberCommandHandler(memberRepository, passwordHasher, clock, logEventPublisher, transactionManager),
-      inject: [MEMBER_REPOSITORY, PASSWORD_HASHER, CLOCK, LOG_EVENT_PUBLISHER, TRANSACTION_MANAGER],
+      ) =>
+        new LoginMemberCommandHandler(
+          memberRepository,
+          passwordHasher,
+          clock,
+          logEventPublisher,
+          opaqueTokenGenerator,
+          tokenRepository,
+          transactionManager,
+        ),
+      inject: [
+        MEMBER_REPOSITORY,
+        PASSWORD_HASHER,
+        CLOCK,
+        LOG_EVENT_PUBLISHER,
+        OPAQUE_TOKEN_GENERATOR,
+        TOKEN_REPOSITORY,
+        TRANSACTION_MANAGER,
+      ],
     },
     {
       provide: IssueTemporaryPasswordCommandHandler,
@@ -182,6 +209,33 @@ import {
       inject: [MEMBER_REPOSITORY, PASSWORD_HASHER, CLOCK, LOG_EVENT_PUBLISHER, TRANSACTION_MANAGER],
     },
     {
+      provide: WithdrawMemberCommandHandler,
+      useFactory: (
+        memberRepository: MemberRepositoryPort,
+        tokenRepository: TokenRepositoryPort,
+        clock: ClockPort,
+        logEventPublisher: LogEventPublisherPort,
+        transactionManager: TransactionManagerPort,
+      ) =>
+        new WithdrawMemberCommandHandler(
+          memberRepository,
+          tokenRepository,
+          clock,
+          logEventPublisher,
+          transactionManager,
+        ),
+      inject: [MEMBER_REPOSITORY, TOKEN_REPOSITORY, CLOCK, LOG_EVENT_PUBLISHER, TRANSACTION_MANAGER],
+    },
+    {
+      provide: LogoutMemberCommandHandler,
+      useFactory: (
+        tokenRepository: TokenRepositoryPort,
+        clock: ClockPort,
+        transactionManager: TransactionManagerPort,
+      ) => new LogoutMemberCommandHandler(tokenRepository, clock, transactionManager),
+      inject: [TOKEN_REPOSITORY, CLOCK, TRANSACTION_MANAGER],
+    },
+    {
       provide: CreateSeatHoldCommandHandler,
       useFactory: (
         seatHoldRepository: SeatHoldRepositoryPort,
@@ -189,7 +243,15 @@ import {
         seatHoldLock: SeatHoldLockPort,
         transactionManager: TransactionManagerPort,
         clock: ClockPort,
-      ) => new CreateSeatHoldCommandHandler(seatHoldRepository, seatHoldCache, seatHoldLock, transactionManager, clock),
+      ) =>
+        new CreateSeatHoldCommandHandler(
+          seatHoldRepository,
+          seatHoldCache,
+          seatHoldLock,
+          transactionManager,
+          clock,
+          { ttlSeconds: seatHoldTtlSeconds() },
+        ),
       inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, SEAT_HOLD_LOCK, TRANSACTION_MANAGER, CLOCK],
     },
     {
@@ -295,8 +357,10 @@ import {
         confirmPhoneVerificationCommandHandler: ConfirmPhoneVerificationCommandHandler,
         signupMemberCommandHandler: SignupMemberCommandHandler,
         loginMemberCommandHandler: LoginMemberCommandHandler,
+        logoutMemberCommandHandler: LogoutMemberCommandHandler,
         issueTemporaryPasswordCommandHandler: IssueTemporaryPasswordCommandHandler,
         changeMemberPasswordCommandHandler: ChangeMemberPasswordCommandHandler,
+        withdrawMemberCommandHandler: WithdrawMemberCommandHandler,
         createSeatHoldCommandHandler: CreateSeatHoldCommandHandler,
         releaseSeatHoldCommandHandler: ReleaseSeatHoldCommandHandler,
         requestPaymentCommandHandler: RequestPaymentCommandHandler,
@@ -308,8 +372,10 @@ import {
           { command: ConfirmPhoneVerificationCommand, handler: confirmPhoneVerificationCommandHandler },
           { command: SignupMemberCommand, handler: signupMemberCommandHandler },
           { command: LoginMemberCommand, handler: loginMemberCommandHandler },
+          { command: LogoutMemberCommand, handler: logoutMemberCommandHandler },
           { command: IssueTemporaryPasswordCommand, handler: issueTemporaryPasswordCommandHandler },
           { command: ChangeMemberPasswordCommand, handler: changeMemberPasswordCommandHandler },
+          { command: WithdrawMemberCommand, handler: withdrawMemberCommandHandler },
           { command: CreateSeatHoldCommand, handler: createSeatHoldCommandHandler },
           { command: ReleaseSeatHoldCommand, handler: releaseSeatHoldCommandHandler },
           { command: RequestPaymentCommand, handler: requestPaymentCommandHandler },
@@ -321,8 +387,10 @@ import {
         ConfirmPhoneVerificationCommandHandler,
         SignupMemberCommandHandler,
         LoginMemberCommandHandler,
+        LogoutMemberCommandHandler,
         IssueTemporaryPasswordCommandHandler,
         ChangeMemberPasswordCommandHandler,
+        WithdrawMemberCommandHandler,
         CreateSeatHoldCommandHandler,
         ReleaseSeatHoldCommandHandler,
         RequestPaymentCommandHandler,
@@ -334,3 +402,13 @@ import {
   exports: [CommandBus],
 })
 export class CommandModule {}
+
+function seatHoldTtlSeconds(): number {
+  const parsed = Number(process.env.SEAT_HOLD_TTL_SECONDS);
+
+  if (Number.isInteger(parsed) && parsed > 0) {
+    return parsed;
+  }
+
+  return 3;
+}

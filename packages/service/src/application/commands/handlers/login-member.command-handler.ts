@@ -6,9 +6,12 @@ import type {
   ClockPort,
   LogEventPublisherPort,
   MemberRepositoryPort,
+  OpaqueTokenGeneratorPort,
   PasswordHasherPort,
+  TokenRepositoryPort,
   TransactionManagerPort,
 } from '../ports';
+import { TokenType } from '../ports';
 
 @Logging
 export class LoginMemberCommandHandler {
@@ -17,6 +20,8 @@ export class LoginMemberCommandHandler {
     private readonly passwordHasher: PasswordHasherPort,
     private readonly clock: ClockPort,
     private readonly logEventPublisher: LogEventPublisherPort,
+    private readonly opaqueTokenGenerator: OpaqueTokenGeneratorPort,
+    private readonly tokenRepository: TokenRepositoryPort,
     readonly transactionManager: TransactionManagerPort,
   ) {}
 
@@ -30,6 +35,10 @@ export class LoginMemberCommandHandler {
 
     if (member.status === MemberStatus.LOCKED) {
       throw new Error('MEMBER_LOCKED');
+    }
+
+    if (member.status === MemberStatus.WITHDRAWN) {
+      throw new Error('MEMBER_WITHDRAWN');
     }
 
     const passwordMatched = await this.passwordHasher.verify({
@@ -62,10 +71,56 @@ export class LoginMemberCommandHandler {
         occurredAt,
       }),
     );
+    const accessToken = this.opaqueTokenGenerator.generate();
+    const refreshToken = this.opaqueTokenGenerator.generate();
+    const accessTokenTtl = accessTokenTtlSeconds();
+    const refreshTokenTtl = refreshTokenTtlSeconds();
+    const accessTokenExpiresAt = new Date(occurredAt);
+    accessTokenExpiresAt.setUTCSeconds(accessTokenExpiresAt.getUTCSeconds() + accessTokenTtl);
+    const refreshTokenExpiresAt = new Date(occurredAt);
+    refreshTokenExpiresAt.setUTCSeconds(refreshTokenExpiresAt.getUTCSeconds() + refreshTokenTtl);
+    await this.tokenRepository.save({
+      type: TokenType.ACCESS,
+      memberId: loggedInMember.id,
+      token: accessToken,
+      ttlSeconds: accessTokenTtl,
+      expiresAt: accessTokenExpiresAt,
+    });
+    await this.tokenRepository.save({
+      type: TokenType.REFRESH,
+      memberId: loggedInMember.id,
+      token: refreshToken,
+      ttlSeconds: refreshTokenTtl,
+      expiresAt: refreshTokenExpiresAt,
+    });
 
     return LoginMemberResultDto.of({
       memberId: loggedInMember.id,
       userId: loggedInMember.userId,
+      accessToken,
+      accessTokenExpiresAt,
+      refreshToken,
+      refreshTokenExpiresAt,
     });
   }
+}
+
+function accessTokenTtlSeconds(): number {
+  const parsed = Number(process.env.ACCESS_TOKEN_TTL_SECONDS);
+
+  if (Number.isInteger(parsed) && parsed > 0) {
+    return parsed;
+  }
+
+  return 15 * 60;
+}
+
+function refreshTokenTtlSeconds(): number {
+  const parsed = Number(process.env.REFRESH_TOKEN_TTL_SECONDS);
+
+  if (Number.isInteger(parsed) && parsed > 0) {
+    return parsed;
+  }
+
+  return 14 * 24 * 60 * 60;
 }
