@@ -1,12 +1,12 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ListTheatersQuery, ListTheatersQueryHandler, TheaterListResultDto } from '@application';
+import { ListTheatersQuery, QueryBus, TheaterListResultDto } from '@application';
 import { ListTheatersRequestDto } from '../dto';
 
 @ApiTags('Theaters')
 @Controller('/theaters')
 export class TheaterController {
-  constructor(private readonly listTheatersQueryHandler: ListTheatersQueryHandler) {}
+  constructor(private readonly queryBus: QueryBus) {}
 
   @ApiOperation({
     summary: '영화관 목록 조회',
@@ -19,7 +19,7 @@ export class TheaterController {
   list(@Query() query: ListTheatersRequestDto) {
     const request = ListTheatersRequestDto.of(query);
 
-    return this.listTheatersQueryHandler.execute(
+    return this.queryBus.execute(
       ListTheatersQuery.of({
         latitude: request.latitude,
         longitude: request.longitude,

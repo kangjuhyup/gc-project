@@ -1,12 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { GetHealthQueryHandler } from '@application/query/handlers';
-import { HealthStatusDto } from '@application/query/dto';
+import { GetHealthQuery, HealthStatusDto, QueryBus } from '@application';
 
 @ApiTags('Health')
 @Controller()
 export class HealthController {
-  constructor(private readonly getHealthQueryHandler: GetHealthQueryHandler) {}
+  constructor(private readonly queryBus: QueryBus) {}
 
   @ApiOperation({
     summary: '서비스 상태 확인',
@@ -14,7 +13,7 @@ export class HealthController {
   })
   @ApiOkResponse({ type: HealthStatusDto, description: '서비스가 정상 응답함' })
   @Get()
-  getHealth(): HealthStatusDto {
-    return this.getHealthQueryHandler.execute();
+  getHealth(): Promise<HealthStatusDto> {
+    return this.queryBus.execute<GetHealthQuery, HealthStatusDto>(GetHealthQuery.of());
   }
 }

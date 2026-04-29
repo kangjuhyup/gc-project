@@ -11,23 +11,18 @@ import {
 } from '@nestjs/swagger';
 import {
   ChangeMemberPasswordCommand,
-  ChangeMemberPasswordCommandHandler,
   CheckUserIdAvailabilityQuery,
-  CheckUserIdAvailabilityQueryHandler,
+  CommandBus,
   ConfirmPhoneVerificationCommand,
-  ConfirmPhoneVerificationCommandHandler,
   IssueTemporaryPasswordCommand,
-  IssueTemporaryPasswordCommandHandler,
   LoginMemberCommand,
-  LoginMemberCommandHandler,
   LoginMemberResultDto,
   MemberPasswordChangedDto,
   PhoneVerificationConfirmedDto,
   PhoneVerificationIssuedDto,
+  QueryBus,
   RequestPhoneVerificationCommand,
-  RequestPhoneVerificationCommandHandler,
   SignupMemberCommand,
-  SignupMemberCommandHandler,
   SignupMemberResultDto,
   TemporaryPasswordIssuedDto,
   CheckUserIdAvailabilityResultDto,
@@ -46,13 +41,8 @@ import {
 @Controller()
 export class MemberController {
   constructor(
-    private readonly checkUserIdAvailabilityQueryHandler: CheckUserIdAvailabilityQueryHandler,
-    private readonly requestPhoneVerificationCommandHandler: RequestPhoneVerificationCommandHandler,
-    private readonly confirmPhoneVerificationCommandHandler: ConfirmPhoneVerificationCommandHandler,
-    private readonly signupMemberCommandHandler: SignupMemberCommandHandler,
-    private readonly loginMemberCommandHandler: LoginMemberCommandHandler,
-    private readonly issueTemporaryPasswordCommandHandler: IssueTemporaryPasswordCommandHandler,
-    private readonly changeMemberPasswordCommandHandler: ChangeMemberPasswordCommandHandler,
+    private readonly queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
   ) {}
 
   @ApiOperation({
@@ -64,7 +54,7 @@ export class MemberController {
   @Get('/members/check-user-id')
   checkUserId(@Query() query: CheckUserIdRequestDto) {
     const request = CheckUserIdRequestDto.of(query);
-    return this.checkUserIdAvailabilityQueryHandler.execute(
+    return this.queryBus.execute(
       CheckUserIdAvailabilityQuery.of({ userId: request.userId }),
     );
   }
@@ -78,7 +68,7 @@ export class MemberController {
   @Post('/phone-verifications')
   requestPhoneVerification(@Body() body: RequestPhoneVerificationRequestDto) {
     const request = RequestPhoneVerificationRequestDto.of(body);
-    return this.requestPhoneVerificationCommandHandler.execute(
+    return this.commandBus.execute(
       RequestPhoneVerificationCommand.of({
         phoneNumber: request.phoneNumber,
       }),
@@ -94,7 +84,7 @@ export class MemberController {
   @Post('/phone-verifications/confirm')
   confirmPhoneVerification(@Body() body: ConfirmPhoneVerificationRequestDto) {
     const request = ConfirmPhoneVerificationRequestDto.of(body);
-    return this.confirmPhoneVerificationCommandHandler.execute(
+    return this.commandBus.execute(
       ConfirmPhoneVerificationCommand.of({
         verificationId: request.verificationId,
         phoneNumber: request.phoneNumber,
@@ -113,7 +103,7 @@ export class MemberController {
   @Post('/members/signup')
   signup(@Body() body: SignupMemberRequestDto) {
     const request = SignupMemberRequestDto.of(body);
-    return this.signupMemberCommandHandler.execute(
+    return this.commandBus.execute(
       SignupMemberCommand.of({
         userId: request.userId,
         password: request.password,
@@ -137,7 +127,7 @@ export class MemberController {
   @Post('/members/login')
   login(@Body() body: LoginMemberRequestDto) {
     const request = LoginMemberRequestDto.of(body);
-    return this.loginMemberCommandHandler.execute(
+    return this.commandBus.execute(
       LoginMemberCommand.of({
         userId: request.userId,
         password: request.password,
@@ -155,7 +145,7 @@ export class MemberController {
   @Post('/members/temporary-password')
   issueTemporaryPassword(@Body() body: IssueTemporaryPasswordRequestDto) {
     const request = IssueTemporaryPasswordRequestDto.of(body);
-    return this.issueTemporaryPasswordCommandHandler.execute(
+    return this.commandBus.execute(
       IssueTemporaryPasswordCommand.of({
         userId: request.userId,
         phoneVerificationId: request.phoneVerificationId,
@@ -173,7 +163,7 @@ export class MemberController {
   @Post('/members/password')
   changePassword(@Body() body: ChangeMemberPasswordRequestDto) {
     const request = ChangeMemberPasswordRequestDto.of(body);
-    return this.changeMemberPasswordCommandHandler.execute(
+    return this.commandBus.execute(
       ChangeMemberPasswordCommand.of({
         userId: request.userId,
         currentPassword: request.currentPassword,

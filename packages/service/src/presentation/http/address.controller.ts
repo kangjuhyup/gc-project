@@ -1,12 +1,12 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AddressSearchResultDto, SearchAddressesQuery, SearchAddressesQueryHandler } from '@application';
+import { AddressSearchResultDto, QueryBus, SearchAddressesQuery } from '@application';
 import { SearchAddressesRequestDto } from '../dto';
 
 @ApiTags('Addresses')
 @Controller('/api/addresses')
 export class AddressController {
-  constructor(private readonly searchAddressesQueryHandler: SearchAddressesQueryHandler) {}
+  constructor(private readonly queryBus: QueryBus) {}
 
   @ApiOperation({
     summary: '주소 검색',
@@ -17,7 +17,7 @@ export class AddressController {
   @Get()
   search(@Query() query: SearchAddressesRequestDto) {
     const request = SearchAddressesRequestDto.of(query);
-    return this.searchAddressesQueryHandler.execute(
+    return this.queryBus.execute(
       SearchAddressesQuery.of({
         keyword: request.keyword,
         currentPage: request.currentPage,

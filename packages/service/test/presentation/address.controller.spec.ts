@@ -3,7 +3,7 @@ import { SearchAddressesQuery } from '@application/query/dto';
 import { AddressController } from '@presentation/http';
 
 describe('AddressController', () => {
-  it('주소 검색 요청을 query handler에 위임하고 SignupPage 스펙 응답을 반환한다', async () => {
+  it('주소 검색 요청을 query bus에 위임하고 SignupPage 스펙 응답을 반환한다', async () => {
     const expected = {
       totalCount: 1,
       currentPage: 1,
@@ -26,8 +26,8 @@ describe('AddressController', () => {
         },
       ],
     };
-    const queryHandler = { execute: vi.fn().mockResolvedValue(expected) };
-    const controller = new AddressController(queryHandler as never);
+    const queryBus = { execute: vi.fn().mockResolvedValue(expected) };
+    const controller = new AddressController(queryBus as never);
 
     const result = await controller.search({
       keyword: '테헤란로',
@@ -35,7 +35,7 @@ describe('AddressController', () => {
       countPerPage: 20,
     } as never);
 
-    expect(queryHandler.execute).toHaveBeenCalledWith(
+    expect(queryBus.execute).toHaveBeenCalledWith(
       SearchAddressesQuery.of({ keyword: '테헤란로', currentPage: 2, countPerPage: 20 }),
     );
     expect(result).toBe(expected);

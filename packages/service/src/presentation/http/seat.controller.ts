@@ -10,10 +10,10 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import {
+  CommandBus,
   CreateSeatHoldCommand,
-  CreateSeatHoldCommandHandler,
   ListScreeningSeatsQuery,
-  ListScreeningSeatsQueryHandler,
+  QueryBus,
   ScreeningSeatListResultDto,
   SeatHoldCreatedDto,
 } from '@application';
@@ -26,8 +26,8 @@ import { CreateSeatHoldRequestDto, ListScreeningSeatsRequestDto } from '../dto';
 @Controller()
 export class SeatController {
   constructor(
-    private readonly listScreeningSeatsQueryHandler: ListScreeningSeatsQueryHandler,
-    private readonly createSeatHoldCommandHandler: CreateSeatHoldCommandHandler,
+    private readonly queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
   ) {}
 
   @ApiOperation({
@@ -41,7 +41,7 @@ export class SeatController {
   list(@Param() params: ListScreeningSeatsRequestDto) {
     const request = ListScreeningSeatsRequestDto.of(params);
 
-    return this.listScreeningSeatsQueryHandler.execute(
+    return this.queryBus.execute(
       ListScreeningSeatsQuery.of({
         screeningId: request.screeningId,
       }),
@@ -62,7 +62,7 @@ export class SeatController {
   @Post('/seat-holds')
   createHold(@Body() body: CreateSeatHoldRequestDto, @User() user: AuthenticatedUserDto) {
     const request = CreateSeatHoldRequestDto.of(body);
-    return this.createSeatHoldCommandHandler.execute(
+    return this.commandBus.execute(
       CreateSeatHoldCommand.of({
         memberId: user.memberId,
         screeningId: request.screeningId,
