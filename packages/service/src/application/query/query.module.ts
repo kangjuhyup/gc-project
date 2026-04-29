@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import {
   CheckUserIdAvailabilityQuery,
+  GetPaymentQuery,
   GetHealthQuery,
   ListMoviesQuery,
   ListScreeningSeatsQuery,
@@ -12,17 +13,20 @@ import {
   ADDRESS_SEARCH,
   MEMBER_QUERY,
   MOVIE_QUERY,
+  PAYMENT_QUERY,
   SEAT_QUERY,
   THEATER_QUERY,
   type AddressSearchPort,
   type MemberQueryPort,
   type MovieQueryPort,
+  type PaymentQueryPort,
   type SeatQueryPort,
   type TheaterQueryPort,
 } from '@application/query/ports';
 import { InfrastructureModule } from '@infrastructure';
 import {
   CheckUserIdAvailabilityQueryHandler,
+  GetPaymentQueryHandler,
   GetHealthQueryHandler,
   ListMoviesQueryHandler,
   ListScreeningSeatsQueryHandler,
@@ -60,6 +64,11 @@ import {
       inject: [SEAT_QUERY],
     },
     {
+      provide: GetPaymentQueryHandler,
+      useFactory: (paymentQuery: PaymentQueryPort) => new GetPaymentQueryHandler(paymentQuery),
+      inject: [PAYMENT_QUERY],
+    },
+    {
       provide: QueryBus,
       useFactory: (
         getHealthQueryHandler: GetHealthQueryHandler,
@@ -68,6 +77,7 @@ import {
         listMoviesQueryHandler: ListMoviesQueryHandler,
         listTheatersQueryHandler: ListTheatersQueryHandler,
         listScreeningSeatsQueryHandler: ListScreeningSeatsQueryHandler,
+        getPaymentQueryHandler: GetPaymentQueryHandler,
       ) =>
         QueryBus.of([
           { query: CheckUserIdAvailabilityQuery, handler: checkUserIdAvailabilityQueryHandler },
@@ -75,6 +85,7 @@ import {
           { query: ListMoviesQuery, handler: listMoviesQueryHandler },
           { query: ListTheatersQuery, handler: listTheatersQueryHandler },
           { query: ListScreeningSeatsQuery, handler: listScreeningSeatsQueryHandler },
+          { query: GetPaymentQuery, handler: getPaymentQueryHandler },
           { query: GetHealthQuery, handler: getHealthQueryHandler },
         ]),
       inject: [
@@ -84,6 +95,7 @@ import {
         ListMoviesQueryHandler,
         ListTheatersQueryHandler,
         ListScreeningSeatsQueryHandler,
+        GetPaymentQueryHandler,
       ],
     },
   ],

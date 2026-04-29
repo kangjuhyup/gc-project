@@ -40,8 +40,12 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
     return entity ? PersistenceMapper.paymentToDomain(entity) : undefined;
   }
 
-  async findPaymentById(paymentId: string): Promise<PaymentResultDto | undefined> {
-    return this.findById(paymentId).then((payment) => (payment === undefined ? undefined : this.toDto(payment)));
+  async findPaymentById(params: { paymentId: string; memberId: string }): Promise<PaymentResultDto | undefined> {
+    const entity = await this.entityManager.findOne(PaymentEntity, {
+      id: params.paymentId,
+      member: params.memberId,
+    });
+    return entity ? this.toDto(PersistenceMapper.paymentToDomain(entity)) : undefined;
   }
 
   private toDto(payment: PaymentModel): PaymentResultDto {

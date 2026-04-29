@@ -22,9 +22,9 @@ describe('MikroOrmPaymentRepository', () => {
     };
     const repository = new MikroOrmPaymentRepository(entityManager as never);
 
-    const result = await repository.findPaymentById('7001');
+    const result = await repository.findPaymentById({ paymentId: '7001', memberId: '1' });
 
-    expect(entityManager.findOne).toHaveBeenCalledWith(PaymentEntity, { id: '7001' });
+    expect(entityManager.findOne).toHaveBeenCalledWith(PaymentEntity, { id: '7001', member: '1' });
     expect(result?.paymentId).toBe('7001');
     expect(result?.seatHoldId).toBe('9001');
     expect(result?.provider).toBe('LOCAL');
