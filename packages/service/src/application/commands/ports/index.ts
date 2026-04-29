@@ -3,7 +3,9 @@ export { LOG_EVENT_PUBLISHER } from './log-event-publisher.port';
 export { MEMBER_REPOSITORY } from './member.repository.port';
 export { OUTBOX_EVENT_REPOSITORY } from './outbox-event.repository.port';
 export { PASSWORD_HASHER } from './password-hasher.port';
+export { PAYMENT_CALLBACK_VERIFIER } from './payment-callback-verifier.port';
 export { PAYMENT_EVENT_LOG_REPOSITORY } from './payment-event-log.repository.port';
+export { PAYMENT_GATEWAY } from './payment-gateway.port';
 export { PAYMENT_REPOSITORY } from './payment.repository.port';
 export { PHONE_VERIFICATION_REPOSITORY } from './phone-verification.repository.port';
 export { RESERVATION_EVENT_REPOSITORY } from './reservation-event.repository.port';
@@ -22,7 +24,14 @@ export type { MovieImageRepositoryPort } from './movie-image.repository.port';
 export type { MovieRepositoryPort } from './movie.repository.port';
 export type { OutboxEventRepositoryPort } from './outbox-event.repository.port';
 export type { PasswordHasherPort } from './password-hasher.port';
+export type { PaymentCallbackVerifierPort } from './payment-callback-verifier.port';
 export type { PaymentEventLogRepositoryPort } from './payment-event-log.repository.port';
+export type {
+  PaymentGatewayPort,
+  PaymentGatewayRequestResultDto,
+  PaymentRefundRequestDto,
+  PaymentRefundResultDto as PaymentGatewayRefundResultDto,
+} from './payment-gateway.port';
 export type { PaymentRepositoryPort } from './payment.repository.port';
 export type { PhoneVerificationRepositoryPort } from './phone-verification.repository.port';
 export type { RepositoryPort } from './repository.port';
