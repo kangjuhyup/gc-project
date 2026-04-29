@@ -49,11 +49,11 @@ export class ServiceE2eContext {
   static async create(): Promise<ServiceE2eContext> {
     process.env.NODE_ENV = 'test';
     process.env.DB_HOST = 'localhost';
-    process.env.DB_PORT = '15432';
+    process.env.DB_PORT = '55432';
     process.env.DB_NAME = 'gc_project_e2e';
     process.env.DB_USER = 'gc_user';
     process.env.DB_PASSWORD = 'gc_password';
-    process.env.REDIS_URL = 'redis://:gc_redis_password@localhost:16379';
+    process.env.REDIS_URL = 'redis://:gc_redis_password@localhost:56379';
     process.env.ADDRESS_ADAPTER = 'local';
 
     faker.seed(20260429);
