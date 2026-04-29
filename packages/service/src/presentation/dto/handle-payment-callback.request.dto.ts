@@ -35,7 +35,7 @@ export class HandlePaymentCallbackRequestDto {
   @IsString()
   readonly token?: string;
 
-  private constructor(params: {
+  private constructor(params?: {
     provider: PaymentProviderType;
     providerPaymentId: string;
     paymentId: string;
@@ -44,13 +44,15 @@ export class HandlePaymentCallbackRequestDto {
     failureReason?: string;
     token?: string;
   }) {
-    this.provider = params.provider;
-    this.providerPaymentId = params.providerPaymentId;
-    this.paymentId = params.paymentId;
-    this.amount = params.amount;
-    this.approved = params.approved;
-    this.failureReason = params.failureReason;
-    this.token = params.token;
+    if (params !== undefined) {
+      this.provider = params.provider;
+      this.providerPaymentId = params.providerPaymentId;
+      this.paymentId = params.paymentId;
+      this.amount = params.amount;
+      this.approved = params.approved;
+      this.failureReason = params.failureReason;
+      this.token = params.token;
+    }
   }
 
   static of(params: {

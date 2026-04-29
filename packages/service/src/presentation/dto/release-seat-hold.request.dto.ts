@@ -7,8 +7,10 @@ export class ReleaseSeatHoldRequestDto {
   @Matches(/^[1-9][0-9]*$/)
   readonly holdId!: string;
 
-  private constructor(params: { holdId: string }) {
-    this.holdId = params.holdId;
+  private constructor(params?: { holdId: string }) {
+    if (params !== undefined) {
+      this.holdId = params.holdId;
+    }
   }
 
   static of(params: { holdId: string }): ReleaseSeatHoldRequestDto {

@@ -29,16 +29,18 @@ export class RequestPaymentRequestDto {
   @Min(1)
   readonly amount!: number;
 
-  private constructor(params: {
+  private constructor(params?: {
     seatHoldId: string;
     idempotencyKey: string;
     provider: PaymentProviderType;
     amount: number;
   }) {
-    this.seatHoldId = params.seatHoldId;
-    this.idempotencyKey = params.idempotencyKey;
-    this.provider = params.provider;
-    this.amount = params.amount;
+    if (params !== undefined) {
+      this.seatHoldId = params.seatHoldId;
+      this.idempotencyKey = params.idempotencyKey;
+      this.provider = params.provider;
+      this.amount = params.amount;
+    }
   }
 
   static of(params: {

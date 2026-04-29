@@ -7,8 +7,10 @@ export class ListScreeningSeatsRequestDto {
   @Matches(/^[1-9][0-9]*$/)
   readonly screeningId!: string;
 
-  private constructor(params: { screeningId: string }) {
-    this.screeningId = params.screeningId;
+  private constructor(params?: { screeningId: string }) {
+    if (params !== undefined) {
+      this.screeningId = params.screeningId;
+    }
   }
 
   static of(params: { screeningId: string }): ListScreeningSeatsRequestDto {

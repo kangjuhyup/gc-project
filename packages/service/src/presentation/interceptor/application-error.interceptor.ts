@@ -5,6 +5,7 @@ import {
   ConflictException,
   ExecutionContext,
   ForbiddenException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NestInterceptor,
@@ -66,7 +67,11 @@ export class ApplicationErrorInterceptor implements NestInterceptor {
 
   private map(
     error: Error,
-  ): BadRequestException | ConflictException | ForbiddenException | InternalServerErrorException | NotFoundException {
+  ): BadRequestException | ConflictException | ForbiddenException | HttpException | InternalServerErrorException | NotFoundException {
+    if (error instanceof HttpException) {
+      return error;
+    }
+
     const code = error instanceof DomainError ? error.code : error.message;
 
     if (conflictErrors.has(code)) {

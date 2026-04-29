@@ -7,8 +7,10 @@ export class RefundPaymentRequestDto {
   @Matches(/^[1-9][0-9]*$/)
   readonly paymentId!: string;
 
-  private constructor(params: { paymentId: string }) {
-    this.paymentId = params.paymentId;
+  private constructor(params?: { paymentId: string }) {
+    if (params !== undefined) {
+      this.paymentId = params.paymentId;
+    }
   }
 
   static of(params: { paymentId: string }): RefundPaymentRequestDto {
