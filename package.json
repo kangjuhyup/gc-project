@@ -14,6 +14,11 @@
   ],
   "scripts": {
     "dev": "pnpm -r --parallel dev",
+    "dev:apps": "pnpm -r --parallel --filter @gc-project/service --filter @gc-project/ui dev",
+    "dev:local": "pnpm run compose:up && pnpm run dev:apps",
+    "compose:up": "docker compose up -d",
+    "compose:down": "docker compose down",
+    "compose:logs": "docker compose logs -f",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint"
