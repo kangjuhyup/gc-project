@@ -1,1 +1,5 @@
-export { Transactional } from './transactional.decorator';
+export {
+  clearTransactionalDecorator,
+  configureTransactionalDecorator,
+  Transactional,
+} from './transactional.decorator';

@@ -1,5 +1,6 @@
 import { PersistenceModel } from '@domain/shared';
-import type { ReservationStatusType } from '@domain/property';
+import { DomainError, DomainErrorCode } from '@domain/errors';
+import { ReservationStatus, type ReservationStatusType } from '@domain/property';
 
 export interface ReservationPersistenceProps {
   readonly reservationNumber: string;
@@ -18,6 +19,19 @@ export class ReservationModel extends PersistenceModel<string, ReservationPersis
 
   static of(props: ReservationPersistenceProps): ReservationModel {
     return new ReservationModel(props);
+  }
+
+  cancel(params: { reason?: string; now: Date }): ReservationModel {
+    if (this.status !== ReservationStatus.CONFIRMED) {
+      throw new DomainError(DomainErrorCode.INVALID_RESERVATION_STATUS);
+    }
+
+    return new ReservationModel({
+      ...this.etc,
+      status: ReservationStatus.CANCELED,
+      canceledAt: params.now,
+      cancelReason: params.reason,
+    }, this.id).setPersistence(this.id, this.createdAt, params.now);
   }
 
   get reservationNumber(): string {

@@ -8,7 +8,6 @@ import type {
   MemberRepositoryPort,
   PasswordHasherPort,
   PhoneVerificationRepositoryPort,
-  TransactionManagerPort,
 } from '../ports';
 
 @Logging
@@ -18,7 +17,6 @@ export class SignupMemberCommandHandler {
     private readonly phoneVerificationRepository: PhoneVerificationRepositoryPort,
     private readonly passwordHasher: PasswordHasherPort,
     private readonly logEventPublisher: LogEventPublisherPort,
-    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 

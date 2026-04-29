@@ -7,7 +7,6 @@ import type {
   PaymentEventLogRepositoryPort,
   PaymentGatewayPort,
   PaymentRepositoryPort,
-  TransactionManagerPort,
 } from '../ports';
 
 @Logging
@@ -16,7 +15,6 @@ export class RefundPaymentCommandHandler {
     private readonly paymentRepository: PaymentRepositoryPort,
     private readonly paymentEventLogRepository: PaymentEventLogRepositoryPort,
     private readonly paymentGateway: PaymentGatewayPort,
-    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 

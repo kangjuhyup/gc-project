@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import {
   ChangeMemberPasswordCommand,
+  CancelReservationCommand,
   ConfirmPhoneVerificationCommand,
   CreateSeatHoldCommand,
   HandlePaymentCallbackCommand,
@@ -35,7 +36,6 @@ import {
   SEAT_HOLD_REPOSITORY,
   TEMPORARY_PASSWORD_GENERATOR,
   TOKEN_REPOSITORY,
-  TRANSACTION_MANAGER,
   VERIFICATION_CODE_GENERATOR,
   type ClockPort,
   type LogEventPublisherPort,
@@ -57,13 +57,14 @@ import {
   type SeatHoldRepositoryPort,
   type TemporaryPasswordGeneratorPort,
   type TokenRepositoryPort,
-  type TransactionManagerPort,
   type VerificationCodeGeneratorPort,
 } from '@application/commands/ports';
 import { InfrastructureModule } from '@infrastructure';
 import { CommandBus } from './command-bus';
+import { TransactionalDecoratorProvider } from './transactional-decorator.provider';
 import {
   ChangeMemberPasswordCommandHandler,
+  CancelReservationCommandHandler,
   ConfirmPhoneVerificationCommandHandler,
   CreateSeatHoldCommandHandler,
   HandlePaymentCallbackCommandHandler,
@@ -81,30 +82,28 @@ import {
 @Module({
   imports: [InfrastructureModule],
   providers: [
+    TransactionalDecoratorProvider,
     {
       provide: RequestPhoneVerificationCommandHandler,
       useFactory: (
         phoneVerificationRepository: PhoneVerificationRepositoryPort,
         verificationCodeGenerator: VerificationCodeGeneratorPort,
-        transactionManager: TransactionManagerPort,
         clock: ClockPort,
       ) =>
         new RequestPhoneVerificationCommandHandler(
           phoneVerificationRepository,
           verificationCodeGenerator,
-          transactionManager,
           clock,
         ),
-      inject: [PHONE_VERIFICATION_REPOSITORY, VERIFICATION_CODE_GENERATOR, TRANSACTION_MANAGER, CLOCK],
+      inject: [PHONE_VERIFICATION_REPOSITORY, VERIFICATION_CODE_GENERATOR, CLOCK],
     },
     {
       provide: ConfirmPhoneVerificationCommandHandler,
       useFactory: (
         phoneVerificationRepository: PhoneVerificationRepositoryPort,
-        transactionManager: TransactionManagerPort,
         clock: ClockPort,
-      ) => new ConfirmPhoneVerificationCommandHandler(phoneVerificationRepository, transactionManager, clock),
-      inject: [PHONE_VERIFICATION_REPOSITORY, TRANSACTION_MANAGER, CLOCK],
+      ) => new ConfirmPhoneVerificationCommandHandler(phoneVerificationRepository, clock),
+      inject: [PHONE_VERIFICATION_REPOSITORY, CLOCK],
     },
     {
       provide: SignupMemberCommandHandler,
@@ -113,7 +112,6 @@ import {
         phoneVerificationRepository: PhoneVerificationRepositoryPort,
         passwordHasher: PasswordHasherPort,
         logEventPublisher: LogEventPublisherPort,
-        transactionManager: TransactionManagerPort,
         clock: ClockPort,
       ) =>
         new SignupMemberCommandHandler(
@@ -121,7 +119,6 @@ import {
           phoneVerificationRepository,
           passwordHasher,
           logEventPublisher,
-          transactionManager,
           clock,
         ),
       inject: [
@@ -129,7 +126,6 @@ import {
         PHONE_VERIFICATION_REPOSITORY,
         PASSWORD_HASHER,
         LOG_EVENT_PUBLISHER,
-        TRANSACTION_MANAGER,
         CLOCK,
       ],
     },
@@ -142,7 +138,6 @@ import {
         logEventPublisher: LogEventPublisherPort,
         opaqueTokenGenerator: OpaqueTokenGeneratorPort,
         tokenRepository: TokenRepositoryPort,
-        transactionManager: TransactionManagerPort,
       ) =>
         new LoginMemberCommandHandler(
           memberRepository,
@@ -151,7 +146,6 @@ import {
           logEventPublisher,
           opaqueTokenGenerator,
           tokenRepository,
-          transactionManager,
         ),
       inject: [
         MEMBER_REPOSITORY,
@@ -160,7 +154,6 @@ import {
         LOG_EVENT_PUBLISHER,
         OPAQUE_TOKEN_GENERATOR,
         TOKEN_REPOSITORY,
-        TRANSACTION_MANAGER,
       ],
     },
     {
@@ -170,7 +163,6 @@ import {
         phoneVerificationRepository: PhoneVerificationRepositoryPort,
         temporaryPasswordGenerator: TemporaryPasswordGeneratorPort,
         passwordHasher: PasswordHasherPort,
-        transactionManager: TransactionManagerPort,
         clock: ClockPort,
       ) =>
         new IssueTemporaryPasswordCommandHandler(
@@ -178,7 +170,6 @@ import {
           phoneVerificationRepository,
           temporaryPasswordGenerator,
           passwordHasher,
-          transactionManager,
           clock,
         ),
       inject: [
@@ -186,7 +177,6 @@ import {
         PHONE_VERIFICATION_REPOSITORY,
         TEMPORARY_PASSWORD_GENERATOR,
         PASSWORD_HASHER,
-        TRANSACTION_MANAGER,
         CLOCK,
       ],
     },
@@ -197,16 +187,14 @@ import {
         passwordHasher: PasswordHasherPort,
         clock: ClockPort,
         logEventPublisher: LogEventPublisherPort,
-        transactionManager: TransactionManagerPort,
       ) =>
         new ChangeMemberPasswordCommandHandler(
           memberRepository,
           passwordHasher,
           clock,
           logEventPublisher,
-          transactionManager,
         ),
-      inject: [MEMBER_REPOSITORY, PASSWORD_HASHER, CLOCK, LOG_EVENT_PUBLISHER, TRANSACTION_MANAGER],
+      inject: [MEMBER_REPOSITORY, PASSWORD_HASHER, CLOCK, LOG_EVENT_PUBLISHER],
     },
     {
       provide: WithdrawMemberCommandHandler,
@@ -215,25 +203,22 @@ import {
         tokenRepository: TokenRepositoryPort,
         clock: ClockPort,
         logEventPublisher: LogEventPublisherPort,
-        transactionManager: TransactionManagerPort,
       ) =>
         new WithdrawMemberCommandHandler(
           memberRepository,
           tokenRepository,
           clock,
           logEventPublisher,
-          transactionManager,
         ),
-      inject: [MEMBER_REPOSITORY, TOKEN_REPOSITORY, CLOCK, LOG_EVENT_PUBLISHER, TRANSACTION_MANAGER],
+      inject: [MEMBER_REPOSITORY, TOKEN_REPOSITORY, CLOCK, LOG_EVENT_PUBLISHER],
     },
     {
       provide: LogoutMemberCommandHandler,
       useFactory: (
         tokenRepository: TokenRepositoryPort,
         clock: ClockPort,
-        transactionManager: TransactionManagerPort,
-      ) => new LogoutMemberCommandHandler(tokenRepository, clock, transactionManager),
-      inject: [TOKEN_REPOSITORY, CLOCK, TRANSACTION_MANAGER],
+      ) => new LogoutMemberCommandHandler(tokenRepository, clock),
+      inject: [TOKEN_REPOSITORY, CLOCK],
     },
     {
       provide: CreateSeatHoldCommandHandler,
@@ -241,27 +226,24 @@ import {
         seatHoldRepository: SeatHoldRepositoryPort,
         seatHoldCache: SeatHoldCachePort,
         seatHoldLock: SeatHoldLockPort,
-        transactionManager: TransactionManagerPort,
         clock: ClockPort,
       ) =>
         new CreateSeatHoldCommandHandler(
           seatHoldRepository,
           seatHoldCache,
           seatHoldLock,
-          transactionManager,
           clock,
           { ttlSeconds: seatHoldTtlSeconds() },
         ),
-      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, SEAT_HOLD_LOCK, TRANSACTION_MANAGER, CLOCK],
+      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, SEAT_HOLD_LOCK, CLOCK],
     },
     {
       provide: ReleaseSeatHoldCommandHandler,
       useFactory: (
         seatHoldRepository: SeatHoldRepositoryPort,
         seatHoldCache: SeatHoldCachePort,
-        transactionManager: TransactionManagerPort,
-      ) => new ReleaseSeatHoldCommandHandler(seatHoldRepository, seatHoldCache, transactionManager),
-      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, TRANSACTION_MANAGER],
+      ) => new ReleaseSeatHoldCommandHandler(seatHoldRepository, seatHoldCache),
+      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE],
     },
     {
       provide: RequestPaymentCommandHandler,
@@ -271,7 +253,6 @@ import {
         paymentEventLogRepository: PaymentEventLogRepositoryPort,
         outboxEventRepository: OutboxEventRepositoryPort,
         paymentRequestHasher: PaymentRequestHasherPort,
-        transactionManager: TransactionManagerPort,
         clock: ClockPort,
       ) =>
         new RequestPaymentCommandHandler(
@@ -280,7 +261,6 @@ import {
           paymentEventLogRepository,
           outboxEventRepository,
           paymentRequestHasher,
-          transactionManager,
           clock,
         ),
       inject: [
@@ -289,7 +269,6 @@ import {
         PAYMENT_EVENT_LOG_REPOSITORY,
         OUTBOX_EVENT_REPOSITORY,
         PAYMENT_REQUEST_HASHER,
-        TRANSACTION_MANAGER,
         CLOCK,
       ],
     },
@@ -304,7 +283,6 @@ import {
         paymentEventLogRepository: PaymentEventLogRepositoryPort,
         outboxEventRepository: OutboxEventRepositoryPort,
         paymentCallbackVerifier: PaymentCallbackVerifierPort,
-        transactionManager: TransactionManagerPort,
         clock: ClockPort,
       ) =>
         new HandlePaymentCallbackCommandHandler(
@@ -316,7 +294,6 @@ import {
           paymentEventLogRepository,
           outboxEventRepository,
           paymentCallbackVerifier,
-          transactionManager,
           clock,
         ),
       inject: [
@@ -328,7 +305,6 @@ import {
         PAYMENT_EVENT_LOG_REPOSITORY,
         OUTBOX_EVENT_REPOSITORY,
         PAYMENT_CALLBACK_VERIFIER,
-        TRANSACTION_MANAGER,
         CLOCK,
       ],
     },
@@ -338,17 +314,42 @@ import {
         paymentRepository: PaymentRepositoryPort,
         paymentEventLogRepository: PaymentEventLogRepositoryPort,
         paymentGateway: PaymentGatewayPort,
-        transactionManager: TransactionManagerPort,
         clock: ClockPort,
       ) =>
         new RefundPaymentCommandHandler(
           paymentRepository,
           paymentEventLogRepository,
           paymentGateway,
-          transactionManager,
           clock,
         ),
-      inject: [PAYMENT_REPOSITORY, PAYMENT_EVENT_LOG_REPOSITORY, PAYMENT_GATEWAY, TRANSACTION_MANAGER, CLOCK],
+      inject: [PAYMENT_REPOSITORY, PAYMENT_EVENT_LOG_REPOSITORY, PAYMENT_GATEWAY, CLOCK],
+    },
+    {
+      provide: CancelReservationCommandHandler,
+      useFactory: (
+        reservationRepository: ReservationRepositoryPort,
+        paymentRepository: PaymentRepositoryPort,
+        reservationEventRepository: ReservationEventRepositoryPort,
+        paymentEventLogRepository: PaymentEventLogRepositoryPort,
+        outboxEventRepository: OutboxEventRepositoryPort,
+        clock: ClockPort,
+      ) =>
+        new CancelReservationCommandHandler(
+          reservationRepository,
+          paymentRepository,
+          reservationEventRepository,
+          paymentEventLogRepository,
+          outboxEventRepository,
+          clock,
+        ),
+      inject: [
+        RESERVATION_REPOSITORY,
+        PAYMENT_REPOSITORY,
+        RESERVATION_EVENT_REPOSITORY,
+        PAYMENT_EVENT_LOG_REPOSITORY,
+        OUTBOX_EVENT_REPOSITORY,
+        CLOCK,
+      ],
     },
     {
       provide: CommandBus,
@@ -366,6 +367,7 @@ import {
         requestPaymentCommandHandler: RequestPaymentCommandHandler,
         handlePaymentCallbackCommandHandler: HandlePaymentCallbackCommandHandler,
         refundPaymentCommandHandler: RefundPaymentCommandHandler,
+        cancelReservationCommandHandler: CancelReservationCommandHandler,
       ) =>
         CommandBus.of([
           { command: RequestPhoneVerificationCommand, handler: requestPhoneVerificationCommandHandler },
@@ -381,6 +383,7 @@ import {
           { command: RequestPaymentCommand, handler: requestPaymentCommandHandler },
           { command: HandlePaymentCallbackCommand, handler: handlePaymentCallbackCommandHandler },
           { command: RefundPaymentCommand, handler: refundPaymentCommandHandler },
+          { command: CancelReservationCommand, handler: cancelReservationCommandHandler },
         ]),
       inject: [
         RequestPhoneVerificationCommandHandler,
@@ -396,6 +399,7 @@ import {
         RequestPaymentCommandHandler,
         HandlePaymentCallbackCommandHandler,
         RefundPaymentCommandHandler,
+        CancelReservationCommandHandler,
       ],
     },
   ],

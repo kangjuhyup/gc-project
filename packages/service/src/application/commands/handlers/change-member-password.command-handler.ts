@@ -7,7 +7,6 @@ import type {
   LogEventPublisherPort,
   MemberRepositoryPort,
   PasswordHasherPort,
-  TransactionManagerPort,
 } from '../ports';
 
 @Logging
@@ -17,7 +16,6 @@ export class ChangeMemberPasswordCommandHandler {
     private readonly passwordHasher: PasswordHasherPort,
     private readonly clock: ClockPort,
     private readonly logEventPublisher: LogEventPublisherPort,
-    readonly transactionManager: TransactionManagerPort,
   ) {}
 
   @Transactional()

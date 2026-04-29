@@ -1,6 +1,7 @@
 export { ApplicationModule } from './application.module';
 export {
   ChangeMemberPasswordCommand,
+  CancelReservationCommand,
   ConfirmPhoneVerificationCommand,
   CreateSeatHoldCommand,
   HandlePaymentCallbackCommand,
@@ -16,6 +17,7 @@ export {
   PaymentCallbackResultDto,
   PaymentRefundResultDto,
   PaymentResultDto,
+  ReservationCanceledDto,
   RequestPhoneVerificationCommand,
   RequestPaymentCommand,
   ReleaseSeatHoldCommand,
@@ -36,6 +38,7 @@ export { Transactional } from './commands/decorators';
 export type { QueryHandler } from './query/query-bus';
 export {
   ChangeMemberPasswordCommandHandler,
+  CancelReservationCommandHandler,
   ConfirmPhoneVerificationCommandHandler,
   CreateSeatHoldCommandHandler,
   HandlePaymentCallbackCommandHandler,

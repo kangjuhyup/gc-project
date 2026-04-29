@@ -8,7 +8,6 @@ import type {
   SeatHoldLock,
   SeatHoldLockPort,
   SeatHoldRepositoryPort,
-  TransactionManagerPort,
 } from '../ports';
 
 const DEFAULT_SEAT_HOLD_TTL_SECONDS = 3;
@@ -24,7 +23,6 @@ export class CreateSeatHoldCommandHandler {
     private readonly seatHoldRepository: SeatHoldRepositoryPort,
     private readonly seatHoldCache: SeatHoldCachePort,
     private readonly seatHoldLock: SeatHoldLockPort,
-    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
     private readonly ttlOptions: SeatHoldTtlOptions = { ttlSeconds: DEFAULT_SEAT_HOLD_TTL_SECONDS },
   ) {}

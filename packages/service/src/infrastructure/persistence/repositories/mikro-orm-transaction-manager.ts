@@ -1,5 +1,5 @@
 import { Logging } from '@kangjuhyup/rvlog';
-import { MikroORM } from '@mikro-orm/core';
+import { MikroORM, RequestContext } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import type { TransactionManagerPort, TransactionPropagation } from '@application/commands/ports';
 
@@ -12,7 +12,16 @@ export class MikroOrmTransactionManager implements TransactionManagerPort {
     work: () => Promise<T>,
     propagation: TransactionPropagation = 'REQUIRED',
   ): Promise<T> {
-    const entityManager = propagation === 'NEW' ? this.orm.em.fork() : this.orm.em;
-    return await entityManager.transactional(() => work());
+    const currentEntityManager = RequestContext.getEntityManager();
+    const entityManager =
+      propagation === 'NEW' || currentEntityManager === undefined
+        ? this.orm.em.fork()
+        : currentEntityManager;
+
+    return await RequestContext.create(entityManager, async () =>
+      entityManager.transactional(async (transactionalEntityManager) =>
+        RequestContext.create(transactionalEntityManager, async () => await work()),
+      ),
+    );
   }
 }

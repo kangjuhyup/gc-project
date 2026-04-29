@@ -9,7 +9,6 @@ import type {
   OpaqueTokenGeneratorPort,
   PasswordHasherPort,
   TokenRepositoryPort,
-  TransactionManagerPort,
 } from '../ports';
 import { TokenType } from '../ports';
 
@@ -22,7 +21,6 @@ export class LoginMemberCommandHandler {
     private readonly logEventPublisher: LogEventPublisherPort,
     private readonly opaqueTokenGenerator: OpaqueTokenGeneratorPort,
     private readonly tokenRepository: TokenRepositoryPort,
-    readonly transactionManager: TransactionManagerPort,
   ) {}
 
   @Transactional()

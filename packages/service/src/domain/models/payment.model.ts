@@ -120,6 +120,18 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
     }, this.id).setPersistence(this.id, this.createdAt, params.now);
   }
 
+  requestCancelRefund(params: { reason: string; now: Date }): PaymentModel {
+    if (this.status !== PaymentStatus.APPROVED) {
+      throw new DomainError(DomainErrorCode.INVALID_PAYMENT_STATUS);
+    }
+
+    return new PaymentModel({
+      ...this.etc,
+      status: PaymentStatus.REFUND_REQUIRED,
+      failureReason: params.reason,
+    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+  }
+
   startRefund(params: { now: Date }): PaymentModel {
     if (this.status === PaymentStatus.REFUNDING) {
       return this;

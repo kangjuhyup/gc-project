@@ -7,7 +7,6 @@ import type {
   LogEventPublisherPort,
   MemberRepositoryPort,
   TokenRepositoryPort,
-  TransactionManagerPort,
 } from '../ports';
 import { TokenType } from '../ports';
 
@@ -18,7 +17,6 @@ export class WithdrawMemberCommandHandler {
     private readonly tokenRepository: TokenRepositoryPort,
     private readonly clock: ClockPort,
     private readonly logEventPublisher: LogEventPublisherPort,
-    readonly transactionManager: TransactionManagerPort,
   ) {}
 
   @Transactional()

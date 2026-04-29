@@ -4,7 +4,6 @@ import { Transactional } from '../decorators';
 import type {
   ClockPort,
   TokenRepositoryPort,
-  TransactionManagerPort,
 } from '../ports';
 import { TokenType } from '../ports';
 
@@ -13,7 +12,6 @@ export class LogoutMemberCommandHandler {
   constructor(
     private readonly tokenRepository: TokenRepositoryPort,
     private readonly clock: ClockPort,
-    readonly transactionManager: TransactionManagerPort,
   ) {}
 
   @Transactional()

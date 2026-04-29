@@ -671,6 +671,70 @@
         ]
       }
     },
+    "/reservations/{reservationId}/cancel": {
+      "post": {
+        "description": "인증된 회원 본인이 결제 완료한 예매를 취소합니다. 현재 결제 1건은 예약 1건과 연결되므로 예매 전체를 취소하고 환불 요청 이벤트를 outbox에 기록합니다.",
+        "operationId": "ReservationController_cancel",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "required": true,
+            "in": "path",
+            "description": "취소할 예매 ID",
+            "schema": {
+              "example": "5001",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelReservationRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "예매 취소 및 환불 요청 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationCanceledDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "이미 취소되었거나 결제 완료 상태가 아닌 예매인 경우"
+          },
+          "401": {
+            "description": "Authorization 검증에 실패한 경우"
+          },
+          "403": {
+            "description": "다른 회원의 예매를 취소하려는 경우"
+          },
+          "404": {
+            "description": "예매 또는 결제를 찾을 수 없는 경우"
+          },
+          "409": {
+            "description": "동시에 같은 예매를 취소하려는 경우"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "예매 취소",
+        "tags": [
+          "Reservations"
+        ]
+      }
+    },
     "/screenings/{screeningId}/seats": {
       "get": {
         "description": "상영 ID 기준으로 좌석 목록을 조회합니다. 각 좌석은 AVAILABLE(예매 가능), HELD(임시 점유), RESERVED(예매 완료/진행 중) 상태를 가집니다.",
@@ -1760,6 +1824,53 @@
         "required": [
           "paymentId",
           "status"
+        ]
+      },
+      "CancelReservationRequestDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "user request",
+            "maxLength": 100,
+            "description": "예매 취소 사유"
+          }
+        }
+      },
+      "ReservationCanceledDto": {
+        "type": "object",
+        "properties": {
+          "reservationId": {
+            "type": "string",
+            "example": "5001",
+            "description": "취소된 예매 ID"
+          },
+          "paymentId": {
+            "type": "string",
+            "example": "7001",
+            "description": "예매와 연결된 결제 ID"
+          },
+          "reservationStatus": {
+            "type": "string",
+            "example": "CANCELED",
+            "description": "예매 상태"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "example": "REFUND_REQUIRED",
+            "description": "결제 상태. 취소 후 환불 요청 상태로 전환됩니다."
+          },
+          "reason": {
+            "type": "string",
+            "example": "user request",
+            "description": "취소 사유"
+          }
+        },
+        "required": [
+          "reservationId",
+          "paymentId",
+          "reservationStatus",
+          "paymentStatus"
         ]
       },
       "ScreeningSeatSummaryDto": {

@@ -1,8 +1,14 @@
 import type { TransactionManagerPort, TransactionPropagation } from '../ports';
 
-type TransactionalTarget = {
-  transactionManager?: TransactionManagerPort;
-};
+let transactionManager: TransactionManagerPort | undefined;
+
+export function configureTransactionalDecorator(manager: TransactionManagerPort): void {
+  transactionManager = manager;
+}
+
+export function clearTransactionalDecorator(): void {
+  transactionManager = undefined;
+}
 
 export function Transactional(
   propagation: TransactionPropagation = 'REQUIRED',
@@ -18,15 +24,10 @@ export function Transactional(
       throw new Error('@Transactional can only be applied to methods');
     }
 
-    descriptor.value = async function (
-      this: TransactionalTarget,
-      ...args: unknown[]
-    ) {
-      const transactionManager = this.transactionManager;
-
+    descriptor.value = async function (...args: unknown[]) {
       if (!transactionManager) {
         throw new Error(
-          `Transactional method "${String(propertyKey)}" requires a transactionManager property`,
+          `Transactional method "${String(propertyKey)}" requires a configured transaction manager`,
         );
       }
 

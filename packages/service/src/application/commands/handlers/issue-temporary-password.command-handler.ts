@@ -7,7 +7,6 @@ import type {
   PasswordHasherPort,
   PhoneVerificationRepositoryPort,
   TemporaryPasswordGeneratorPort,
-  TransactionManagerPort,
 } from '../ports';
 
 @Logging
@@ -17,7 +16,6 @@ export class IssueTemporaryPasswordCommandHandler {
     private readonly phoneVerificationRepository: PhoneVerificationRepositoryPort,
     private readonly temporaryPasswordGenerator: TemporaryPasswordGeneratorPort,
     private readonly passwordHasher: PasswordHasherPort,
-    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 

@@ -21,7 +21,6 @@ import type {
   ReservationRepositoryPort,
   ReservationSeatRepositoryPort,
   SeatHoldRepositoryPort,
-  TransactionManagerPort,
 } from '../ports';
 
 @Logging
@@ -35,7 +34,6 @@ export class HandlePaymentCallbackCommandHandler {
     private readonly paymentEventLogRepository: PaymentEventLogRepositoryPort,
     private readonly outboxEventRepository: OutboxEventRepositoryPort,
     private readonly paymentCallbackVerifier: PaymentCallbackVerifierPort,
-    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 

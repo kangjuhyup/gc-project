@@ -16,7 +16,6 @@ import type {
   PaymentRequestHasherPort,
   PaymentRepositoryPort,
   SeatHoldRepositoryPort,
-  TransactionManagerPort,
 } from '../ports';
 
 @Logging
@@ -27,7 +26,6 @@ export class RequestPaymentCommandHandler {
     private readonly paymentEventLogRepository: PaymentEventLogRepositoryPort,
     private readonly outboxEventRepository: OutboxEventRepositoryPort,
     private readonly paymentRequestHasher: PaymentRequestHasherPort,
-    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 

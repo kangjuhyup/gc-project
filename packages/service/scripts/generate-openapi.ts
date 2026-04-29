@@ -11,6 +11,7 @@ import {
   MemberController,
   MovieController,
   PaymentController,
+  ReservationController,
   SeatController,
   TheaterController,
 } from '@presentation/http';
@@ -22,6 +23,7 @@ const documentedControllers = [
   AddressController,
   MovieController,
   PaymentController,
+  ReservationController,
   SeatController,
   TheaterController,
 ];

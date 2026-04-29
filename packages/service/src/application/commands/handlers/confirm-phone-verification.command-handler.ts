@@ -4,13 +4,12 @@ import {
   PhoneVerificationConfirmedDto,
 } from '../dto';
 import { Transactional } from '../decorators';
-import type { ClockPort, PhoneVerificationRepositoryPort, TransactionManagerPort } from '../ports';
+import type { ClockPort, PhoneVerificationRepositoryPort } from '../ports';
 
 @Logging
 export class ConfirmPhoneVerificationCommandHandler {
   constructor(
     private readonly phoneVerificationRepository: PhoneVerificationRepositoryPort,
-    readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
   ) {}
 

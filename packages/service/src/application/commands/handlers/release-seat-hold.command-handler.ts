@@ -1,14 +1,13 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { ReleaseSeatHoldCommand, SeatHoldReleasedDto } from '../dto';
 import { Transactional } from '../decorators';
-import type { SeatHoldCachePort, SeatHoldRepositoryPort, TransactionManagerPort } from '../ports';
+import type { SeatHoldCachePort, SeatHoldRepositoryPort } from '../ports';
 
 @Logging
 export class ReleaseSeatHoldCommandHandler {
   constructor(
     private readonly seatHoldRepository: SeatHoldRepositoryPort,
     private readonly seatHoldCache: SeatHoldCachePort,
-    readonly transactionManager: TransactionManagerPort,
   ) {}
 
   @Transactional()

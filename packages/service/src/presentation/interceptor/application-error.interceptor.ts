@@ -42,6 +42,9 @@ const badRequestErrors = new Set([
   'PAYMENT_CALLBACK_INVALID',
   'PAYMENT_PROVIDER_MISMATCH',
   'PAYMENT_PROVIDER_PAYMENT_ID_REQUIRED',
+  'PAYMENT_NOT_APPROVED',
+  'RESERVATION_CANCEL_NOT_ALLOWED',
+  'INVALID_RESERVATION_STATUS',
 ]);
 
 const forbiddenErrors = new Set([
@@ -50,12 +53,14 @@ const forbiddenErrors = new Set([
   'MEMBER_WITHDRAWN',
   'SEAT_HOLD_FORBIDDEN',
   'SEAT_HOLD_PAYMENT_COMPLETED',
+  'RESERVATION_FORBIDDEN',
 ]);
 
 const notFoundErrors = new Set([
   'MEMBER_NOT_FOUND',
   'SEAT_HOLD_NOT_FOUND',
   'PAYMENT_NOT_FOUND',
+  'RESERVATION_NOT_FOUND',
 ]);
 
 @Injectable()
