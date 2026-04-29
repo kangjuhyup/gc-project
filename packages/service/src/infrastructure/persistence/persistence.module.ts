@@ -14,6 +14,9 @@ import {
   PAYMENT_EVENT_LOG_REPOSITORY,
   PAYMENT_REPOSITORY,
   PHONE_VERIFICATION_REPOSITORY,
+  RESERVATION_EVENT_REPOSITORY,
+  RESERVATION_REPOSITORY,
+  RESERVATION_SEAT_REPOSITORY,
   SEAT_HOLD_REPOSITORY,
   TRANSACTION_MANAGER,
 } from '@application/commands/ports';
@@ -25,6 +28,9 @@ import {
   MikroOrmPaymentEventLogRepository,
   MikroOrmPaymentRepository,
   MikroOrmPhoneVerificationRepository,
+  MikroOrmReservationEventRepository,
+  MikroOrmReservationRepository,
+  MikroOrmReservationSeatRepository,
   MikroOrmSeatHoldRepository,
   MikroOrmSeatQueryRepository,
   MikroOrmTheaterQueryRepository,
@@ -51,6 +57,9 @@ import {
     MikroOrmPaymentEventLogRepository,
     MikroOrmPaymentRepository,
     MikroOrmPhoneVerificationRepository,
+    MikroOrmReservationEventRepository,
+    MikroOrmReservationRepository,
+    MikroOrmReservationSeatRepository,
     MikroOrmSeatHoldRepository,
     MikroOrmSeatQueryRepository,
     MikroOrmTheaterQueryRepository,
@@ -100,6 +109,18 @@ import {
       useExisting: MikroOrmSeatHoldRepository,
     },
     {
+      provide: RESERVATION_REPOSITORY,
+      useExisting: MikroOrmReservationRepository,
+    },
+    {
+      provide: RESERVATION_SEAT_REPOSITORY,
+      useExisting: MikroOrmReservationSeatRepository,
+    },
+    {
+      provide: RESERVATION_EVENT_REPOSITORY,
+      useExisting: MikroOrmReservationEventRepository,
+    },
+    {
       provide: TRANSACTION_MANAGER,
       useExisting: MikroOrmTransactionManager,
     },
@@ -117,6 +138,9 @@ import {
     PAYMENT_EVENT_LOG_REPOSITORY,
     OUTBOX_EVENT_REPOSITORY,
     SEAT_HOLD_REPOSITORY,
+    RESERVATION_REPOSITORY,
+    RESERVATION_SEAT_REPOSITORY,
+    RESERVATION_EVENT_REPOSITORY,
     TRANSACTION_MANAGER,
   ],
 })
