@@ -1,19 +1,32 @@
+import { MaskLog } from '@kangjuhyup/rvlog';
+
 export class SearchAddressesQuery {
-  private constructor(
-    readonly keyword: string,
-    readonly currentPage: number,
-    readonly countPerPage: number,
-  ) {}
+  @MaskLog({ type: 'full' })
+  readonly keyword: string;
+
+  readonly currentPage: number;
+
+  readonly countPerPage: number;
+
+  private constructor(params: {
+    keyword: string;
+    currentPage: number;
+    countPerPage: number;
+  }) {
+    this.keyword = params.keyword;
+    this.currentPage = params.currentPage;
+    this.countPerPage = params.countPerPage;
+  }
 
   static of(params: {
     keyword: string;
     currentPage?: number;
     countPerPage?: number;
   }): SearchAddressesQuery {
-    return new SearchAddressesQuery(
-      params.keyword,
-      params.currentPage ?? 1,
-      params.countPerPage ?? 10,
-    );
+    return new SearchAddressesQuery({
+      keyword: params.keyword,
+      currentPage: params.currentPage ?? 1,
+      countPerPage: params.countPerPage ?? 10,
+    });
   }
 }

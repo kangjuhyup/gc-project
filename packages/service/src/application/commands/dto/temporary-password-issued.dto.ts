@@ -1,3 +1,4 @@
+import { MaskLog } from '@kangjuhyup/rvlog';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class TemporaryPasswordIssuedDto {
@@ -5,6 +6,7 @@ export class TemporaryPasswordIssuedDto {
   readonly userId: string;
 
   @ApiProperty({ example: 'Temp-abc1231!', description: '휴대전화 인증 후 발급된 임시비밀번호' })
+  @MaskLog({ type: 'full' })
   readonly temporaryPassword: string;
 
   private constructor(
