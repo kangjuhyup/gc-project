@@ -41,6 +41,25 @@ export class SeatHoldModel extends PersistenceModel<string, SeatHoldPersistenceP
     ).setPersistence(this.id, this.createdAt, this.updatedAt);
   }
 
+  confirm(params: { reservationId: string; now: Date }): SeatHoldModel {
+    if (this.status === SeatHoldStatus.CONFIRMED && this.reservationId === params.reservationId) {
+      return this;
+    }
+
+    if (this.status !== SeatHoldStatus.HELD) {
+      throw new Error('SEAT_HOLD_NOT_CONFIRMABLE');
+    }
+
+    return new SeatHoldModel(
+      {
+        ...this.etc,
+        reservationId: params.reservationId,
+        status: SeatHoldStatus.CONFIRMED,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
+  }
+
   get screeningId(): string {
     return this.etc.screeningId;
   }

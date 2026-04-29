@@ -34,9 +34,12 @@ export {
   ChangeMemberPasswordCommandHandler,
   ConfirmPhoneVerificationCommandHandler,
   CreateSeatHoldCommandHandler,
+  HandlePaymentCallbackCommandHandler,
   IssueTemporaryPasswordCommandHandler,
   LoginMemberCommandHandler,
   RequestPhoneVerificationCommandHandler,
+  RefundPaymentCommandHandler,
+  RequestPaymentCommandHandler,
   ReleaseSeatHoldCommandHandler,
   SignupMemberCommandHandler,
 } from './commands/handlers';
@@ -65,6 +68,7 @@ export {
 export {
   CheckUserIdAvailabilityQueryHandler,
   GetHealthQueryHandler,
+  GetPaymentQueryHandler,
   ListMoviesQueryHandler,
   ListScreeningSeatsQueryHandler,
   ListTheatersQueryHandler,
