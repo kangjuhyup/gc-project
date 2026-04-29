@@ -7,6 +7,9 @@ export interface LoginFormValues {
 
 export interface LoginResponse {
   accessToken: string;
+  accessTokenExpiresAt: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
   member: {
     id: number;
     memberId: string;
@@ -18,6 +21,10 @@ export interface LoginResponse {
 interface LoginMemberResultDto {
   memberId: string;
   userId: string;
+  accessToken: string;
+  accessTokenExpiresAt: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
@@ -33,7 +40,10 @@ export async function loginWithPassword(values: LoginFormValues) {
   });
 
   return {
-    accessToken: response.memberId,
+    accessToken: response.accessToken,
+    accessTokenExpiresAt: response.accessTokenExpiresAt,
+    refreshToken: response.refreshToken,
+    refreshTokenExpiresAt: response.refreshTokenExpiresAt,
     member: {
       id: Number(response.memberId) || 0,
       memberId: response.userId,

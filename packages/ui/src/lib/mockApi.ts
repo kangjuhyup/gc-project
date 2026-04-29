@@ -90,6 +90,18 @@ export async function resolveMockApi({
     return toMockResponse({
       memberId: '1',
       userId,
+      accessToken: `member:1:${crypto.randomUUID()}`,
+      accessTokenExpiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      refreshToken: crypto.randomUUID(),
+      refreshTokenExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+  }
+
+  if (method === 'POST' && pathname === '/members/logout') {
+    return toMockResponse({
+      memberId: '1',
+      loggedOut: true,
+      revokedRefreshTokenCount: 1,
     });
   }
 
@@ -132,6 +144,14 @@ export async function resolveMockApi({
     return toMockResponse({
       userId: payload.userId ?? 'movie_user',
       changed: true,
+    });
+  }
+
+  if (method === 'DELETE' && pathname === '/members/me') {
+    return toMockResponse({
+      memberId: '1',
+      userId: 'movie_user',
+      withdrawn: true,
     });
   }
 
