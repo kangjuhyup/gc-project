@@ -1,16 +1,11 @@
 import { CalendarClock, Clapperboard, TicketCheck } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/features/auth/AuthProvider';
 import { formatScreeningTime } from '@/features/movies/movieTimeline';
 import { formatCurrency } from '@/features/payment/paymentSummary';
-import {
-  filterReservations,
-  getReservationViewLabel,
-  type ReservationView,
-} from './reservationFilters';
-import { useReservations } from './reservationHooks';
+import { getReservationViewLabel, type ReservationView } from './reservationFilters';
+import { useReservationsPage } from './useReservationsPage';
 
 const reservationViews: ReservationView[] = ['UPCOMING', 'COMPLETED', 'CANCELED'];
 
@@ -39,14 +34,8 @@ interface ReservationHistoryPanelProps {
 }
 
 export function ReservationHistoryPanel({ actionSlot }: ReservationHistoryPanelProps) {
-  const { member } = useAuth();
-  const [currentView, setCurrentView] = useState<ReservationView>('UPCOMING');
-  const reservationsQuery = useReservations(member?.id ?? null);
-  const reservations = reservationsQuery.data?.items ?? [];
-  const filteredReservations = useMemo(
-    () => filterReservations(reservations, currentView),
-    [currentView, reservations],
-  );
+  const { currentView, filteredReservations, reservationsQuery, setCurrentView } =
+    useReservationsPage();
 
   return (
     <>

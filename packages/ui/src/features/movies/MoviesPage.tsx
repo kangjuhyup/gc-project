@@ -1,25 +1,12 @@
 import { Search, Ticket } from 'lucide-react';
-import { useMemo, useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useMovies } from './movieHooks';
-import {
-  demoMovies,
-  filterMoviesForKeyword,
-  formatScreeningTime,
-  groupMoviesByTimeline,
-} from './movieTimeline';
+import { formatScreeningTime } from './movieTimeline';
+import { useMoviesPage } from './useMoviesPage';
 
 export function MoviesPage() {
-  const [keyword, setKeyword] = useState('');
-  const moviesQuery = useMovies(keyword);
-  const movies = moviesQuery.data?.items.length ? moviesQuery.data.items : demoMovies;
-  const filteredMovies = useMemo(() => filterMoviesForKeyword(movies, keyword), [keyword, movies]);
-  const timelineGroups = useMemo(() => groupMoviesByTimeline(filteredMovies), [filteredMovies]);
-
-  const handleKeywordChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setKeyword(event.target.value);
-  };
+  const { filteredMovies, handleKeywordChange, keyword, moviesQuery, timelineGroups } =
+    useMoviesPage();
 
   return (
     <section className="movie-page" aria-labelledby="movie-page-title">

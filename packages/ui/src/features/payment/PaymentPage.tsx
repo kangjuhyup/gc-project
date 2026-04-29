@@ -1,11 +1,10 @@
 import { ArrowLeft, BadgeCheck, CreditCard, WalletCards } from 'lucide-react';
-import { useState, type ChangeEvent } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { formatScreeningTime } from '@/features/movies/movieTimeline';
 import { type PaymentMethod } from './paymentApi';
-import { useCreateReservationPayment } from './paymentHooks';
-import { formatCurrency, isPaymentRouteState } from './paymentSummary';
+import { formatCurrency } from './paymentSummary';
+import { usePaymentPage } from './usePaymentPage';
 
 const paymentMethods: Array<{
   label: string;
@@ -17,30 +16,16 @@ const paymentMethods: Array<{
 ];
 
 export function PaymentPage() {
-  const location = useLocation();
-  const { movieId, screeningId } = useParams();
-  const paymentState = isPaymentRouteState(location.state) ? location.state : null;
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CARD');
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const paymentMutation = useCreateReservationPayment();
-  const seatSelectionPath = `/movies/${movieId ?? '1'}/screenings/${screeningId ?? ''}/seats`;
-
-  const handleSubmit = async () => {
-    if (!paymentState || !agreedToTerms) {
-      return;
-    }
-
-    await paymentMutation.mutateAsync({
-      screeningId: paymentState.screeningId,
-      seatIds: paymentState.seats.map((seat) => seat.id),
-      paymentMethod,
-      totalPrice: paymentState.totalPrice,
-    });
-  };
-
-  const handleAgreementChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setAgreedToTerms(event.target.checked);
-  };
+  const {
+    agreedToTerms,
+    handleAgreementChange,
+    handleSubmit,
+    paymentMethod,
+    paymentMutation,
+    paymentState,
+    seatSelectionPath,
+    setPaymentMethod,
+  } = usePaymentPage();
 
   if (!paymentState) {
     return (
