@@ -1,7 +1,8 @@
-export { MemberIdAuthorizationVerifier } from './auth';
-export { REDIS, RedisModule, RedisSeatHoldCache, RedisSeatHoldLock } from './cache';
+export { AuthModule, MemberIdAuthorizationVerifier } from './auth';
+export { CacheModule, REDIS, RedisModule, RedisSeatHoldCache, RedisSeatHoldLock } from './cache';
 export { EnvironmentAdapterFlag } from './config';
-export { NumericVerificationCodeGenerator, SystemClock } from './crypto';
-export { NestLogEventPublisher } from './logging';
+export { CryptoModule, NumericVerificationCodeGenerator, SystemClock } from './crypto';
+export { InfrastructureModule } from './infrastructure.module';
+export { LoggingModule, NestLogEventPublisher } from './logging';
 export { PersistenceModule } from './persistence';
-export { JusoAddressSearchAdapter } from './public-api';
+export { JusoAddressSearchAdapter, PublicApiModule } from './public-api';
