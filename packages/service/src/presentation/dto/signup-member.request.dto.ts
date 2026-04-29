@@ -1,3 +1,4 @@
+import { MaskLog } from '@kangjuhyup/rvlog';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
@@ -11,27 +12,32 @@ export class SignupMemberRequestDto {
   @IsString()
   @MinLength(8)
   @MaxLength(72)
+  @MaskLog({ type: 'full' })
   readonly password!: string;
 
   @ApiProperty({ example: '홍길동', minLength: 1, maxLength: 50, description: '회원 이름' })
   @IsString()
   @MinLength(1)
   @MaxLength(50)
+  @MaskLog({ type: 'name' })
   readonly name!: string;
 
   @ApiProperty({ example: '1990-01-01', description: '생년월일. ISO date 문자열' })
   @IsDateString()
+  @MaskLog({ type: 'full' })
   readonly birthDate!: string;
 
   @ApiProperty({ example: '01012345678', pattern: '^\\d{10,11}$', description: '휴대전화번호' })
   @IsString()
   @Matches(/^\d{10,11}$/)
+  @MaskLog({ type: 'phone' })
   readonly phoneNumber!: string;
 
   @ApiProperty({ example: '서울특별시 강남구 테헤란로 427', minLength: 1, maxLength: 255, description: '회원 주소' })
   @IsString()
   @MinLength(1)
   @MaxLength(255)
+  @MaskLog({ type: 'full' })
   readonly address!: string;
 
   @ApiProperty({ example: '1', description: '인증 완료된 휴대전화 인증 요청 ID' })

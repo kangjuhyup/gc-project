@@ -1,3 +1,4 @@
+import { MaskLog } from '@kangjuhyup/rvlog';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
@@ -11,12 +12,14 @@ export class ChangeMemberPasswordRequestDto {
   @IsString()
   @MinLength(8)
   @MaxLength(72)
+  @MaskLog({ type: 'full' })
   readonly currentPassword!: string;
 
   @ApiProperty({ example: 'newPassword123!', minLength: 8, maxLength: 72, description: '신규 비밀번호' })
   @IsString()
   @MinLength(8)
   @MaxLength(72)
+  @MaskLog({ type: 'full' })
   readonly newPassword!: string;
 
   private constructor(params: {

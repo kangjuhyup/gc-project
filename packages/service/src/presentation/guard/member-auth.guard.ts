@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import {
   CanActivate,
   ExecutionContext,
@@ -19,6 +20,7 @@ export interface HttpRequestWithAuthenticatedUser {
 }
 
 @Injectable()
+@Logging
 export class MemberAuthGuard implements CanActivate {
   constructor(
     @Inject(AUTHORIZATION_VERIFIER)

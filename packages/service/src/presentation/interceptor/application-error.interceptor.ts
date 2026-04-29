@@ -1,3 +1,4 @@
+import { Logging } from '@kangjuhyup/rvlog';
 import {
   BadRequestException,
   CallHandler,
@@ -45,6 +46,7 @@ const notFoundErrors = new Set([
 ]);
 
 @Injectable()
+@Logging
 export class ApplicationErrorInterceptor implements NestInterceptor {
   intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(

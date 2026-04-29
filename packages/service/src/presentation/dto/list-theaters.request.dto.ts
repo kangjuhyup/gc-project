@@ -1,3 +1,4 @@
+import { MaskLog } from '@kangjuhyup/rvlog';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, Max, Min } from 'class-validator';
@@ -9,6 +10,7 @@ export class ListTheatersRequestDto {
   @IsNumber()
   @Min(-90)
   @Max(90)
+  @MaskLog({ type: 'full' })
   readonly latitude?: number;
 
   @ApiPropertyOptional({ example: 127.0364, minimum: -180, maximum: 180, description: '현재 위치 경도. latitude와 함께 전달하면 가까운 영화관 순으로 정렬' })
@@ -17,6 +19,7 @@ export class ListTheatersRequestDto {
   @IsNumber()
   @Min(-180)
   @Max(180)
+  @MaskLog({ type: 'full' })
   readonly longitude?: number;
 
   private constructor(params: {
