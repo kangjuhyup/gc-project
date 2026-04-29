@@ -186,6 +186,25 @@ export async function resolveMockApi({
     });
   }
 
+  const seatHoldReleaseMatch = pathname.match(/^\/seat-holds\/(.+)$/);
+
+  if (method === 'DELETE' && seatHoldReleaseMatch) {
+    const holdId = decodeURIComponent(seatHoldReleaseMatch[1]);
+    const holdIdMatch = holdId.match(/^hold-(\d+)-(.+)$/);
+
+    if (holdIdMatch) {
+      const [, screeningId, seatId] = holdIdMatch;
+      const heldSeatIds = mockHeldSeatIdsByScreening.get(screeningId);
+
+      heldSeatIds?.delete(seatId);
+    }
+
+    return toMockResponse({
+      holdId,
+      released: true,
+    });
+  }
+
   if (method === 'GET' && pathname === '/api/addresses') {
     const keyword = url.searchParams.get('keyword') ?? '';
     const items = mockAddresses.filter((address) =>

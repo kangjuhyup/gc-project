@@ -1,57 +1,22 @@
 import { Armchair, ArrowLeft, Clock, CreditCard, RefreshCw } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { formatScreeningTime } from '@/features/movies/movieTimeline';
-import { getSelectedSeats, toggleSeatSelection } from './seatSelection';
-import { useCreateSeatHold, useScreeningSeats } from './seatHooks';
+import { useSeatSelectionPage } from './useSeatSelectionPage';
 
 export function SeatSelectionPage() {
-  const { movieId, screeningId } = useParams();
-  const location = useLocation();
-  const parsedScreeningId = Number(screeningId);
-  const validScreeningId = Number.isFinite(parsedScreeningId) ? parsedScreeningId : null;
-  const seatsQuery = useScreeningSeats(validScreeningId);
-  const seatHoldMutation = useCreateSeatHold();
-  const routeScreening = getSeatRouteState(location.state);
-  const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
-  const screeningSummary = {
-    id: seatsQuery.data?.screening.id ?? String(validScreeningId ?? ''),
-    movieTitle: routeScreening?.movieTitle ?? seatsQuery.data?.screening.movieTitle ?? '상영 좌석',
-    screenName: routeScreening?.screenName ?? seatsQuery.data?.screening.screenName ?? '상영관',
-    startAt: routeScreening?.screeningStartAt ?? seatsQuery.data?.screening.startAt ?? new Date().toISOString(),
-    endAt: routeScreening?.screeningEndAt ?? seatsQuery.data?.screening.endAt ?? new Date().toISOString(),
-    price: seatsQuery.data?.screening.price ?? 14000,
-  };
-  const selectedSeats = useMemo(
-    () => getSelectedSeats(seatsQuery.data?.seats ?? [], selectedSeatIds),
-    [seatsQuery.data?.seats, selectedSeatIds],
-  );
-  const totalPrice = selectedSeats.length * screeningSummary.price;
-
-  const handleSeatClick = async (seatId: string) => {
-    const seat = seatsQuery.data?.seats.find((currentSeat) => currentSeat.id === seatId);
-
-    if (!seat) {
-      return;
-    }
-
-    if (selectedSeatIds.includes(seat.id)) {
-      setSelectedSeatIds((currentSeatIds) => toggleSeatSelection(currentSeatIds, seat));
-      return;
-    }
-
-    if (seat.status !== 'AVAILABLE' || !validScreeningId) {
-      return;
-    }
-
-    await seatHoldMutation.mutateAsync({
-      screeningId: String(validScreeningId),
-      seatIds: [seat.id],
-    });
-    setSelectedSeatIds((currentSeatIds) => toggleSeatSelection(currentSeatIds, seat));
-    await seatsQuery.refetch();
-  };
+  const {
+    handlePaymentNavigation,
+    handleSeatClick,
+    movieId,
+    screeningSummary,
+    seatHoldMutation,
+    seatsQuery,
+    selectedSeatIds,
+    selectedSeats,
+    totalPrice,
+    validScreeningId,
+  } = useSeatSelectionPage();
 
   if (!validScreeningId) {
     return (
@@ -182,6 +147,7 @@ export function SeatSelectionPage() {
                     })),
                     totalPrice,
                   }}
+                  onClick={handlePaymentNavigation}
                   to={`/movies/${movieId ?? '1'}/screenings/${screeningSummary.id}/payment`}
                   viewTransition
                 >
@@ -202,30 +168,4 @@ export function SeatSelectionPage() {
       ) : null}
     </section>
   );
-}
-
-interface SeatRouteState {
-  movieTitle: string;
-  screenName: string;
-  screeningStartAt: string;
-  screeningEndAt: string;
-}
-
-function getSeatRouteState(value: unknown): SeatRouteState | null {
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-
-  const state = value as Partial<SeatRouteState>;
-
-  if (
-    typeof state.movieTitle === 'string' &&
-    typeof state.screenName === 'string' &&
-    typeof state.screeningStartAt === 'string' &&
-    typeof state.screeningEndAt === 'string'
-  ) {
-    return state as SeatRouteState;
-  }
-
-  return null;
 }

@@ -48,6 +48,11 @@ export interface SeatHoldResponse {
   expiresAt: string;
 }
 
+export interface SeatHoldReleaseResponse {
+  holdId: string;
+  released: boolean;
+}
+
 export function fetchScreeningSeats(screeningId: number) {
   return apiClient<ScreeningSeatListApiResponse>(`/screenings/${screeningId}/seats`).then(
     (response) => ({
@@ -71,5 +76,12 @@ export function createSeatHold(payload: SeatHoldRequest) {
   return apiClient<SeatHoldResponse>('/seat-holds', {
     body: JSON.stringify(payload),
     method: 'POST',
+  });
+}
+
+export function releaseSeatHold(holdId: string, options: Pick<RequestInit, 'keepalive'> = {}) {
+  return apiClient<SeatHoldReleaseResponse>(`/seat-holds/${holdId}`, {
+    keepalive: options.keepalive,
+    method: 'DELETE',
   });
 }
