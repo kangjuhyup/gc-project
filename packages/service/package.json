@@ -6,8 +6,12 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "NODE_ENV=development nest start --watch",
-    "start": "node dist/main.js",
+    "dev": "NODE_ENV=development nest start --watch --entryFile api-main",
+    "dev:api": "NODE_ENV=development nest start --watch --entryFile api-main",
+    "dev:worker": "NODE_ENV=development nest start --watch --entryFile worker-main",
+    "start": "node dist/api-main.js",
+    "start:api": "node dist/api-main.js",
+    "start:worker": "node dist/worker-main.js",
     "build": "nest build",
     "docs:openapi": "ts-node -r tsconfig-paths/register scripts/generate-openapi.ts",
     "test": "vitest run --reporter=verbose",

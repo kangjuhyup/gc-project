@@ -1,15 +1,19 @@
 import { MikroORM } from '@mikro-orm/core';
-import { NestFactory } from '@nestjs/core';
 import { type INestApplication, ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import { ApplicationErrorInterceptor } from '@presentation';
-import { buildSwaggerConfig, SWAGGER_DOCUMENT_PATH, SWAGGER_JSON_PATH } from '@presentation/swagger/swagger.config';
 import { buildCorsOptions } from '@infrastructure/config/cors.config';
 import { shouldRunMigrationsOnStartup } from '@infrastructure/config/migration.config';
+import { ApplicationErrorInterceptor } from '@presentation';
+import {
+  buildSwaggerConfig,
+  SWAGGER_DOCUMENT_PATH,
+  SWAGGER_JSON_PATH,
+} from '@presentation/swagger/swagger.config';
+import { ApiAppModule } from './api-app.module';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+export async function bootstrapApi(): Promise<INestApplication> {
+  const app = await NestFactory.create(ApiAppModule);
   const corsOptions = buildCorsOptions();
 
   if (corsOptions) {
@@ -36,6 +40,8 @@ async function bootstrap() {
 
   await runMigrationsOnStartup(app);
   await app.listen(process.env.PORT ?? 3000);
+
+  return app;
 }
 
 async function runMigrationsOnStartup(app: INestApplication): Promise<void> {
@@ -46,4 +52,6 @@ async function runMigrationsOnStartup(app: INestApplication): Promise<void> {
   await app.get(MikroORM).migrator.up();
 }
 
-void bootstrap();
+if (require.main === module) {
+  void bootstrapApi();
+}

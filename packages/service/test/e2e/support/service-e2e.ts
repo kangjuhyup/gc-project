@@ -54,8 +54,8 @@ export class ServiceE2eContext {
 
     faker.seed(20260429);
 
-    const { AppModule } = await import('../../../src/app.module');
-    const app = await NestFactory.create(AppModule, { logger: false, abortOnError: false });
+    const { ApiAppModule } = await import('../../../src/api-app.module');
+    const app = await NestFactory.create(ApiAppModule, { logger: false, abortOnError: false });
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,

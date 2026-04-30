@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { LogLevel } from '@kangjuhyup/rvlog';
 import { RvlogNestModule } from '@kangjuhyup/rvlog-nest';
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { ApplicationModule } from '@application';
 import { PresentationModule } from '@presentation';
 
@@ -23,4 +23,4 @@ import { PresentationModule } from '@presentation';
     PresentationModule,
   ],
 })
-export class AppModule {}
+export class ApiAppModule {}
