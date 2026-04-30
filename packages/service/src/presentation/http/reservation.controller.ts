@@ -1,25 +1,56 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiOkResponse,
   ApiNotFoundResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CancelReservationCommand, CommandBus, ReservationCanceledDto } from '@application';
+import {
+  CancelReservationCommand,
+  CommandBus,
+  ListMyReservationsQuery,
+  QueryBus,
+  ReservationCanceledDto,
+  ReservationListResultDto,
+} from '@application';
 import { AuthenticatedUserDto } from '@application/query/dto';
 import { User } from '@presentation/decorator';
 import { MemberAuthGuard } from '@presentation/guard';
-import { CancelReservationParamRequestDto, CancelReservationRequestDto } from '../dto';
+import { CancelReservationParamRequestDto, CancelReservationRequestDto, ListMyReservationsRequestDto } from '../dto';
 
 @ApiTags('Reservations')
 @Controller('/reservations')
 export class ReservationController {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '내 예매 목록 조회',
+    description: '인증된 회원 본인의 예매 목록을 최신순 커서 페이지네이션으로 조회합니다.',
+  })
+  @ApiOkResponse({ type: ReservationListResultDto, description: '내 예매 목록' })
+  @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
+  @UseGuards(MemberAuthGuard)
+  @Get()
+  listMine(@Query() query: ListMyReservationsRequestDto, @User() user: AuthenticatedUserDto) {
+    const request = ListMyReservationsRequestDto.of(query);
+    return this.queryBus.execute(
+      ListMyReservationsQuery.of({
+        memberId: user.memberId,
+        limit: request.limit,
+        cursor: request.cursor,
+      }),
+    );
+  }
 
   @ApiBearerAuth()
   @ApiOperation({

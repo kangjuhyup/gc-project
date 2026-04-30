@@ -4,6 +4,7 @@ import {
   GetPaymentQuery,
   GetHealthQuery,
   ListMoviesQuery,
+  ListMyReservationsQuery,
   ListScreeningSeatsQuery,
   ListTheatersQuery,
   SearchAddressesQuery,
@@ -13,12 +14,14 @@ import {
   MEMBER_QUERY,
   MOVIE_QUERY,
   PAYMENT_QUERY,
+  RESERVATION_QUERY,
   SEAT_QUERY,
   THEATER_QUERY,
   type AddressSearchPort,
   type MemberQueryPort,
   type MovieQueryPort,
   type PaymentQueryPort,
+  type ReservationQueryPort,
   type SeatQueryPort,
   type TheaterQueryPort,
 } from '@application/query/ports';
@@ -29,6 +32,7 @@ import {
   GetPaymentQueryHandler,
   GetHealthQueryHandler,
   ListMoviesQueryHandler,
+  ListMyReservationsQueryHandler,
   ListScreeningSeatsQueryHandler,
   ListTheatersQueryHandler,
   SearchAddressesQueryHandler,
@@ -69,6 +73,11 @@ import {
       inject: [PAYMENT_QUERY],
     },
     {
+      provide: ListMyReservationsQueryHandler,
+      useFactory: (reservationQuery: ReservationQueryPort) => new ListMyReservationsQueryHandler(reservationQuery),
+      inject: [RESERVATION_QUERY],
+    },
+    {
       provide: QueryBus,
       useFactory: (
         getHealthQueryHandler: GetHealthQueryHandler,
@@ -78,6 +87,7 @@ import {
         listTheatersQueryHandler: ListTheatersQueryHandler,
         listScreeningSeatsQueryHandler: ListScreeningSeatsQueryHandler,
         getPaymentQueryHandler: GetPaymentQueryHandler,
+        listMyReservationsQueryHandler: ListMyReservationsQueryHandler,
       ) =>
         QueryBus.of([
           { query: CheckUserIdAvailabilityQuery, handler: checkUserIdAvailabilityQueryHandler },
@@ -86,6 +96,7 @@ import {
           { query: ListTheatersQuery, handler: listTheatersQueryHandler },
           { query: ListScreeningSeatsQuery, handler: listScreeningSeatsQueryHandler },
           { query: GetPaymentQuery, handler: getPaymentQueryHandler },
+          { query: ListMyReservationsQuery, handler: listMyReservationsQueryHandler },
           { query: GetHealthQuery, handler: getHealthQueryHandler },
         ]),
       inject: [
@@ -96,6 +107,7 @@ import {
         ListTheatersQueryHandler,
         ListScreeningSeatsQueryHandler,
         GetPaymentQueryHandler,
+        ListMyReservationsQueryHandler,
       ],
     },
   ],

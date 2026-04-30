@@ -6,6 +6,7 @@ import {
   MEMBER_QUERY,
   MOVIE_QUERY,
   PAYMENT_QUERY,
+  RESERVATION_QUERY,
   SEAT_QUERY,
   THEATER_QUERY,
 } from '@application/query/ports';
@@ -31,6 +32,7 @@ import {
   MikroOrmPhoneVerificationRepository,
   MikroOrmRefreshTokenRepository,
   MikroOrmReservationEventRepository,
+  MikroOrmReservationQueryRepository,
   MikroOrmReservationRepository,
   MikroOrmReservationSeatRepository,
   MikroOrmSeatHoldRepository,
@@ -70,6 +72,7 @@ import { Migration202604300002SeedTempMovieData } from './migrations/Migration20
     MikroOrmPhoneVerificationRepository,
     MikroOrmRefreshTokenRepository,
     MikroOrmReservationEventRepository,
+    MikroOrmReservationQueryRepository,
     MikroOrmReservationRepository,
     MikroOrmReservationSeatRepository,
     MikroOrmSeatHoldRepository,
@@ -91,6 +94,10 @@ import { Migration202604300002SeedTempMovieData } from './migrations/Migration20
     {
       provide: PAYMENT_QUERY,
       useExisting: MikroOrmPaymentRepository,
+    },
+    {
+      provide: RESERVATION_QUERY,
+      useExisting: MikroOrmReservationQueryRepository,
     },
     {
       provide: THEATER_QUERY,
@@ -142,6 +149,7 @@ import { Migration202604300002SeedTempMovieData } from './migrations/Migration20
     MEMBER_QUERY,
     MOVIE_QUERY,
     PAYMENT_QUERY,
+    RESERVATION_QUERY,
     THEATER_QUERY,
     SEAT_QUERY,
     PHONE_VERIFICATION_REPOSITORY,

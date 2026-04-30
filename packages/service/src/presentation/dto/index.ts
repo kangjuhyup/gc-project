@@ -6,6 +6,7 @@ export { ConfirmPhoneVerificationRequestDto } from './confirm-phone-verification
 export { CreateSeatHoldRequestDto } from './create-seat-hold.request.dto';
 export { IssueTemporaryPasswordRequestDto } from './issue-temporary-password.request.dto';
 export { ListMoviesRequestDto } from './list-movies.request.dto';
+export { ListMyReservationsRequestDto } from './list-my-reservations.request.dto';
 export { ListScreeningSeatsRequestDto } from './list-screening-seats.request.dto';
 export { ListTheatersRequestDto } from './list-theaters.request.dto';
 export { LoginMemberRequestDto } from './login-member.request.dto';
