@@ -16,8 +16,14 @@ import { LocalAddressSearchAdapter } from './local-address-search.adapter';
         configService: ConfigService,
         jusoAddressSearchAdapter: JusoAddressSearchAdapter,
         localAddressSearchAdapter: LocalAddressSearchAdapter,
-      ): AddressSearchPort =>
-        EnvironmentAdapterFlag.of({
+      ): AddressSearchPort => {
+        const fallbackAdapter = defaultAddressSearchAdapter({
+          jusoAddressSearchAdapter,
+          localAddressSearchAdapter,
+          nodeEnv: configService.get<string>('NODE_ENV'),
+        });
+
+        return EnvironmentAdapterFlag.of({
           name: 'ADDRESS_SEARCH_ADAPTER',
           value: configService.get<string>('ADDRESS_SEARCH_ADAPTER'),
         }).select({
@@ -25,11 +31,22 @@ import { LocalAddressSearchAdapter } from './local-address-search.adapter';
             local: localAddressSearchAdapter,
             juso: jusoAddressSearchAdapter,
           },
-          fallback: jusoAddressSearchAdapter,
-        }),
+          fallback: fallbackAdapter,
+        });
+      },
       inject: [ConfigService, JusoAddressSearchAdapter, LocalAddressSearchAdapter],
     },
   ],
   exports: [ADDRESS_SEARCH],
 })
 export class PublicApiModule {}
+
+export function defaultAddressSearchAdapter(params: {
+  jusoAddressSearchAdapter: AddressSearchPort;
+  localAddressSearchAdapter: AddressSearchPort;
+  nodeEnv?: string;
+}): AddressSearchPort {
+  return params.nodeEnv === 'development'
+    ? params.localAddressSearchAdapter
+    : params.jusoAddressSearchAdapter;
+}

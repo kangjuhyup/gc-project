@@ -59,7 +59,7 @@ export class ServiceE2eContext {
     process.env.DB_USER = 'gc_user';
     process.env.DB_PASSWORD = 'gc_password';
     process.env.REDIS_URL = 'redis://:gc_redis_password@localhost:56379';
-    process.env.ADDRESS_ADAPTER = 'local';
+    process.env.ADDRESS_SEARCH_ADAPTER = 'local';
     process.env.SEAT_HOLD_TTL_SECONDS = '1';
 
     faker.seed(20260429);
