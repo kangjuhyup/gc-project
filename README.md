@@ -5,6 +5,15 @@ pnpm workspace 기반 모노레포입니다.
 - `packages/ui`: React 19 + Vite
 - `packages/service`: NestJS
 
+## 서비스 구성
+
+백엔드 서비스는 API 프로세스와 worker 프로세스를 분리해서 실행합니다.
+
+- API: HTTP controller, Swagger, application command/query 진입점
+- Worker: `outbox_event` polling 기반 결제/환불 후속 작업 처리
+
+현재 outbox 구조와 향후 message broker 확장 방향은 [`architect.md`](architect.md)의 “결제 이벤트 로그와 아웃박스” 섹션을 참고합니다.
+
 ## 로컬 실행 전 준비사항
 
 ### 1. Node.js 24 사용
@@ -70,10 +79,18 @@ REDIS_SENTINEL_PASSWORD=gc_sentinel_password
 REDIS_SENTINEL_MASTER_SET=mymaster
 ```
 
+worker 프로세스는 `packages/service/.env-worker`를 읽습니다. 결제 outbox worker 전용 설정이 필요하면 아래 값을 둘 수 있습니다.
+
+```bash
+PAYMENT_OUTBOX_WORKER_ENABLED=true
+PAYMENT_OUTBOX_WORKER_INTERVAL_MS=500
+LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS=3
+```
+
 ### 6. 로컬 인프라 실행
 
 ```bash
-docker compose up -d
+pnpm run compose:up
 ```
 
 상태 확인:
@@ -92,13 +109,50 @@ pnpm build
 
 ## 로컬 실행
 
+UI, API, worker를 한 번에 개발 모드로 실행합니다.
+
 ```bash
 pnpm dev
 ```
 
-개별 workspace만 실행할 수도 있습니다.
+UI와 API만 실행합니다.
 
 ```bash
-pnpm --filter @gc-project/ui dev
-pnpm --filter @gc-project/service dev
+pnpm run dev:apps
+```
+
+API와 worker를 함께 실행합니다.
+
+```bash
+pnpm run dev:service:all
+```
+
+개별 프로세스만 실행할 수도 있습니다.
+
+```bash
+pnpm run dev:ui
+pnpm run dev:service
+pnpm run dev:worker
+```
+
+빌드된 산출물을 실행할 때는 다음 명령을 사용합니다.
+
+```bash
+pnpm run service
+pnpm run worker
+pnpm run service:all
+```
+
+## 검증
+
+전체 테스트:
+
+```bash
+pnpm test
+```
+
+service e2e 테스트:
+
+```bash
+pnpm run service:test:e2e
 ```
