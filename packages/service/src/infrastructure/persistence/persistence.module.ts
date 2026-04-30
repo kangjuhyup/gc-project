@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { Migrator } from '@mikro-orm/migrations';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import {
@@ -37,18 +38,27 @@ import {
   MikroOrmTheaterQueryRepository,
   MikroOrmTransactionManager,
 } from './repositories';
+import { Migration202604300001CreateTables } from './migrations/Migration202604300001CreateTables';
+import { Migration202604300002SeedTempMovieData } from './migrations/Migration202604300002SeedTempMovieData';
 
 @Module({
   imports: [
     MikroOrmModule.forRoot({
       driver: PostgreSqlDriver,
       entities: persistenceEntities,
+      extensions: [Migrator],
       host: process.env.DB_HOST ?? 'localhost',
       port: Number(process.env.DB_PORT ?? 5432),
       dbName: process.env.DB_NAME ?? 'gc_project',
       user: process.env.DB_USER ?? 'gc_user',
       password: process.env.DB_PASSWORD ?? 'gc_password',
       debug: process.env.NODE_ENV !== 'production',
+      migrations: {
+        migrationsList: [
+          { name: 'Migration202604300001CreateTables', class: Migration202604300001CreateTables },
+          { name: 'Migration202604300002SeedTempMovieData', class: Migration202604300002SeedTempMovieData },
+        ],
+      },
     }),
   ],
   providers: [

@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
 import { ValidationPipe, type INestApplication } from '@nestjs/common';
@@ -32,14 +30,6 @@ export type E2eSeat = {
 };
 
 type E2eSeatRow = Omit<E2eSeat, 'status'>;
-
-const migrations = [
-  '001_create_movie_catalog_tables.sql',
-  '002_seed_movie_catalog_temp_data.sql',
-  '003_add_theater_location.sql',
-  '004_create_payment_outbox_tables.sql',
-  '005_create_member_refresh_token_table.sql',
-];
 
 let userSequence = 0;
 
@@ -85,8 +75,8 @@ export class ServiceE2eContext {
   }
 
   async reset(): Promise<void> {
-    await this.orm.schema.refreshDatabase();
-    await applySeedMigrations(this.orm);
+    await this.orm.schema.dropSchema({ dropMigrationsTable: true });
+    await this.orm.migrator.up();
     await this.redis.flushall();
   }
 
@@ -313,15 +303,5 @@ export class ServiceE2eContext {
       status: response.status,
       body: text.length === 0 ? {} : JSON.parse(text) as JsonObject,
     };
-  }
-}
-
-async function applySeedMigrations(orm: MikroORM): Promise<void> {
-  for (const migration of migrations) {
-    const sql = await readFile(
-      resolve(process.cwd(), 'src/infrastructure/persistence/migrations', migration),
-      'utf8',
-    );
-    await orm.em.getConnection().execute(sql);
   }
 }
