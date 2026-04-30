@@ -1,4 +1,3 @@
-import { Logging } from '@kangjuhyup/rvlog';
 import {
   BadRequestException,
   CallHandler,
@@ -64,17 +63,25 @@ const notFoundErrors = new Set([
 ]);
 
 @Injectable()
-@Logging
 export class ApplicationErrorInterceptor implements NestInterceptor {
-  intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    return next.handle().pipe(
-      catchError((error: Error) => throwError(() => this.map(error))),
-    );
+  intercept(
+    _context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<unknown> {
+    return next
+      .handle()
+      .pipe(catchError((error: Error) => throwError(() => this.map(error))));
   }
 
   private map(
     error: Error,
-  ): BadRequestException | ConflictException | ForbiddenException | HttpException | InternalServerErrorException | NotFoundException {
+  ):
+    | BadRequestException
+    | ConflictException
+    | ForbiddenException
+    | HttpException
+    | InternalServerErrorException
+    | NotFoundException {
     if (error instanceof HttpException) {
       return error;
     }
