@@ -832,6 +832,141 @@ flowchart LR
     C --> D --> E --> F
 ```
 
+**현재 outbox worker 구조**
+
+현재 구현은 메시지 브로커 없이 **DB outbox + polling worker**로 구성합니다. 핵심은 비즈니스 상태 변경과 이벤트 발행 의도를 같은 DB 트랜잭션에 저장하고, 별도 worker 프로세스가 `outbox_event`를 주기적으로 조회해 재시도 가능한 후속 작업을 처리하는 것입니다.
+
+관련 파일은 다음과 같습니다.
+
+| 영역 | 파일 | 역할 |
+|---|---|---|
+| API app | `packages/service/src/api-app.module.ts` | HTTP API, presentation/application 모듈 구성 |
+| API main | `packages/service/src/api-main.ts` | API 프로세스 bootstrap, Swagger, global pipe/interceptor, migration 실행 |
+| Worker app | `packages/service/src/worker-app.module.ts` | `.env-worker` 로드, warning/error 로그 레벨, outbox worker 모듈 구성 |
+| Worker main | `packages/service/src/worker-main.ts` | worker 프로세스 bootstrap |
+| Outbox worker module | `packages/service/src/infrastructure/outbox/outbox-worker.module.ts` | worker provider 조립 |
+| Payment outbox worker | `packages/service/src/infrastructure/outbox/payment-outbox-worker.ts` | `outbox_event` polling, 처리 잠금, 발행, 실패 재시도 |
+
+실행 명령은 API와 worker를 별도 프로세스로 분리합니다.
+
+| 명령 | 설명 |
+|---|---|
+| `pnpm run service` | 빌드된 API 프로세스 실행 |
+| `pnpm run worker` | 빌드된 worker 프로세스 실행 |
+| `pnpm run service:all` | 빌드된 API와 worker를 병렬 실행 |
+| `pnpm run dev:service` | API 개발 watch 실행 |
+| `pnpm run dev:worker` | worker 개발 watch 실행 |
+| `pnpm run dev:service:all` | API와 worker 개발 watch 병렬 실행 |
+
+```mermaid
+flowchart TD
+    subgraph ApiProcess["API Process"]
+        A["Command Handler"]
+        B["PostgreSQL Transaction"]
+        C["business table UPDATE/INSERT"]
+        D["payment_event_log INSERT"]
+        E["outbox_event INSERT"]
+    end
+
+    subgraph WorkerProcess["Worker Process"]
+        F["PaymentOutboxWorker<br/>polling interval"]
+        G["find publishable events"]
+        H["mark PROCESSING<br/>locked_until"]
+        I{"event type"}
+        J["PaymentGatewayPort.request()"]
+        K["PaymentGatewayPort.refund()"]
+        L["mark PUBLISHED"]
+        M["mark FAILED<br/>retry_count + next_retry_at"]
+    end
+
+    A --> B
+    B --> C --> D --> E
+    E -. "polling" .-> F --> G --> H --> I
+    I -- "PAYMENT_REQUESTED" --> J --> L
+    I -- "PAYMENT_REFUND_REQUESTED" --> K --> L
+    J -- "failure" --> M
+    K -- "failure" --> M
+```
+
+현재 구조의 운영 특성은 다음과 같습니다.
+
+- `outbox_event`는 발행해야 할 의도를 저장하는 source of truth입니다.
+- worker는 polling 기반으로 동작하며, 현재 기본 간격은 `PaymentOutboxWorker`의 `DEFAULT_PAYMENT_OUTBOX_WORKER_INTERVAL_MS = 500`입니다.
+- worker는 `.env-worker`를 바라보고, 로그는 warning/error 중심으로 출력합니다.
+- 같은 프로세스에서 API와 worker를 함께 띄우지 않고, 각자 별도 프로세스로 실행합니다.
+- 실패한 이벤트는 `FAILED`, `retry_count`, `next_retry_at`, `last_error`를 남겨 재시도 대상이 됩니다.
+- 현재 worker는 결제 요청과 환불 요청 같은 Payment Context 후속 작업을 직접 `PaymentGatewayPort`로 처리합니다.
+
+**향후 메시지 브로커 확장 방향**
+
+트래픽 증가, 소비자 다변화, 정산/알림/감사 로그 등 독립 consumer가 늘어나는 시점에는 메시지 브로커를 도입합니다. 이때도 outbox 패턴의 핵심은 유지합니다. 즉, API 트랜잭션은 여전히 비즈니스 상태와 `outbox_event`를 함께 저장하고, worker의 책임만 “직접 후속 작업 수행”에서 “브로커 publish”로 좁힙니다.
+
+```mermaid
+flowchart TD
+    subgraph ApiProcess["API Process"]
+        A["Command Handler"]
+        B["DB Transaction"]
+        C["business table UPDATE/INSERT"]
+        D["payment_event_log INSERT"]
+        E["outbox_event INSERT"]
+    end
+
+    subgraph OutboxPublisher["Outbox Publisher Worker"]
+        F["poll outbox_event"]
+        G["mark PROCESSING"]
+        H["publish to broker"]
+        I["mark PUBLISHED"]
+        J["mark FAILED + retry"]
+    end
+
+    subgraph Broker["Message Broker<br/>Kafka / RabbitMQ / SQS"]
+        K["payment.requested"]
+        L["payment.refund.requested"]
+        M["reservation.confirmed"]
+    end
+
+    subgraph Consumers["Independent Consumers"]
+        N["Payment Request Consumer"]
+        O["Refund Consumer"]
+        P["Notification Consumer"]
+        Q["Settlement Consumer"]
+        R["Audit/Analytics Consumer"]
+    end
+
+    A --> B --> C --> D --> E
+    E -. "polling or CDC" .-> F --> G --> H
+    H --> K
+    H --> L
+    H --> M
+    H -- "success" --> I
+    H -- "failure" --> J
+    K --> N
+    L --> O
+    M --> P
+    M --> Q
+    M --> R
+```
+
+확장 시 설계 원칙은 다음과 같습니다.
+
+- `outbox_event` 저장은 계속 DB 트랜잭션 안에서 수행합니다.
+- broker publish는 outbox worker가 담당하고, API command handler는 broker client를 직접 호출하지 않습니다.
+- consumer는 at-least-once delivery를 전제로 멱등하게 구현합니다.
+- 이벤트에는 consumer 멱등 처리를 위한 안정적인 `eventId`, `aggregateType`, `aggregateId`, `eventType`, `occurredAt`을 포함합니다.
+- provider 결제 요청, 환불, 알림, 정산, 분석 적재는 consumer 단위로 분리합니다.
+- broker 장애 시 `outbox_event`는 `FAILED`와 `next_retry_at` 기준으로 재시도합니다.
+- 다중 worker 확장이 필요하면 `FOR UPDATE SKIP LOCKED` 또는 동등한 잠금 전략을 적용합니다.
+- PostgreSQL `LISTEN/NOTIFY`는 polling 지연을 줄이는 wake-up 최적화로 사용할 수 있지만, 최종 source of truth는 여전히 `outbox_event`입니다.
+- 더 큰 규모에서는 Debezium 같은 CDC 기반 outbox relay를 검토할 수 있습니다.
+
+단계별 전환안은 다음과 같습니다.
+
+| 단계 | 구조 | 적용 시점 |
+|---|---|---|
+| 1단계 | DB outbox + polling worker가 직접 adapter 호출 | 현재 구조. 운영 부담을 낮추고 결제/환불 재시도 보장 |
+| 2단계 | DB outbox + polling publisher + broker + consumer | 결제/환불/알림/정산 consumer가 분리될 때 |
+| 3단계 | DB outbox + CDC relay + broker + consumer | polling 부하와 지연을 줄이고 이벤트 처리량이 커질 때 |
+
 ### 4.7 정합성 보장 포인트
 
 **결제 완료 시 원자성**
@@ -1029,6 +1164,7 @@ CREATE TABLE seat_hold_2026_04 PARTITION OF seat_hold
 
 - **payment provider 확장**: Kakao/Toss/Naver adapter 구현, provider별 callback 검증 강화
 - **payment 운영 인증**: `POST /payments/:paymentId/refund`를 내부 운영자 권한 또는 시스템 간 인증으로 보호
+- **message broker 기반 outbox 확장**: 결제/환불/알림/정산 consumer가 분리되는 시점에 Kafka/RabbitMQ/SQS 등으로 outbox publish 경로 확장
 - **point / coupon**: 적립금·쿠폰 사용 내역
 - **review**: 영화 리뷰 및 평점
 - **읽기 전용 복제본(Read Replica)**: 영화/상영 일정 조회 트래픽이 많아질 경우 분리
