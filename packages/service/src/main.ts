@@ -4,9 +4,16 @@ import { SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ApplicationErrorInterceptor } from '@presentation';
 import { buildSwaggerConfig, SWAGGER_DOCUMENT_PATH, SWAGGER_JSON_PATH } from '@presentation/swagger/swagger.config';
+import { buildCorsOptions } from '@infrastructure/config/cors.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const corsOptions = buildCorsOptions();
+
+  if (corsOptions) {
+    app.enableCors(corsOptions);
+  }
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

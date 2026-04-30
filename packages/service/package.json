@@ -6,7 +6,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "nest start --watch",
+    "dev": "NODE_ENV=development nest start --watch",
     "start": "node dist/main.js",
     "build": "nest build",
     "docs:openapi": "ts-node -r tsconfig-paths/register scripts/generate-openapi.ts",
