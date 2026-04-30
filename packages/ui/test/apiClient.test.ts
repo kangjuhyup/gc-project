@@ -71,4 +71,21 @@ describe('apiClient', () => {
     expect(listener).not.toHaveBeenCalled();
     window.removeEventListener('gc-project:auth-error', listener);
   });
+
+  it('VITE_API_MODE가 mock이면 실제 fetch 대신 mock API 응답을 반환한다', async () => {
+    vi.stubEnv('VITE_API_MODE', 'mock');
+    vi.stubGlobal('crypto', {
+      randomUUID: () => 'mock-token',
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await apiClient<{ accessToken: string }>('/members/login', {
+      body: JSON.stringify({ userId: 'movie_user', password: 'password123!' }),
+      method: 'POST',
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.accessToken).toBe('member:1:mock-token');
+  });
 });

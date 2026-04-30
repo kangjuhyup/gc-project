@@ -12,6 +12,7 @@ import type {
   PhoneVerificationConfirmResponse,
   PhoneVerificationRequestResponse,
 } from '@/features/signup/signupApi';
+import { shouldUseMockApi } from './apiMode';
 
 interface MockRequest {
   body?: BodyInit | null;
@@ -28,10 +29,11 @@ const mockMembers = new Set(['admin', 'movie_user', 'tester']);
 const mockVerificationCode = '123456';
 const mockHeldSeatIdsByScreening = new Map<string, Set<string>>();
 const mockSeatHoldIndex = new Map<string, { screeningId: string; seatId: string }>();
+const mockPayments = new Map<string, PaymentResultDto & { approvedAt: number }>();
 let mockNextSeatHoldId = 9001;
 const mockReservations: ReservationSummary[] = [
   {
-    id: 1,
+    id: '1',
     reservationNumber: 'R20260428101',
     status: 'CONFIRMED',
     totalPrice: 28000,
@@ -44,7 +46,7 @@ const mockReservations: ReservationSummary[] = [
     seats: ['C4', 'C5'],
   },
   {
-    id: 2,
+    id: '2',
     reservationNumber: 'R20260420401',
     status: 'CONFIRMED',
     totalPrice: 14000,
@@ -57,7 +59,7 @@ const mockReservations: ReservationSummary[] = [
     seats: ['E6'],
   },
   {
-    id: 3,
+    id: '3',
     reservationNumber: 'R20260411201',
     status: 'CANCELED',
     totalPrice: 36000,
@@ -169,7 +171,7 @@ export async function resolveMockApi({
     const paymentScreening = findMockScreening(screeningId);
 
     mockReservations.unshift({
-      id: Date.now(),
+      id: String(Date.now()),
       reservationNumber,
       status: 'CONFIRMED',
       totalPrice: payload.amount,
@@ -181,8 +183,9 @@ export async function resolveMockApi({
       seats: heldSeat ? [getMockSeatLabel(screeningId, heldSeat.seatId)] : [],
     });
 
-    return toMockResponse<PaymentResultDto>({
-      paymentId: String(Date.now()),
+    const paymentId = String(Date.now());
+    const paymentResult: PaymentResultDto & { approvedAt: number } = {
+      paymentId,
       seatHoldId: payload.seatHoldId,
       idempotencyKey: payload.idempotencyKey,
       reservationId: String(Date.now() + 1),
@@ -191,19 +194,51 @@ export async function resolveMockApi({
       status: 'PENDING',
       amount: payload.amount,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-    });
+      approvedAt: Date.now() + 5_000,
+    };
+
+    mockPayments.set(paymentId, paymentResult);
+
+    return toMockResponse<PaymentResultDto>(paymentResult);
+  }
+
+  const paymentDetailMatch = pathname.match(/^\/payments\/(\d+)$/);
+
+  if (method === 'GET' && paymentDetailMatch) {
+    const paymentId = paymentDetailMatch[1];
+    const payment = mockPayments.get(paymentId);
+
+    if (payment && Date.now() >= payment.approvedAt) {
+      payment.status = 'APPROVED';
+    }
+
+    return toMockResponse<PaymentResultDto>(
+      payment ?? {
+        paymentId,
+        seatHoldId: 'mock-seat-hold',
+        idempotencyKey: `mock-${paymentId}`,
+        reservationId: `reservation-${paymentId}`,
+        provider: 'LOCAL',
+        providerPaymentId: `mock-${paymentId}`,
+        status: 'APPROVED',
+        amount: 15000,
+      },
+    );
   }
 
   if (method === 'GET' && pathname === '/reservations') {
+    const limit = Number(url.searchParams.get('limit') ?? '20');
+
     return toMockResponse<ReservationListResponse>({
-      items: mockReservations,
+      items: mockReservations.slice(0, limit),
+      hasNext: false,
     });
   }
 
   const reservationCancelMatch = pathname.match(/^\/reservations\/(\d+)\/cancel$/);
 
   if (method === 'POST' && reservationCancelMatch) {
-    const reservationId = Number(reservationCancelMatch[1]);
+    const reservationId = reservationCancelMatch[1];
     const payload = await readJsonBody<{ reason?: string }>(body);
     const reservation = mockReservations.find((item) => item.id === reservationId);
 
@@ -214,7 +249,7 @@ export async function resolveMockApi({
     }
 
     return toMockResponse<ReservationCanceledDto>({
-      reservationId: String(reservationId),
+      reservationId,
       paymentId: `payment-${reservationId}`,
       reservationStatus: 'CANCELED',
       paymentStatus: 'REFUND_REQUIRED',
@@ -316,11 +351,7 @@ export async function resolveMockApi({
 }
 
 function shouldMockApi() {
-  return (
-    import.meta.env.DEV &&
-    import.meta.env.MODE === 'development' &&
-    import.meta.env.VITE_API_MOCK !== 'false'
-  );
+  return shouldUseMockApi();
 }
 
 async function readJsonBody<TBody>(body: BodyInit | null | undefined) {

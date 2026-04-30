@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   checkMemberId,
@@ -41,6 +42,7 @@ type PhoneVerificationState = 'idle' | 'requested' | 'verified';
 
 export function useSignupPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<SignupFormErrors>({});
   const [idCheckState, setIdCheckState] = useState<IdCheckState>('idle');
@@ -145,6 +147,14 @@ export function useSignupPage() {
     );
     setPhoneVerificationId(result.verificationId);
     setPhoneVerificationState('requested');
+    setValues((current) => ({
+      ...current,
+      verificationCode: result.code,
+    }));
+    setErrors((current) => ({
+      ...current,
+      verificationCode: undefined,
+    }));
   };
 
   const handleSearchAddress = async () => {
@@ -217,6 +227,7 @@ export function useSignupPage() {
     });
 
     setSubmittedMemberId(result.memberId);
+    navigate('/login', { replace: true });
   };
 
   return {

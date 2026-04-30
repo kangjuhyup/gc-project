@@ -44,6 +44,7 @@ export function ReservationHistoryPanel({ actionSlot }: ReservationHistoryPanelP
     currentView,
     filteredReservations,
     handleCancelReservation,
+    handleFetchNextPage,
     reservationsQuery,
     setCurrentView,
   } = useReservationsPage();
@@ -158,6 +159,19 @@ export function ReservationHistoryPanel({ actionSlot }: ReservationHistoryPanelP
             {actionSlot}
           </div>
         )
+      ) : null}
+
+      {!reservationsQuery.isLoading && !reservationsQuery.isError && reservationsQuery.hasNextPage ? (
+        <div className="reservation-actions reservation-actions-centered">
+          <Button
+            disabled={reservationsQuery.isFetchingNextPage}
+            onClick={handleFetchNextPage}
+            type="button"
+            variant="secondary"
+          >
+            {reservationsQuery.isFetchingNextPage ? '불러오는 중' : '더 보기'}
+          </Button>
+        </div>
       ) : null}
     </>
   );

@@ -1,9 +1,20 @@
 import { apiClient } from '@/lib/apiClient';
 
-export type ReservationStatus = 'CONFIRMED' | 'CANCELED' | 'EXPIRED';
+export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'EXPIRED';
+type ReservationPaymentStatus =
+  | 'PENDING'
+  | 'APPROVING'
+  | 'APPROVED'
+  | 'FAILED'
+  | 'REFUND_REQUIRED'
+  | 'REFUNDING'
+  | 'REFUNDED'
+  | 'REFUND_FAILED'
+  | 'CANCELED'
+  | 'EXPIRED';
 
 export interface ReservationSummary {
-  id: number;
+  id: string;
   reservationNumber: string;
   status: ReservationStatus;
   totalPrice: number;
@@ -19,6 +30,68 @@ export interface ReservationSummary {
 
 export interface ReservationListResponse {
   items: ReservationSummary[];
+  hasNext: boolean;
+  nextCursor?: string;
+}
+
+interface ReservationListResultDto {
+  items: ReservationSummaryDto[];
+  hasNext: boolean;
+  nextCursor?: string;
+}
+
+interface ReservationSummaryDto {
+  id: string;
+  reservationNumber: string;
+  status: ReservationStatus;
+  totalPrice: number;
+  createdAt: string;
+  canceledAt?: string;
+  cancelReason?: string;
+  movie: ReservationMovieSummaryDto;
+  screening: ReservationScreeningSummaryDto;
+  seats: ReservationSeatSummaryDto[];
+  payment?: ReservationPaymentSummaryDto;
+}
+
+interface ReservationMovieSummaryDto {
+  id: string;
+  title: string;
+  rating?: string;
+  posterUrl?: string;
+}
+
+interface ReservationTheaterSummaryDto {
+  id: string;
+  name: string;
+  address: string;
+}
+
+interface ReservationScreeningSummaryDto {
+  id: string;
+  screenName: string;
+  startAt: string;
+  endAt: string;
+  theater: ReservationTheaterSummaryDto;
+}
+
+interface ReservationSeatSummaryDto {
+  id: string;
+  row: string;
+  col: number;
+  type: string;
+}
+
+interface ReservationPaymentSummaryDto {
+  id: string;
+  status: ReservationPaymentStatus;
+  amount: number;
+  providerPaymentId?: string;
+}
+
+export interface FetchReservationsParams {
+  limit?: number;
+  cursor?: string;
 }
 
 export interface CancelReservationRequestDto {
@@ -33,20 +106,47 @@ export interface ReservationCanceledDto {
   reason?: string;
 }
 
-export function fetchReservations(memberId: number) {
+export async function fetchReservations({ limit = 20, cursor }: FetchReservationsParams = {}) {
   const params = new URLSearchParams({
-    memberId: String(memberId),
+    limit: String(limit),
   });
 
-  return apiClient<ReservationListResponse>(`/reservations?${params}`);
+  if (cursor) {
+    params.set('cursor', cursor);
+  }
+
+  const response = await apiClient<ReservationListResultDto>(`/reservations?${params}`);
+
+  return {
+    items: response.items.map(mapReservationSummary),
+    hasNext: response.hasNext,
+    nextCursor: response.nextCursor,
+  };
 }
 
-export function cancelReservation(reservationId: number, payload: CancelReservationRequestDto) {
+export function cancelReservation(reservationId: string, payload: CancelReservationRequestDto) {
   return apiClient<ReservationCanceledDto>(
-    `/reservations/${encodeURIComponent(String(reservationId))}/cancel`,
+    `/reservations/${encodeURIComponent(reservationId)}/cancel`,
     {
       body: JSON.stringify(payload),
       method: 'POST',
     },
   );
+}
+
+function mapReservationSummary(reservation: ReservationSummaryDto): ReservationSummary {
+  return {
+    id: reservation.id,
+    reservationNumber: reservation.reservationNumber,
+    status: reservation.status,
+    totalPrice: reservation.totalPrice,
+    createdAt: reservation.createdAt,
+    movieTitle: reservation.movie.title,
+    posterUrl: reservation.movie.posterUrl ?? '',
+    screeningStartAt: reservation.screening.startAt,
+    screenName: reservation.screening.screenName,
+    seats: reservation.seats.map((seat) => `${seat.row}${seat.col}`),
+    canceledAt: reservation.canceledAt,
+    cancelReason: reservation.cancelReason,
+  };
 }

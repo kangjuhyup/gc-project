@@ -20,6 +20,7 @@ export function PaymentPage() {
     agreedToTerms,
     handleAgreementChange,
     handleSubmit,
+    paymentConfirmationState,
     paymentMethod,
     paymentMutation,
     paymentState,
@@ -100,14 +101,21 @@ export function PaymentPage() {
           ) : null}
 
           {paymentMutation.data ? (
-            <div className="payment-success" role="status">
+            <div
+              className="payment-success"
+              data-state={paymentConfirmationState?.status}
+              role="status"
+            >
               <BadgeCheck size={22} aria-hidden="true" />
               <div>
-                <strong>결제 요청이 생성되었습니다.</strong>
+                <strong>{paymentConfirmationState?.label ?? '결제 요청이 생성되었습니다.'}</strong>
                 <span>
                   결제 ID {paymentMutation.data[0]?.paymentId}
                   {paymentMutation.data.length > 1 ? ` 외 ${paymentMutation.data.length - 1}건` : ''}
                 </span>
+                {paymentConfirmationState?.description ? (
+                  <span>{paymentConfirmationState.description}</span>
+                ) : null}
                 {paymentMutation.data[0]?.approvalUrl ? (
                   <a href={paymentMutation.data[0].approvalUrl} rel="noreferrer" target="_blank">
                     결제 승인으로 이동

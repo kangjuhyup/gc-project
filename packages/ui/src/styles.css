@@ -1055,6 +1055,18 @@ h2 {
   padding: 14px;
 }
 
+.payment-success[data-state="pending"] {
+  border-color: #f6d58c;
+  background: #fff8e6;
+  color: #8a5a0f;
+}
+
+.payment-success[data-state="error"] {
+  border-color: #ffc9c4;
+  background: #fff1f0;
+  color: #b42318;
+}
+
 .payment-success strong,
 .payment-success span {
   display: block;
@@ -1253,6 +1265,10 @@ h2 {
 .reservation-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.reservation-actions-centered {
+  justify-content: center;
 }
 
 .reservation-actions .button {

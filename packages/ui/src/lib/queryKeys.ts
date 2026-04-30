@@ -6,8 +6,8 @@ export const queryKeys = {
   },
   reservations: {
     all: ['reservations'] as const,
-    list: (memberId: number) => [...queryKeys.reservations.all, 'list', memberId] as const,
-    detail: (reservationId: number) =>
+    list: () => [...queryKeys.reservations.all, 'list'] as const,
+    detail: (reservationId: string) =>
       [...queryKeys.reservations.all, 'detail', reservationId] as const,
   },
   payments: {

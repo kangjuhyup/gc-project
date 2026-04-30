@@ -6,7 +6,7 @@ import {
 import { type ReservationSummary } from '@/features/reservations/reservationApi';
 
 const baseReservation: ReservationSummary = {
-  id: 1,
+  id: '1',
   reservationNumber: 'R20260428001',
   status: 'CONFIRMED',
   totalPrice: 28000,
@@ -35,8 +35,8 @@ describe('reservationFilters', () => {
     expect(
       filterReservations(
         [
-          { ...baseReservation, id: 2, status: 'CANCELED' },
-          { ...baseReservation, id: 3, status: 'EXPIRED' },
+          { ...baseReservation, id: '2', status: 'CANCELED' },
+          { ...baseReservation, id: '3', status: 'EXPIRED' },
         ],
         'CANCELED',
       ),

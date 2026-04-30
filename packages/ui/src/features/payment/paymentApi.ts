@@ -2,6 +2,17 @@ import { apiClient } from '@/lib/apiClient';
 
 export type PaymentMethod = 'CARD' | 'KAKAO_PAY' | 'NAVER_PAY';
 export type PaymentProvider = 'LOCAL' | 'KAKAO' | 'TOSS' | 'NAVER';
+export type PaymentStatus =
+  | 'PENDING'
+  | 'APPROVING'
+  | 'APPROVED'
+  | 'FAILED'
+  | 'REFUND_REQUIRED'
+  | 'REFUNDING'
+  | 'REFUNDED'
+  | 'REFUND_FAILED'
+  | 'CANCELED'
+  | 'EXPIRED';
 
 export interface PaymentSeat {
   id: string;
@@ -22,17 +33,7 @@ export interface PaymentResultDto {
   reservationId?: string;
   provider: PaymentProvider;
   providerPaymentId?: string;
-  status:
-    | 'PENDING'
-    | 'APPROVING'
-    | 'APPROVED'
-    | 'FAILED'
-    | 'REFUND_REQUIRED'
-    | 'REFUNDING'
-    | 'REFUNDED'
-    | 'REFUND_FAILED'
-    | 'CANCELED'
-    | 'EXPIRED';
+  status: PaymentStatus;
   amount: number;
   approvalUrl?: string;
   expiresAt?: string;
@@ -43,6 +44,10 @@ export function requestPayment(payload: RequestPaymentRequestDto) {
     body: JSON.stringify(payload),
     method: 'POST',
   });
+}
+
+export function fetchPayment(paymentId: string) {
+  return apiClient<PaymentResultDto>(`/payments/${encodeURIComponent(paymentId)}`);
 }
 
 export function mapPaymentMethodToProvider(paymentMethod: PaymentMethod): PaymentProvider {
