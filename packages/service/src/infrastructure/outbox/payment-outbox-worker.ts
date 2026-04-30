@@ -1,5 +1,5 @@
-import { Logging } from '@kangjuhyup/rvlog';
-import { Injectable } from '@nestjs/common';
+import { MikroORM, RequestContext } from '@mikro-orm/core';
+import { Injectable, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
 import { OutboxEventModel, PaymentEventLogModel, PaymentEventType } from '@domain';
 import type {
   ClockPort,
@@ -10,9 +10,13 @@ import type {
   TransactionManagerPort,
 } from '@application/commands/ports';
 
+const DEFAULT_PAYMENT_OUTBOX_WORKER_INTERVAL_MS = 500;
+
 @Injectable()
-@Logging
-export class PaymentOutboxWorker {
+export class PaymentOutboxWorker implements OnApplicationBootstrap, OnApplicationShutdown {
+  private interval?: NodeJS.Timeout;
+  private processing = false;
+
   constructor(
     private readonly outboxEventRepository: OutboxEventRepositoryPort,
     private readonly paymentRepository: PaymentRepositoryPort,
@@ -20,7 +24,41 @@ export class PaymentOutboxWorker {
     private readonly paymentGateway: PaymentGatewayPort,
     private readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
+    private readonly orm: MikroORM,
   ) {}
+
+  onApplicationBootstrap(): void {
+    if (!shouldRunPaymentOutboxWorker()) {
+      return;
+    }
+
+    this.start();
+  }
+
+  onApplicationShutdown(): void {
+    this.stop();
+  }
+
+  start(): void {
+    if (this.interval !== undefined) {
+      return;
+    }
+
+    void this.processSafely();
+    this.interval = setInterval(
+      () => void this.processSafely(),
+      paymentOutboxWorkerIntervalMilliseconds(),
+    );
+  }
+
+  stop(): void {
+    if (this.interval === undefined) {
+      return;
+    }
+
+    clearInterval(this.interval);
+    this.interval = undefined;
+  }
 
   async processOnce(limit = 20): Promise<{ processed: number; failed: number }> {
     const events = await this.outboxEventRepository.findPublishable({
@@ -42,6 +80,20 @@ export class PaymentOutboxWorker {
     return { processed, failed };
   }
 
+  private async processSafely(): Promise<void> {
+    if (this.processing) {
+      return;
+    }
+
+    this.processing = true;
+
+    try {
+      await RequestContext.create(this.orm.em, () => this.processOnce());
+    } finally {
+      this.processing = false;
+    }
+  }
+
   private async processEvent(event: OutboxEventModel): Promise<void> {
     await this.transactionManager.runInTransaction(async () => {
       const processing = event.markProcessing({
@@ -52,7 +104,9 @@ export class PaymentOutboxWorker {
 
       try {
         await this.publish(processing);
-        await this.outboxEventRepository.save(processing.markPublished({ now: this.clock.now() }));
+        await this.outboxEventRepository.save(
+          processing.markPublished({ now: this.clock.now() }),
+        );
       } catch (error) {
         await this.outboxEventRepository.save(
           processing.markFailed({
@@ -113,12 +167,17 @@ export class PaymentOutboxWorker {
     });
     const nextPayment = refund.refunded
       ? refunding.completeRefund({ now: this.clock.now() })
-      : refunding.failRefund({ reason: refund.reason ?? 'PAYMENT_REFUND_FAILED', now: this.clock.now() });
+      : refunding.failRefund({
+          reason: refund.reason ?? 'PAYMENT_REFUND_FAILED',
+          now: this.clock.now(),
+        });
     await this.paymentRepository.save(nextPayment);
     await this.paymentEventLogRepository.save(
       PaymentEventLogModel.of({
         paymentId: nextPayment.id,
-        eventType: refund.refunded ? PaymentEventType.PAYMENT_REFUNDED : PaymentEventType.PAYMENT_REFUND_FAILED,
+        eventType: refund.refunded
+          ? PaymentEventType.PAYMENT_REFUNDED
+          : PaymentEventType.PAYMENT_REFUND_FAILED,
         previousStatus: refunding.status,
         nextStatus: nextPayment.status,
         provider: nextPayment.provider,
@@ -129,4 +188,29 @@ export class PaymentOutboxWorker {
       }),
     );
   }
+}
+
+export function shouldRunPaymentOutboxWorker(
+  value = process.env.PAYMENT_OUTBOX_WORKER_ENABLED,
+  nodeEnv = process.env.NODE_ENV,
+): boolean {
+  if (value === undefined && nodeEnv === 'test') {
+    return false;
+  }
+
+  return !['0', 'false', 'no', 'off'].includes(
+    value?.trim().toLocaleLowerCase() ?? '',
+  );
+}
+
+export function paymentOutboxWorkerIntervalMilliseconds(
+  value = process.env.PAYMENT_OUTBOX_WORKER_INTERVAL_MS,
+): number {
+  const milliseconds = Number(value ?? DEFAULT_PAYMENT_OUTBOX_WORKER_INTERVAL_MS);
+
+  if (!Number.isFinite(milliseconds) || milliseconds <= 0) {
+    return DEFAULT_PAYMENT_OUTBOX_WORKER_INTERVAL_MS;
+  }
+
+  return Math.round(milliseconds);
 }

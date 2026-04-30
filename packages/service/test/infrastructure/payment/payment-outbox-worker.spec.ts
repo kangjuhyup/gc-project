@@ -1,6 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { MikroORM } from '@mikro-orm/core';
 import { OutboxEventModel, PaymentModel } from '@domain';
-import { PaymentOutboxWorker } from '@infrastructure/payment';
+import {
+  paymentOutboxWorkerIntervalMilliseconds,
+  PaymentOutboxWorker,
+  shouldRunPaymentOutboxWorker,
+} from '@infrastructure/outbox';
 import type {
   ClockPort,
   OutboxEventRepositoryPort,
@@ -17,6 +22,20 @@ const clock: ClockPort = {
 const transactionManager: TransactionManagerPort = {
   runInTransaction: vi.fn(async (work) => await work()),
 };
+const fakeEntityManager = {
+  name: 'default',
+};
+const orm = {
+  em: {
+    ...fakeEntityManager,
+    fork: vi.fn(() => fakeEntityManager),
+  },
+} as unknown as MikroORM;
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllEnvs();
+});
 
 function paymentRequestedOutbox() {
   return OutboxEventModel.pending({
@@ -39,6 +58,44 @@ function refundRequestedOutbox() {
 }
 
 describe('PaymentOutboxWorker', () => {
+  it('앱 시작 시 outbox 처리를 시작하고 종료 시 중지한다', async () => {
+    vi.useFakeTimers();
+    vi.stubEnv('PAYMENT_OUTBOX_WORKER_ENABLED', 'true');
+    const outboxEventRepository = {
+      findPublishable: vi.fn(async () => []),
+      save: vi.fn(),
+    } as unknown as OutboxEventRepositoryPort;
+    const worker = new PaymentOutboxWorker(
+      outboxEventRepository,
+      { findById: vi.fn() } as unknown as PaymentRepositoryPort,
+      { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
+      { request: vi.fn(), refund: vi.fn() } as unknown as PaymentGatewayPort,
+      transactionManager,
+      clock,
+      orm,
+    );
+
+    worker.onApplicationBootstrap();
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(500);
+    worker.onApplicationShutdown();
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(outboxEventRepository.findPublishable).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it('outbox worker 환경변수를 파싱한다', () => {
+    expect(shouldRunPaymentOutboxWorker(undefined, 'development')).toBe(true);
+    expect(shouldRunPaymentOutboxWorker(undefined, 'test')).toBe(false);
+    expect(shouldRunPaymentOutboxWorker('false')).toBe(false);
+    expect(shouldRunPaymentOutboxWorker('0')).toBe(false);
+    expect(shouldRunPaymentOutboxWorker('true')).toBe(true);
+    expect(paymentOutboxWorkerIntervalMilliseconds(undefined)).toBe(500);
+    expect(paymentOutboxWorkerIntervalMilliseconds('1000')).toBe(1000);
+    expect(paymentOutboxWorkerIntervalMilliseconds('invalid')).toBe(500);
+  });
+
   it('PAYMENT_REQUESTED 아웃박스 이벤트를 local payment gateway 요청으로 발행하고 published 처리한다', async () => {
     const outboxEventRepository = {
       findPublishable: vi.fn(async () => [paymentRequestedOutbox()]),
@@ -68,6 +125,7 @@ describe('PaymentOutboxWorker', () => {
       paymentGateway,
       transactionManager,
       clock,
+      orm,
     );
 
     const result = await worker.processOnce();
@@ -116,6 +174,7 @@ describe('PaymentOutboxWorker', () => {
       paymentGateway,
       transactionManager,
       clock,
+      orm,
     );
 
     const result = await worker.processOnce();
