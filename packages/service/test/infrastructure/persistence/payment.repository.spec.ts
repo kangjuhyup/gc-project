@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { LockMode } from '@mikro-orm/core';
-import { PaymentEntity } from '@infrastructure/persistence/entities';
+import { OutboxEventEntity, PaymentEntity } from '@infrastructure/persistence/entities';
 import { MikroOrmOutboxEventRepository, MikroOrmPaymentRepository } from '@infrastructure/persistence/repositories';
 
 describe('MikroOrmPaymentRepository', () => {
@@ -81,6 +81,43 @@ describe('MikroOrmPaymentRepository', () => {
 });
 
 describe('MikroOrmOutboxEventRepository', () => {
+  it('persistence id가 있는 outbox 이벤트는 기존 row를 갱신한다', async () => {
+    const now = new Date('2026-04-29T01:00:00.000Z');
+    const entityManager = {
+      nativeUpdate: vi.fn().mockResolvedValue(1),
+      insert: vi.fn(),
+    };
+    const repository = new MikroOrmOutboxEventRepository(entityManager as never);
+
+    const result = await repository.save(
+      {
+        id: '8001',
+        aggregateType: 'PAYMENT',
+        aggregateId: '7001',
+        eventType: 'PAYMENT_REQUESTED',
+        payload: { paymentId: '7001' },
+        status: 'PROCESSING',
+        retryCount: 0,
+        lockedUntil: now,
+        occurredAt: now,
+        createdAt: now,
+        updatedAt: now,
+      } as never,
+    );
+
+    expect(entityManager.nativeUpdate).toHaveBeenCalledWith(
+      OutboxEventEntity,
+      { id: '8001' },
+      expect.objectContaining({
+        aggregateType: 'PAYMENT',
+        status: 'PROCESSING',
+        lockedUntil: now,
+      }),
+    );
+    expect(entityManager.insert).not.toHaveBeenCalled();
+    expect(result.id).toBe('8001');
+  });
+
   it('발행 가능한 PENDING/FAILED 아웃박스 이벤트를 오래된 순으로 조회한다', async () => {
     const now = new Date('2026-04-29T01:00:00.000Z');
     const entityManager = {
