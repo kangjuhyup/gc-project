@@ -18,7 +18,7 @@ export class ServiceConfigModule {
 
   static forWorker(): DynamicModule | Promise<DynamicModule> {
     return ConfigModule.forRoot({
-      envFilePath: '.env-worker',
+      envFilePath: '.env.worker',
       isGlobal: true,
       validationOptions: serviceValidationOptions,
       validationSchema: workerValidationSchema,

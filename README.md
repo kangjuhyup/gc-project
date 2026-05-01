@@ -64,7 +64,7 @@ service 실행 환경 변수는 API와 worker 프로세스별로 검증됩니다
 
 ```bash
 cp packages/service/.env.example packages/service/.env
-cp packages/service/.env.example packages/service/.env-worker
+cp packages/service/.env.worker.example packages/service/.env.worker
 cp packages/ui/.env.example packages/ui/.env
 ```
 

@@ -7,17 +7,18 @@
 | 파일 | 대상 | 설명 |
 |---|---|---|
 | `packages/service/.env` | API | `ServiceConfigModule.forApi()`가 읽는 기본 API 실행 환경입니다. |
-| `packages/service/.env-worker` | Worker | `ServiceConfigModule.forWorker()`가 읽는 worker 실행 환경입니다. |
+| `packages/service/.env.worker` | Worker | `ServiceConfigModule.forWorker()`가 읽는 worker 실행 환경입니다. |
 | `packages/service/.env.example` | 예시 | API와 worker에 필요한 값을 한 파일에 모아 둔 템플릿입니다. |
+| `packages/service/.env.worker.example` | 예시 | Worker 실행에 필요한 값만 모아 둔 템플릿입니다. |
 
 로컬에서는 예시 파일을 기준으로 필요한 파일을 만듭니다.
 
 ```bash
 cp packages/service/.env.example packages/service/.env
-cp packages/service/.env.example packages/service/.env-worker
+cp packages/service/.env.worker.example packages/service/.env.worker
 ```
 
-`.env-worker`는 worker 전용 값도 필요합니다. API만 실행할 때는 worker 전용 값을 사용하지 않습니다.
+`.env.worker`는 worker 전용 값도 필요합니다. API만 실행할 때는 worker 전용 값을 사용하지 않습니다.
 
 ## 공통 환경 변수
 
