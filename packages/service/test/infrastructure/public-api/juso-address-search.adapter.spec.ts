@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ConfigService } from '@nestjs/config';
 import { SearchAddressesQuery } from '@application/query/dto';
 import { JusoAddressSearchAdapter } from '@infrastructure/public-api';
 
@@ -41,9 +40,7 @@ describe('JusoAddressSearchAdapter', () => {
       }),
     });
     vi.stubGlobal('fetch', fetchMock);
-    const adapter = new JusoAddressSearchAdapter({
-      getOrThrow: vi.fn().mockReturnValue('juso-test-key'),
-    } as unknown as ConfigService);
+    const adapter = new JusoAddressSearchAdapter('juso-test-key');
 
     const result = await adapter.search(
       SearchAddressesQuery.of({ keyword: '테헤란로', currentPage: 2, countPerPage: 20 }),
@@ -78,9 +75,7 @@ describe('JusoAddressSearchAdapter', () => {
         }),
       }),
     );
-    const adapter = new JusoAddressSearchAdapter({
-      getOrThrow: vi.fn().mockReturnValue('juso-test-key'),
-    } as unknown as ConfigService);
+    const adapter = new JusoAddressSearchAdapter('juso-test-key');
 
     await expect(
       adapter.search(SearchAddressesQuery.of({ keyword: '테헤란로' })),

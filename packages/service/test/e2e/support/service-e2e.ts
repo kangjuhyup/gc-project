@@ -43,6 +43,7 @@ export class ServiceE2eContext {
 
   static async create(): Promise<ServiceE2eContext> {
     process.env.NODE_ENV = 'test';
+    process.env.PORT = '3000';
     process.env.DB_HOST = 'localhost';
     process.env.DB_PORT = '55432';
     process.env.DB_NAME = 'gc_project_e2e';
@@ -50,7 +51,11 @@ export class ServiceE2eContext {
     process.env.DB_PASSWORD = 'gc_password';
     process.env.REDIS_URL = 'redis://:gc_redis_password@localhost:56379';
     process.env.ADDRESS_SEARCH_ADAPTER = 'local';
+    process.env.ACCESS_TOKEN_TTL_SECONDS = '900';
+    process.env.REFRESH_TOKEN_TTL_SECONDS = '1209600';
     process.env.SEAT_HOLD_TTL_SECONDS = '1';
+    process.env.LOCAL_PAYMENT_CALLBACK_URL = 'http://localhost:3000/payments/callback';
+    process.env.LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS = '3';
 
     faker.seed(20260429);
 

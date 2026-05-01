@@ -56,6 +56,11 @@ function opaqueTokenGenerator(): OpaqueTokenGeneratorPort {
   };
 }
 
+const loginTokenTtlOptions = {
+  accessTokenTtlSeconds: 15 * 60,
+  refreshTokenTtlSeconds: 14 * 24 * 60 * 60,
+};
+
 describe('LoginMemberCommandHandler', () => {
   it('비밀번호가 일치하면 로그인 성공 결과를 반환한다', async () => {
     const memberRepository = {
@@ -79,6 +84,7 @@ describe('LoginMemberCommandHandler', () => {
       logEventPublisher,
       opaqueTokenGenerator(),
       tokens,
+      loginTokenTtlOptions,
     );
 
     const result = await handler.execute(LoginMemberCommand.of({ userId: 'member_01', password: 'password123!' }));
@@ -134,6 +140,7 @@ describe('LoginMemberCommandHandler', () => {
       logEventPublisher,
       opaqueTokenGenerator(),
       tokenRepository(),
+      loginTokenTtlOptions,
     );
 
     await expect(
@@ -173,6 +180,7 @@ describe('LoginMemberCommandHandler', () => {
       logEventPublisher,
       opaqueTokenGenerator(),
       tokenRepository(),
+      loginTokenTtlOptions,
     );
 
     await expect(
@@ -212,6 +220,7 @@ describe('LoginMemberCommandHandler', () => {
       logEventPublisher,
       opaqueTokenGenerator(),
       tokenRepository(),
+      loginTokenTtlOptions,
     );
 
     await expect(
@@ -243,6 +252,7 @@ describe('LoginMemberCommandHandler', () => {
       logEventPublisher,
       opaqueTokenGenerator(),
       tokenRepository(),
+      loginTokenTtlOptions,
     );
 
     await expect(

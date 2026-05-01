@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  localPaymentCallbackDelayMilliseconds,
   LocalPaymentCallbackVerifier,
   LocalPaymentGateway,
 } from '@infrastructure/payment';
@@ -15,7 +14,10 @@ describe('LocalPaymentGateway', () => {
   it('로컬 결제 요청 시 callback에 필요한 provider payment id와 token이 담긴 URL을 반환한다', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('fetch', vi.fn(async () => new Response(undefined, { status: 201 })));
-    const gateway = new LocalPaymentGateway();
+    const gateway = new LocalPaymentGateway({
+      callbackUrl: 'http://localhost:3000/payments/callback',
+      callbackDelayMilliseconds: 3_000,
+    });
 
     const result = await gateway.request({
       paymentId: '7001',
@@ -34,11 +36,13 @@ describe('LocalPaymentGateway', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
-  it('환경변수로 local callback 지연 시간을 설정한다', async () => {
+  it('주입된 local callback 지연 시간으로 callback 요청을 예약한다', async () => {
     vi.useFakeTimers();
-    vi.stubEnv('LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS', '5');
     vi.stubGlobal('fetch', vi.fn(async () => new Response(undefined, { status: 201 })));
-    const gateway = new LocalPaymentGateway();
+    const gateway = new LocalPaymentGateway({
+      callbackUrl: 'http://localhost:3000/payments/callback',
+      callbackDelayMilliseconds: 5_000,
+    });
 
     const result = await gateway.request({
       paymentId: '7001',
@@ -65,16 +69,11 @@ describe('LocalPaymentGateway', () => {
     );
   });
 
-  it('callback 지연 시간 환경변수 값이 유효하지 않으면 3초를 사용한다', () => {
-    expect(localPaymentCallbackDelayMilliseconds(undefined)).toBe(3_000);
-    expect(localPaymentCallbackDelayMilliseconds('')).toBe(0);
-    expect(localPaymentCallbackDelayMilliseconds('1.5')).toBe(1_500);
-    expect(localPaymentCallbackDelayMilliseconds('-1')).toBe(3_000);
-    expect(localPaymentCallbackDelayMilliseconds('invalid')).toBe(3_000);
-  });
-
   it('로컬 결제 환불은 LOCAL provider 요청만 성공으로 처리한다', async () => {
-    const gateway = new LocalPaymentGateway();
+    const gateway = new LocalPaymentGateway({
+      callbackUrl: 'http://localhost:3000/payments/callback',
+      callbackDelayMilliseconds: 3_000,
+    });
 
     await expect(
       gateway.refund({
