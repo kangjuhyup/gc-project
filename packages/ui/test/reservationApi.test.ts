@@ -22,8 +22,8 @@ describe('reservationApi', () => {
               id: '5001',
               reservationNumber: 'R00000000000005001',
               status: 'CONFIRMED',
-              totalPrice: 15000,
-              createdAt: '2026-04-30T10:20:00.000Z',
+              totalPrice: 30000,
+          createdAt: '2026-04-30T10:20:00.000Z',
               movie: {
                 id: '1',
                 title: '파묘',
@@ -48,7 +48,7 @@ describe('reservationApi', () => {
               payment: {
                 id: '7001',
                 status: 'APPROVED',
-                amount: 15000,
+                amount: 30000,
               },
             },
           ],
@@ -85,6 +85,11 @@ describe('reservationApi', () => {
           screeningStartAt: '2026-04-30T12:00:00.000Z',
           screenName: '1관',
           seats: ['A1', 'A2'],
+          payment: {
+            id: '7001',
+            status: 'APPROVED',
+            amount: 30000,
+          },
         },
       ],
     });

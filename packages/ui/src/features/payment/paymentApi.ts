@@ -20,7 +20,7 @@ export interface PaymentSeat {
 }
 
 export interface RequestPaymentRequestDto {
-  seatHoldId: string;
+  seatHoldIds: string[];
   idempotencyKey: string;
   provider: PaymentProvider;
   amount: number;
@@ -29,6 +29,7 @@ export interface RequestPaymentRequestDto {
 export interface PaymentResultDto {
   paymentId: string;
   seatHoldId: string;
+  seatHoldIds: string[];
   idempotencyKey: string;
   reservationId?: string;
   provider: PaymentProvider;
@@ -62,6 +63,6 @@ export function mapPaymentMethodToProvider(paymentMethod: PaymentMethod): Paymen
   return 'LOCAL';
 }
 
-export function createPaymentIdempotencyKey(seatHoldId: string) {
-  return `pay-${seatHoldId}-${crypto.randomUUID()}`;
+export function createPaymentIdempotencyKey(seatHoldIds: string[]) {
+  return `pay-${seatHoldIds.join('-')}-${crypto.randomUUID()}`;
 }

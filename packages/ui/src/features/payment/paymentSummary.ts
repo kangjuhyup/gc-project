@@ -1,4 +1,5 @@
 import { type PaymentResultDto, type PaymentSeat } from './paymentApi';
+import type { ReservationDetail } from '@/features/reservations/reservationApi';
 
 export interface PaymentRouteState {
   movieTitle: string;
@@ -64,6 +65,39 @@ export function formatCurrency(value: number) {
   return `${value.toLocaleString()}원`;
 }
 
+export function summarizePaymentCompleteReservations({
+  paymentState,
+  reservations,
+}: {
+  paymentState?: PaymentRouteState;
+  reservations: ReservationDetail[];
+}) {
+  const firstReservation = reservations[0];
+
+  if (firstReservation) {
+    return {
+      movieTitle: firstReservation.movieTitle,
+      screeningStartAt: firstReservation.screeningStartAt,
+      screenName: firstReservation.screenName,
+      seats: uniqueStrings(reservations.flatMap((reservation) => reservation.seats)),
+      totalPrice: reservations.reduce(
+        (sum, reservation) => sum + (reservation.paymentAmount ?? reservation.totalPrice),
+        0,
+      ),
+      reservationNumbers: reservations.map((reservation) => reservation.reservationNumber),
+    };
+  }
+
+  return {
+    movieTitle: paymentState?.movieTitle,
+    screeningStartAt: paymentState?.screeningStartAt,
+    screenName: paymentState?.screenName,
+    seats: paymentState?.seats.map((seat) => seat.label),
+    totalPrice: paymentState?.totalPrice,
+    reservationNumbers: [],
+  };
+}
+
 function isPaymentResult(value: unknown): value is PaymentResultDto {
   if (!value || typeof value !== 'object') {
     return false;
@@ -79,4 +113,8 @@ function isPaymentResult(value: unknown): value is PaymentResultDto {
     typeof payment.status === 'string' &&
     typeof payment.amount === 'number'
   );
+}
+
+function uniqueStrings(values: string[]) {
+  return [...new Set(values)];
 }

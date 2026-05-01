@@ -163,15 +163,18 @@ export async function resolveMockApi({
 
   if (method === 'POST' && pathname === '/payments') {
     const payload = await readJsonBody<RequestPaymentRequestDto>(body);
-    const heldSeat = mockSeatHoldIndex.get(payload.seatHoldId);
-    const screeningId = Number(heldSeat?.screeningId ?? '101');
+    const heldSeats = payload.seatHoldIds
+      .map((seatHoldId) => mockSeatHoldIndex.get(seatHoldId))
+      .filter((heldSeat) => heldSeat !== undefined);
+    const screeningId = Number(heldSeats[0]?.screeningId ?? '101');
     const reservationNumber = `R${new Date().getFullYear()}${String(screeningId).padStart(4, '0')}${String(
       Math.floor(Math.random() * 1000),
     ).padStart(3, '0')}`;
     const paymentScreening = findMockScreening(screeningId);
+    const reservationId = String(Date.now());
 
     mockReservations.unshift({
-      id: String(Date.now()),
+      id: reservationId,
       reservationNumber,
       status: 'CONFIRMED',
       totalPrice: payload.amount,
@@ -180,17 +183,18 @@ export async function resolveMockApi({
       posterUrl: paymentScreening?.movie.posterUrl ?? '',
       screeningStartAt: paymentScreening?.screening.startAt ?? new Date().toISOString(),
       screenName: paymentScreening?.screening.screenName ?? '상영관',
-      seats: heldSeat ? [getMockSeatLabel(screeningId, heldSeat.seatId)] : [],
+      seats: heldSeats.map((heldSeat) => getMockSeatLabel(screeningId, heldSeat.seatId)),
     });
 
     const paymentId = String(Date.now());
     const paymentResult: PaymentResultDto & { approvedAt: number } = {
       paymentId,
-      seatHoldId: payload.seatHoldId,
+      seatHoldId: payload.seatHoldIds[0] ?? 'mock-seat-hold',
+      seatHoldIds: payload.seatHoldIds,
       idempotencyKey: payload.idempotencyKey,
-      reservationId: String(Date.now() + 1),
+      reservationId,
       provider: payload.provider,
-      providerPaymentId: `mock-${payload.seatHoldId}`,
+      providerPaymentId: `mock-${paymentId}`,
       status: 'PENDING',
       amount: payload.amount,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
@@ -216,6 +220,7 @@ export async function resolveMockApi({
       payment ?? {
         paymentId,
         seatHoldId: 'mock-seat-hold',
+        seatHoldIds: ['mock-seat-hold'],
         idempotencyKey: `mock-${paymentId}`,
         reservationId: `reservation-${paymentId}`,
         provider: 'LOCAL',
@@ -232,6 +237,58 @@ export async function resolveMockApi({
     return toMockResponse<ReservationListResponse>({
       items: mockReservations.slice(0, limit),
       hasNext: false,
+    });
+  }
+
+  const reservationDetailMatch = pathname.match(/^\/reservations\/(.+)$/);
+
+  if (method === 'GET' && reservationDetailMatch) {
+    const reservationId = decodeURIComponent(reservationDetailMatch[1]);
+    const reservation = mockReservations.find((item) => item.id === reservationId);
+
+    if (!reservation) {
+      return {
+        data: { message: 'RESERVATION_NOT_FOUND' },
+        status: 404,
+      };
+    }
+
+    return toMockResponse({
+      id: reservation.id,
+      reservationNumber: reservation.reservationNumber,
+      status: reservation.status,
+      totalPrice: reservation.totalPrice,
+      paymentAmount: reservation.totalPrice,
+      createdAt: reservation.createdAt,
+      canceledAt: reservation.canceledAt,
+      cancelReason: reservation.cancelReason,
+      movie: {
+        id: reservation.id,
+        title: reservation.movieTitle,
+        posterUrl: reservation.posterUrl,
+      },
+      screening: {
+        id: reservation.id,
+        screenName: reservation.screenName,
+        startAt: reservation.screeningStartAt,
+        endAt: reservation.screeningStartAt,
+        theater: {
+          id: '1',
+          name: 'GC 시네마 강남',
+          address: '서울특별시 강남구 테헤란로 427',
+        },
+      },
+      seats: reservation.seats.map((seat, index) => ({
+        id: `${reservation.id}-${index}`,
+        row: seat.slice(0, 1),
+        col: Number(seat.slice(1)),
+        type: 'NORMAL',
+      })),
+      payment: {
+        id: `payment-${reservation.id}`,
+        status: 'APPROVED',
+        amount: reservation.totalPrice,
+      },
     });
   }
 

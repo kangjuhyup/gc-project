@@ -1,11 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { ArrowLeft, BadgeCheck, TicketCheck } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatScreeningTime } from "@/features/movies/movieTimeline";
 import { fetchReservationDetail } from "@/features/reservations/reservationApi";
 import { queryKeys } from "@/lib/queryKeys";
-import { formatCurrency, isPaymentCompleteRouteState } from "./paymentSummary";
+import {
+  formatCurrency,
+  isPaymentCompleteRouteState,
+  summarizePaymentCompleteReservations,
+} from "./paymentSummary";
 
 export function PaymentCompletePage() {
   const location = useLocation();
@@ -14,27 +18,34 @@ export function PaymentCompletePage() {
     ? location.state
     : undefined;
   const payment = completeState?.payment;
+  const payments = completeState?.payments ?? (payment ? [payment] : []);
   const paymentState = completeState?.paymentState;
-  const reservationId = payment?.reservationId;
-  const reservationQuery = useQuery({
-    enabled: Boolean(reservationId),
-    queryKey: reservationId
-      ? queryKeys.reservations.detail(reservationId)
-      : queryKeys.reservations.detail(""),
-    queryFn: () => fetchReservationDetail(reservationId ?? ""),
-    retry: 1,
+  const reservationIds = [
+    ...new Set(
+      payments
+        .map((item) => item.reservationId)
+        .filter((reservationId): reservationId is string => Boolean(reservationId)),
+    ),
+  ];
+  const reservationQueries = useQueries({
+    queries: reservationIds.map((reservationId) => ({
+      enabled: Boolean(reservationId),
+      queryKey: queryKeys.reservations.detail(reservationId),
+      queryFn: () => fetchReservationDetail(reservationId),
+      retry: 1,
+    })),
   });
-  const reservation = reservationQuery.data;
-  const movieTitle = reservation?.movieTitle ?? paymentState?.movieTitle;
-  const screeningStartAt =
-    reservation?.screeningStartAt ?? paymentState?.screeningStartAt;
-  const screenName = reservation?.screenName ?? paymentState?.screenName;
-  const seats =
-    reservation?.seats ?? paymentState?.seats.map((seat) => seat.label);
-  const totalPrice =
-    reservation?.paymentAmount ??
-    reservation?.totalPrice ??
-    paymentState?.totalPrice;
+  const reservations = reservationQueries
+    .map((query) => query.data)
+    .filter((reservation) => reservation !== undefined);
+  const summary = summarizePaymentCompleteReservations({
+    paymentState,
+    reservations,
+  });
+  const reservationLookupLoading = reservationQueries.some((query) => query.isLoading);
+  const reservationLookupError = reservationQueries.some((query) => query.isError);
+  const paymentIds = payments.map((item) => item.paymentId);
+  const paymentStatuses = [...new Set(payments.map((item) => item.status))];
 
   return (
     <section
@@ -59,34 +70,34 @@ export function PaymentCompletePage() {
             </div>
           </header>
 
-          {movieTitle &&
-          screeningStartAt &&
-          screenName &&
-          seats?.length &&
-          totalPrice !== undefined ? (
+          {summary.movieTitle &&
+          summary.screeningStartAt &&
+          summary.screenName &&
+          summary.seats?.length &&
+          summary.totalPrice !== undefined ? (
             <dl className="payment-complete-list">
               <div>
                 <dt>영화</dt>
-                <dd>{movieTitle}</dd>
+                <dd>{summary.movieTitle}</dd>
               </div>
               <div>
                 <dt>상영</dt>
                 <dd>
-                  {formatScreeningTime(screeningStartAt)} · {screenName}
+                  {formatScreeningTime(summary.screeningStartAt)} · {summary.screenName}
                 </dd>
               </div>
               <div>
                 <dt>좌석</dt>
-                <dd>{seats.join(", ")}</dd>
+                <dd>{summary.seats.join(", ")}</dd>
               </div>
               <div>
                 <dt>결제 금액</dt>
-                <dd>{formatCurrency(totalPrice)}</dd>
+                <dd>{formatCurrency(summary.totalPrice)}</dd>
               </div>
-              {reservation?.reservationNumber ? (
+              {summary.reservationNumbers.length > 0 ? (
                 <div>
                   <dt>예매 번호</dt>
-                  <dd>{reservation.reservationNumber}</dd>
+                  <dd>{summary.reservationNumbers.join(", ")}</dd>
                 </div>
               ) : undefined}
             </dl>
@@ -108,24 +119,24 @@ export function PaymentCompletePage() {
           <dl>
             <div>
               <dt>결제 ID</dt>
-              <dd>{payment?.paymentId ?? paymentId ?? "-"}</dd>
+              <dd>{paymentIds.length > 0 ? paymentIds.join(", ") : paymentId ?? "-"}</dd>
             </div>
             <div>
               <dt>결제 상태</dt>
-              <dd>{payment?.status ?? "확인 필요"}</dd>
+              <dd>{paymentStatuses.length > 0 ? paymentStatuses.join(", ") : "확인 필요"}</dd>
             </div>
             <div>
               <dt>예매 ID</dt>
-              <dd>{reservationId ?? "결제 승인 후 확인 가능"}</dd>
+              <dd>{reservationIds.length > 0 ? reservationIds.join(", ") : "결제 승인 후 확인 가능"}</dd>
             </div>
             <div>
               <dt>예매 상세</dt>
               <dd>
-                {reservationQuery.isLoading
+                {reservationLookupLoading
                   ? "불러오는 중"
-                  : reservationQuery.isError
+                  : reservationLookupError
                     ? "예매내역에서 다시 확인해 주세요"
-                    : reservation
+                    : reservations.length > 0
                       ? "연동 완료"
                       : "대기 중"}
               </dd>

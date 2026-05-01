@@ -24,13 +24,13 @@ export interface ReservationSummary {
   screeningStartAt: string;
   screenName: string;
   seats: string[];
+  payment?: ReservationPaymentSummary;
   canceledAt?: string;
   cancelReason?: string;
 }
 
 export interface ReservationDetail extends ReservationSummary {
   paymentAmount?: number;
-  payment?: ReservationPaymentSummary;
 }
 
 export interface ReservationPaymentSummary {
@@ -178,6 +178,7 @@ function mapReservationSummary(reservation: ReservationSummaryDto): ReservationS
     screeningStartAt: reservation.screening.startAt,
     screenName: reservation.screening.screenName,
     seats: reservation.seats.map((seat) => `${seat.row}${seat.col}`),
+    payment: reservation.payment,
     canceledAt: reservation.canceledAt,
     cancelReason: reservation.cancelReason,
   };

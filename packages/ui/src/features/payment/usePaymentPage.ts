@@ -116,18 +116,15 @@ async function requestPayments({
   paymentState: PaymentRouteState;
 }) {
   const provider = mapPaymentMethodToProvider(paymentMethod);
-  const amount = Math.round(paymentState.totalPrice / paymentState.seatHoldIds.length);
 
-  return Promise.all(
-    paymentState.seatHoldIds.map((seatHoldId) =>
-      requestPayment({
-        seatHoldId,
-        idempotencyKey: createPaymentIdempotencyKey(seatHoldId),
-        provider,
-        amount,
-      }),
-    ),
-  );
+  const payment = await requestPayment({
+    seatHoldIds: paymentState.seatHoldIds,
+    idempotencyKey: createPaymentIdempotencyKey(paymentState.seatHoldIds),
+    provider,
+    amount: paymentState.totalPrice,
+  });
+
+  return [payment];
 }
 
 function getPaymentConfirmationRefetchInterval(payment: PaymentResultDto) {
