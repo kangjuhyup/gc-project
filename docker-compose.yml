@@ -6,6 +6,7 @@ services:
       POSTGRESQL_REPLICATION_MODE: master
       POSTGRESQL_REPLICATION_USER: ${POSTGRES_REPLICATION_USER:-replicator}
       POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-replicator_password}
+      POSTGRESQL_POSTGRES_PASSWORD: ${POSTGRES_POSTGRES_PASSWORD:-gc_postgres_password}
       POSTGRESQL_USERNAME: ${POSTGRES_USER:-gc_user}
       POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD:-gc_password}
       POSTGRESQL_DATABASE: ${POSTGRES_DB:-gc_project}
@@ -13,6 +14,7 @@ services:
       - "${POSTGRES_MASTER_PORT:-5432}:5432"
     volumes:
       - postgres_master_data:/bitnami/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test:
         [
