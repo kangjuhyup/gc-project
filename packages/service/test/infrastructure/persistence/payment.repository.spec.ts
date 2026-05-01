@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { LockMode } from '@mikro-orm/core';
-import { OutboxEventEntity, PaymentEntity } from '@infrastructure/persistence/entities';
+import { OutboxEventEntity, PaymentEntity, PaymentSeatHoldEntity, SeatHoldEntity } from '@infrastructure/persistence/entities';
 import { MikroOrmOutboxEventRepository, MikroOrmPaymentRepository } from '@infrastructure/persistence/repositories';
 
 describe('MikroOrmPaymentRepository', () => {
@@ -20,6 +20,11 @@ describe('MikroOrmPaymentRepository', () => {
     entity.updatedAt = requestedAt;
     const entityManager = {
       findOne: vi.fn().mockResolvedValue(entity),
+      find: vi.fn().mockResolvedValue([
+        {
+          seatHold: { id: '9001' },
+        },
+      ]),
     };
     const repository = new MikroOrmPaymentRepository(entityManager as never);
 
@@ -77,6 +82,60 @@ describe('MikroOrmPaymentRepository', () => {
       { reservation: '5001' },
       { lockMode: LockMode.PESSIMISTIC_WRITE },
     );
+  });
+
+  it('좌석 점유 ID 목록으로 연결된 결제를 조회한다', async () => {
+    const requestedAt = new Date('2026-04-29T01:00:00.000Z');
+    const entity = new PaymentEntity();
+    entity.id = '7001';
+    entity.member = { id: '1' } as never;
+    entity.seatHold = { id: '9001' } as never;
+    entity.idempotencyKey = 'pay-test-key';
+    entity.provider = 'LOCAL';
+    entity.amount = 30000;
+    entity.status = 'PENDING';
+    entity.requestedAt = requestedAt;
+    entity.createdAt = requestedAt;
+    entity.updatedAt = requestedAt;
+    const entityManager = {
+      find: vi.fn()
+        .mockResolvedValueOnce([
+          { payment: entity },
+          { payment: entity },
+        ])
+        .mockResolvedValueOnce([
+          { seatHold: { id: '9001' } },
+          { seatHold: { id: '9002' } },
+        ]),
+    };
+    const repository = new MikroOrmPaymentRepository(entityManager as never);
+
+    const result = await repository.findBySeatHoldIds(['9001', '9002']);
+
+    expect(entityManager.find).toHaveBeenNthCalledWith(1, PaymentSeatHoldEntity, {
+      seatHold: { $in: ['9001', '9002'] },
+    }, { populate: ['payment'] });
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('7001');
+    expect(result[0].seatHoldIds).toEqual(['9001', '9002']);
+  });
+
+  it('결제와 여러 좌석 점유 연결을 중복 없이 저장한다', async () => {
+    const entityManager = {
+      find: vi.fn().mockResolvedValue([{ seatHold: { id: '9001' } }]),
+      getReference: vi.fn((entity, id: string) => ({ entity, id })),
+      insert: vi.fn().mockResolvedValue('1'),
+    };
+    const repository = new MikroOrmPaymentRepository(entityManager as never);
+
+    await repository.saveSeatHoldLinks('7001', ['9001', '9002']);
+
+    expect(entityManager.find).toHaveBeenCalledWith(PaymentSeatHoldEntity, {
+      payment: '7001',
+    }, { populate: ['seatHold'] });
+    expect(entityManager.getReference).toHaveBeenCalledWith(PaymentEntity, '7001');
+    expect(entityManager.getReference).toHaveBeenCalledWith(SeatHoldEntity, '9002');
+    expect(entityManager.insert).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -1,12 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsInt, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
+import { ArrayMinSize, IsArray, IsIn, IsInt, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
 import { PaymentProvider, type PaymentProviderType } from '@domain';
 
 export class RequestPaymentRequestDto {
-  @ApiProperty({ example: '9001', description: '결제를 요청할 좌석 임시점유 ID' })
-  @IsString()
-  @Matches(/^[1-9][0-9]*$/)
-  readonly seatHoldId!: string;
+  @ApiProperty({ example: ['9001', '9002'], description: '결제를 요청할 좌석 임시점유 ID 목록' })
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  @Matches(/^[1-9][0-9]*$/, { each: true })
+  readonly seatHoldIds!: string[];
 
   @ApiProperty({
     example: 'pay-20260429-0001',
@@ -30,13 +32,13 @@ export class RequestPaymentRequestDto {
   readonly amount!: number;
 
   private constructor(params?: {
-    seatHoldId: string;
+    seatHoldIds: string[];
     idempotencyKey: string;
     provider: PaymentProviderType;
     amount: number;
   }) {
     if (params !== undefined) {
-      this.seatHoldId = params.seatHoldId;
+      this.seatHoldIds = params.seatHoldIds;
       this.idempotencyKey = params.idempotencyKey;
       this.provider = params.provider;
       this.amount = params.amount;
@@ -44,7 +46,7 @@ export class RequestPaymentRequestDto {
   }
 
   static of(params: {
-    seatHoldId: string;
+    seatHoldIds: string[];
     idempotencyKey: string;
     provider: PaymentProviderType;
     amount: number;

@@ -14,11 +14,13 @@ export class Sha256PaymentRequestHasher implements PaymentRequestHasherPort {
 
   @NoLog
   private canonicalize(params: PaymentRequestHashParams): string {
+    const seatHoldIds = params.seatHoldIds ?? (params.seatHoldId === undefined ? [] : [params.seatHoldId]);
+
     return JSON.stringify({
       amount: params.amount,
       memberId: params.memberId,
       provider: params.provider,
-      seatHoldId: params.seatHoldId,
+      seatHoldIds: [...seatHoldIds].sort(),
     });
   }
 }

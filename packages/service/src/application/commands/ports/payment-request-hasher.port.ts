@@ -4,7 +4,8 @@ export const PAYMENT_REQUEST_HASHER = Symbol('PAYMENT_REQUEST_HASHER');
 
 export interface PaymentRequestHashParams {
   readonly memberId: string;
-  readonly seatHoldId: string;
+  readonly seatHoldId?: string;
+  readonly seatHoldIds?: string[];
   readonly provider: PaymentProviderType;
   readonly amount: number;
 }

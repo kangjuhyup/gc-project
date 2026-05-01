@@ -32,9 +32,10 @@ export class RequestPaymentCommandHandler {
   @Transactional()
   async execute(command: RequestPaymentCommand): Promise<PaymentResultDto> {
     const now = this.clock.now();
+    const seatHoldIds = this.uniqueSeatHoldIds(command.seatHoldIds);
     const requestHash = this.paymentRequestHasher.hash({
       memberId: command.memberId,
-      seatHoldId: command.seatHoldId,
+      seatHoldIds,
       provider: command.provider,
       amount: command.amount,
     });
@@ -49,20 +50,28 @@ export class RequestPaymentCommandHandler {
       return this.toResult(existingIdempotentPayment);
     }
 
-    const seatHold = await this.seatHoldRepository.findById(command.seatHoldId);
-    assertDefined(seatHold, () => new Error('SEAT_HOLD_NOT_FOUND'));
-    seatHold.assertPayableBy(command.memberId);
+    const seatHolds = await Promise.all(seatHoldIds.map((seatHoldId) => this.seatHoldRepository.findById(seatHoldId)));
+    assertTrue(seatHolds.every((seatHold) => seatHold !== undefined), () => new Error('SEAT_HOLD_NOT_FOUND'));
 
-    const existingPayment = await this.paymentRepository.findBySeatHoldId(command.seatHoldId);
+    const payableSeatHolds = seatHolds.filter((seatHold) => seatHold !== undefined);
+    payableSeatHolds.forEach((seatHold) => seatHold.assertPayableBy(command.memberId));
+    const [firstSeatHold] = payableSeatHolds;
+    assertDefined(firstSeatHold, () => new Error('SEAT_HOLD_NOT_FOUND'));
     assertTrue(
-      existingPayment === undefined || existingPayment.status === PaymentStatus.FAILED,
+      payableSeatHolds.every((seatHold) => seatHold.screeningId === firstSeatHold.screeningId),
+      () => new Error('INVALID_SEAT_HOLD_REQUEST'),
+    );
+
+    const existingPayments = await this.paymentRepository.findBySeatHoldIds(seatHoldIds);
+    assertTrue(
+      existingPayments.every((existingPayment) => existingPayment.status === PaymentStatus.FAILED),
       () => new Error('PAYMENT_ALREADY_REQUESTED'),
     );
 
     const payment = await this.paymentRepository.save(
       PaymentModel.request({
         memberId: command.memberId,
-        seatHoldId: command.seatHoldId,
+        seatHoldIds,
         idempotencyKey: command.idempotencyKey,
         requestHash,
         provider: command.provider,
@@ -79,7 +88,7 @@ export class RequestPaymentCommandHandler {
         provider: payment.provider,
         amount: payment.amount,
         metadata: {
-          seatHoldId: payment.seatHoldId,
+          seatHoldIds: payment.seatHoldIds,
           idempotencyKey: payment.idempotencyKey,
           requestHash: payment.requestHash,
         },
@@ -111,6 +120,7 @@ export class RequestPaymentCommandHandler {
     return PaymentResultDto.of({
       paymentId: payment.id,
       seatHoldId: payment.seatHoldId,
+      seatHoldIds: payment.seatHoldIds,
       idempotencyKey: payment.idempotencyKey,
       provider: payment.provider,
       providerPaymentId: payment.providerPaymentId,
@@ -118,5 +128,14 @@ export class RequestPaymentCommandHandler {
       status: payment.status,
       amount: payment.amount,
     });
+  }
+
+  @NoLog
+  private uniqueSeatHoldIds(seatHoldIds: string[]): string[] {
+    const unique = [...new Set(seatHoldIds)];
+    assertTrue(unique.length > 0, () => new Error('INVALID_SEAT_HOLD_REQUEST'));
+    assertTrue(unique.length === seatHoldIds.length, () => new Error('INVALID_SEAT_HOLD_REQUEST'));
+
+    return unique;
   }
 }

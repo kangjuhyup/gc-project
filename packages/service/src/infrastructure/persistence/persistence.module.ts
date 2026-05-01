@@ -54,6 +54,7 @@ import {
 import { Migration202604300001CreateTables } from './migrations/Migration202604300001CreateTables';
 import { Migration202604300002SeedTempMovieData } from './migrations/Migration202604300002SeedTempMovieData';
 import { Migration202605010001CreateAdminAudit } from './migrations/Migration202605010001CreateAdminAudit';
+import { Migration202605010002CreatePaymentSeatHold } from './migrations/Migration202605010002CreatePaymentSeatHold';
 import { ENV_KEY } from '../config';
 
 class ThresholdMikroOrmLogger implements Logger {
@@ -107,6 +108,7 @@ class ThresholdMikroOrmLogger implements Logger {
               { name: 'Migration202604300001CreateTables', class: Migration202604300001CreateTables },
               { name: 'Migration202604300002SeedTempMovieData', class: Migration202604300002SeedTempMovieData },
               { name: 'Migration202605010001CreateAdminAudit', class: Migration202605010001CreateAdminAudit },
+              { name: 'Migration202605010002CreatePaymentSeatHold', class: Migration202605010002CreatePaymentSeatHold },
             ],
           },
         };

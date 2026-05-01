@@ -134,26 +134,42 @@ export class HandlePaymentCallbackCommandHandler {
 
   @NoLog
   private async confirmReservation(payment: PaymentModel, now: Date): Promise<void> {
-    const seatHold = await this.seatHoldRepository.findById(payment.seatHoldId);
-    assertDefined(seatHold, () => new Error('SEAT_HOLD_NOT_FOUND'));
+    const seatHolds = await Promise.all(payment.seatHoldIds.map((seatHoldId) => this.seatHoldRepository.findById(seatHoldId)));
+    assertTrue(seatHolds.every((seatHold) => seatHold !== undefined), () => new Error('SEAT_HOLD_NOT_FOUND'));
+
+    const payableSeatHolds = seatHolds.filter((seatHold) => seatHold !== undefined);
+    const [firstSeatHold] = payableSeatHolds;
+    assertDefined(firstSeatHold, () => new Error('SEAT_HOLD_NOT_FOUND'));
+    assertTrue(
+      payableSeatHolds.every((seatHold) => seatHold.screeningId === firstSeatHold.screeningId),
+      () => new Error('INVALID_SEAT_HOLD_REQUEST'),
+    );
 
     const reservation = await this.reservationRepository.save(
       ReservationModel.of({
         reservationNumber: this.reservationNumber(payment.id),
         memberId: payment.memberId,
-        screeningId: seatHold.screeningId,
+        screeningId: firstSeatHold.screeningId,
         status: 'CONFIRMED',
         totalPrice: payment.amount,
       }),
     );
-    await this.reservationSeatRepository.save(
-      ReservationSeatModel.of({
-        reservationId: reservation.id,
-        screeningId: seatHold.screeningId,
-        seatId: seatHold.seatId,
-      }),
+    await Promise.all(
+      payableSeatHolds.map((seatHold) =>
+        this.reservationSeatRepository.save(
+          ReservationSeatModel.of({
+            reservationId: reservation.id,
+            screeningId: seatHold.screeningId,
+            seatId: seatHold.seatId,
+          }),
+        ),
+      ),
     );
-    await this.seatHoldRepository.save(seatHold.confirm({ reservationId: reservation.id, now }));
+    await Promise.all(
+      payableSeatHolds.map((seatHold) =>
+        this.seatHoldRepository.save(seatHold.confirm({ reservationId: reservation.id, now })),
+      ),
+    );
     await this.reservationEventRepository.save(
       ReservationEventModel.of({
         reservationId: reservation.id,

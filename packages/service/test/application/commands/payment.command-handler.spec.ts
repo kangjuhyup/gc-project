@@ -38,27 +38,39 @@ const clock: ClockPort = {
   now: vi.fn(() => now),
 };
 const paymentRequestHasher: PaymentRequestHasherPort = {
-  hash: vi.fn((params) => JSON.stringify(params)),
+  hash: vi.fn((params) =>
+    JSON.stringify({
+      amount: params.amount,
+      memberId: params.memberId,
+      provider: params.provider,
+      seatHoldIds: params.seatHoldIds ?? (params.seatHoldId === undefined ? [] : [params.seatHoldId]),
+    }),
+  ),
 };
 
-function heldSeatHold() {
+function heldSeatHold(params: {
+  id?: string;
+  screeningId?: string;
+  seatId?: string;
+  memberId?: string;
+} = {}) {
   return SeatHoldModel.of({
-    screeningId: '101',
-    seatId: '1001',
-    memberId: '1',
+    screeningId: params.screeningId ?? '101',
+    seatId: params.seatId ?? '1001',
+    memberId: params.memberId ?? '1',
     status: 'HELD',
     expiresAt: new Date('2026-04-29T01:13:00.000Z'),
-  }).setPersistence('9001', now, now);
+  }).setPersistence(params.id ?? '9001', now, now);
 }
 
 function pendingPayment() {
   return PaymentModel.request({
     memberId: '1',
-    seatHoldId: '9001',
+    seatHoldIds: ['9001'],
     idempotencyKey: 'pay-test-key',
     requestHash: paymentRequestHasher.hash({
       memberId: '1',
-      seatHoldId: '9001',
+      seatHoldIds: ['9001'],
       provider: 'LOCAL',
       amount: 15000,
     }),
@@ -77,6 +89,9 @@ describe('RequestPaymentCommandHandler', () => {
       findByReservationIdForUpdate: vi.fn(),
       findByMemberIdAndIdempotencyKey: vi.fn(async () => undefined),
       findBySeatHoldId: vi.fn(async () => undefined),
+      findBySeatHoldIds: vi.fn(async () => []),
+      findSeatHoldIds: vi.fn(async () => []),
+      saveSeatHoldLinks: vi.fn(async () => undefined),
     };
     const seatHoldRepository = {
       findById: vi.fn(async () => heldSeatHold()),
@@ -112,6 +127,59 @@ describe('RequestPaymentCommandHandler', () => {
     const savedOutboxEvents = vi.mocked(outboxEventRepository.save).mock.calls.map(([event]) => event);
     expect(savedEventLogs.some((eventLog) => eventLog.eventType === 'PAYMENT_REQUESTED')).toBe(true);
     expect(savedOutboxEvents.some((event) => event.eventType === 'PAYMENT_REQUESTED')).toBe(true);
+  });
+
+  it('여러 좌석 점유를 하나의 결제 요청으로 저장한다', async () => {
+    const paymentRepository: PaymentRepositoryPort = {
+      save: vi.fn(async (payment: PaymentModel) => payment.setPersistence('7001', now, now)),
+      findById: vi.fn(),
+      findByIdForUpdate: vi.fn(),
+      findByReservationIdForUpdate: vi.fn(),
+      findByMemberIdAndIdempotencyKey: vi.fn(async () => undefined),
+      findBySeatHoldId: vi.fn(async () => undefined),
+      findBySeatHoldIds: vi.fn(async () => []),
+      findSeatHoldIds: vi.fn(async () => []),
+      saveSeatHoldLinks: vi.fn(async () => undefined),
+    };
+    const seatHoldRepository = {
+      findById: vi.fn(async (seatHoldId: string) =>
+        heldSeatHold({
+          id: seatHoldId,
+          seatId: seatHoldId === '9001' ? '1001' : '1002',
+        }),
+      ),
+    } as unknown as SeatHoldRepositoryPort;
+    const paymentEventLogRepository = {
+      save: vi.fn(async (eventLog) => eventLog),
+    } as unknown as PaymentEventLogRepositoryPort;
+    const outboxEventRepository = {
+      save: vi.fn(async (event) => event),
+    } as unknown as OutboxEventRepositoryPort;
+    const handler = new RequestPaymentCommandHandler(
+      paymentRepository,
+      seatHoldRepository,
+      paymentEventLogRepository,
+      outboxEventRepository,
+      paymentRequestHasher,
+      clock,
+    );
+
+    const result = await handler.execute(
+      RequestPaymentCommand.of({
+        memberId: '1',
+        seatHoldIds: ['9001', '9002'],
+        idempotencyKey: 'pay-test-key',
+        provider: 'LOCAL',
+        amount: 30000,
+      }),
+    );
+
+    expect(result.paymentId).toBe('7001');
+    expect(result.seatHoldId).toBe('9001');
+    expect(result.seatHoldIds).toEqual(['9001', '9002']);
+    expect(paymentRepository.findBySeatHoldIds).toHaveBeenCalledWith(['9001', '9002']);
+    expect(paymentRepository.save).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(paymentRepository.save).mock.calls[0][0].seatHoldIds).toEqual(['9001', '9002']);
   });
 
   it('같은 멱등성 키로 동일한 결제 요청이 재전송되면 기존 결제 결과를 반환한다', async () => {
@@ -280,6 +348,70 @@ describe('HandlePaymentCallbackCommandHandler', () => {
     expect(savedSeatHolds.some((seatHold) => seatHold.status === 'CONFIRMED')).toBe(true);
     expect(savedPayments.some((payment) => payment.status === 'APPROVED')).toBe(true);
     expect(savedOutboxEvents.some((event) => event.eventType === 'RESERVATION_CONFIRMED')).toBe(true);
+  });
+
+  it('PG 승인 callback 후 여러 좌석 점유를 하나의 예매로 확정한다', async () => {
+    const multiSeatPayment = PaymentModel.request({
+      memberId: '1',
+      seatHoldIds: ['9001', '9002', '9003'],
+      idempotencyKey: 'pay-test-key',
+      requestHash: paymentRequestHasher.hash({
+        memberId: '1',
+        seatHoldIds: ['9001', '9002', '9003'],
+        provider: 'LOCAL',
+        amount: 45000,
+      }),
+      provider: 'LOCAL',
+      amount: 45000,
+      now,
+    }).setPersistence('7001', now, now);
+    const paymentRepository = {
+      findByIdForUpdate: vi.fn(async () => multiSeatPayment),
+      save: vi.fn(async (payment: PaymentModel) => payment),
+    } as unknown as PaymentRepositoryPort;
+    const seatHoldRepository = {
+      findById: vi.fn(async (seatHoldId: string) =>
+        heldSeatHold({
+          id: seatHoldId,
+          seatId: `1${seatHoldId}`,
+        }),
+      ),
+      save: vi.fn(async (seatHold) => seatHold),
+    } as unknown as SeatHoldRepositoryPort;
+    const reservationRepository = {
+      save: vi.fn(async (reservation) => reservation.setPersistence('5001', now, now)),
+    } as unknown as ReservationRepositoryPort;
+    const reservationSeatRepository = {
+      save: vi.fn(async (reservationSeat) => reservationSeat),
+    } as unknown as ReservationSeatRepositoryPort;
+    const handler = new HandlePaymentCallbackCommandHandler(
+      paymentRepository,
+      seatHoldRepository,
+      reservationRepository,
+      reservationSeatRepository,
+      { save: vi.fn(async (reservationEvent) => reservationEvent) } as unknown as ReservationEventRepositoryPort,
+      { save: vi.fn(async (eventLog) => eventLog) } as unknown as PaymentEventLogRepositoryPort,
+      { save: vi.fn(async (event) => event) } as unknown as OutboxEventRepositoryPort,
+      { verify: vi.fn(() => true) },
+      clock,
+    );
+
+    const result = await handler.execute(
+      HandlePaymentCallbackCommand.of({
+        provider: 'LOCAL',
+        providerPaymentId: 'local-payment-7001',
+        paymentId: '7001',
+        amount: 45000,
+        approved: true,
+        token: 'local-token',
+      }),
+    );
+
+    expect(result.handled).toBe(true);
+    expect(reservationRepository.save).toHaveBeenCalledTimes(1);
+    expect(reservationSeatRepository.save).toHaveBeenCalledTimes(3);
+    expect(seatHoldRepository.save).toHaveBeenCalledTimes(3);
+    expect(paymentRepository.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'APPROVED' }));
   });
 
   it('PG 승인 후 예약 후처리에 실패하면 환불 요청 아웃박스를 저장한다', async () => {

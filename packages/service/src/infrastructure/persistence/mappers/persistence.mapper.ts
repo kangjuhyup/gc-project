@@ -367,6 +367,7 @@ export class PersistenceMapper {
     return PaymentModel.of({
       memberId: entity.member.id,
       seatHoldId: entity.seatHold.id,
+      seatHoldIds: [entity.seatHold.id],
       idempotencyKey: entity.idempotencyKey,
       requestHash: entity.requestHash,
       reservationId: entity.reservation?.id,

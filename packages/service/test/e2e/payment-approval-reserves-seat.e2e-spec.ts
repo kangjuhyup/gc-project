@@ -42,4 +42,35 @@ describe('결제 승인 후 좌석 예매 완료 e2e', () => {
     expect(await e2e.countRows('reservation_seat', 'screening_id = ? AND seat_id = ?', [screeningId, seat.id])).toBe(1);
     expect(await e2e.countRows('reservation_event')).toBe(1);
   });
+
+  it('여러 좌석을 결제하면 하나의 결제와 하나의 예매로 모든 좌석을 확정한다', async () => {
+    const member = await e2e.signupAndLogin('approve_multi');
+    const screeningId = await e2e.firstScreeningId();
+    const seats = await e2e.availableSeats(screeningId, 3);
+
+    const hold = await e2e.createSeatHold(member, screeningId, seats.map((seat) => seat.id));
+    expect(hold.status).toBe(201);
+    const holdIds = hold.body.holdIds as string[];
+
+    const payment = await e2e.requestPayment(member, holdIds, 'pay-approval-multi-0001', 45000);
+    expect(payment.status).toBe(201);
+    expect(payment.body.status).toBe('PENDING');
+    expect(payment.body.seatHoldIds).toEqual(holdIds);
+
+    const callback = await e2e.approvePayment(payment.body, 45000);
+    expect(callback.status).toBe(201);
+    expect(callback.body).toMatchObject({ handled: true });
+
+    await Promise.all(
+      seats.map(async (seat) => {
+        expect(await e2e.seatStatus(screeningId, seat.id)).toBe('RESERVED');
+        expect(await e2e.countRows('reservation_seat', 'screening_id = ? AND seat_id = ?', [screeningId, seat.id])).toBe(1);
+      }),
+    );
+    expect(await e2e.countRows('payment', 'member_id = ? AND idempotency_key = ?', [
+      member.memberId,
+      'pay-approval-multi-0001',
+    ])).toBe(1);
+    expect(await e2e.countRows('reservation', 'member_id = ?', [member.memberId])).toBe(1);
+  });
 });

@@ -40,4 +40,24 @@ describe('Sha256PaymentRequestHasher', () => {
 
     expect(changed).not.toBe(original);
   });
+
+  it('여러 좌석 결제 요청은 좌석 순서가 달라도 같은 requestHash를 생성한다', () => {
+    const hasher = new Sha256PaymentRequestHasher();
+
+    const first = hasher.hash({
+      memberId: '1',
+      seatHoldIds: ['9002', '9001'],
+      provider: 'LOCAL',
+      amount: 30000,
+    });
+    const second = hasher.hash({
+      memberId: '1',
+      seatHoldIds: ['9001', '9002'],
+      provider: 'LOCAL',
+      amount: 30000,
+    });
+
+    expect(first).toBe(second);
+    expect(first).toMatch(/^[a-f0-9]{64}$/);
+  });
 });

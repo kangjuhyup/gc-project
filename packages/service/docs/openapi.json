@@ -1837,10 +1837,16 @@
       "RequestPaymentRequestDto": {
         "type": "object",
         "properties": {
-          "seatHoldId": {
-            "type": "string",
-            "example": "9001",
-            "description": "결제를 요청할 좌석 임시점유 ID"
+          "seatHoldIds": {
+            "example": [
+              "9001",
+              "9002"
+            ],
+            "description": "결제를 요청할 좌석 임시점유 ID 목록",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "idempotencyKey": {
             "type": "string",
@@ -1868,7 +1874,7 @@
           }
         },
         "required": [
-          "seatHoldId",
+          "seatHoldIds",
           "idempotencyKey",
           "provider",
           "amount"
@@ -1886,6 +1892,17 @@
             "type": "string",
             "example": "9001",
             "description": "좌석 임시점유 ID"
+          },
+          "seatHoldIds": {
+            "example": [
+              "9001",
+              "9002"
+            ],
+            "description": "결제에 포함된 좌석 임시점유 ID 목록",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "idempotencyKey": {
             "type": "string",
@@ -1932,6 +1949,7 @@
         "required": [
           "paymentId",
           "seatHoldId",
+          "seatHoldIds",
           "idempotencyKey",
           "provider",
           "status",

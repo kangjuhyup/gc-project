@@ -13,6 +13,7 @@ describe('PaymentController', () => {
     const expected = {
       paymentId: '7001',
       seatHoldId: '9001',
+      seatHoldIds: ['9001'],
       idempotencyKey: 'pay-test-key',
       provider: 'LOCAL',
       status: 'PENDING',
@@ -24,7 +25,7 @@ describe('PaymentController', () => {
 
     const result = await controller.request(
       {
-        seatHoldId: '9001',
+        seatHoldIds: ['9001'],
         idempotencyKey: 'pay-test-key',
         provider: 'LOCAL',
         amount: 15000,
@@ -35,7 +36,7 @@ describe('PaymentController', () => {
     expect(commandBus.execute).toHaveBeenCalledWith(
       RequestPaymentCommand.of({
         memberId: '1',
-        seatHoldId: '9001',
+        seatHoldIds: ['9001'],
         idempotencyKey: 'pay-test-key',
         provider: 'LOCAL',
         amount: 15000,

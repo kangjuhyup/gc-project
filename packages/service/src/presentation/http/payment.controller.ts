@@ -57,7 +57,7 @@ export class PaymentController {
     return this.commandBus.execute(
       RequestPaymentCommand.of({
         memberId: user.memberId,
-        seatHoldId: request.seatHoldId,
+        seatHoldIds: request.seatHoldIds,
         idempotencyKey: request.idempotencyKey,
         provider: request.provider,
         amount: request.amount,

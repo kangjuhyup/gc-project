@@ -239,11 +239,18 @@ export class ServiceE2eContext {
     );
   }
 
-  async requestPayment(member: E2eMember, seatHoldId: string, idempotencyKey: string, amount = 15000): Promise<HttpResult> {
+  async requestPayment(
+    member: E2eMember,
+    seatHoldIds: string | string[],
+    idempotencyKey: string,
+    amount = 15000,
+  ): Promise<HttpResult> {
+    const normalizedSeatHoldIds = Array.isArray(seatHoldIds) ? seatHoldIds : [seatHoldIds];
+
     return this.post(
       '/payments',
       {
-        seatHoldId,
+        seatHoldIds: normalizedSeatHoldIds,
         idempotencyKey,
         provider: 'LOCAL',
         amount,

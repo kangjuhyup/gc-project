@@ -5,6 +5,7 @@ import { PersistenceModel } from '@domain/shared';
 export interface PaymentPersistenceProps {
   readonly memberId: string;
   readonly seatHoldId: string;
+  readonly seatHoldIds?: string[];
   readonly idempotencyKey: string;
   readonly requestHash: string;
   readonly reservationId?: string;
@@ -30,7 +31,8 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
 
   static request(params: {
     memberId: string;
-    seatHoldId: string;
+    seatHoldId?: string;
+    seatHoldIds?: string[];
     idempotencyKey: string;
     requestHash: string;
     provider: PaymentProviderType;
@@ -41,9 +43,17 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       throw new DomainError(DomainErrorCode.INVALID_PAYMENT_AMOUNT);
     }
 
+    const seatHoldIds = params.seatHoldIds ?? (params.seatHoldId === undefined ? [] : [params.seatHoldId]);
+    const primarySeatHoldId = seatHoldIds[0];
+
+    if (primarySeatHoldId === undefined) {
+      throw new Error('INVALID_PAYMENT_SEAT_HOLDS');
+    }
+
     return new PaymentModel({
       memberId: params.memberId,
-      seatHoldId: params.seatHoldId,
+      seatHoldId: primarySeatHoldId,
+      seatHoldIds,
       idempotencyKey: params.idempotencyKey,
       requestHash: params.requestHash,
       provider: params.provider,
@@ -211,6 +221,10 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
 
   get seatHoldId(): string {
     return this.etc.seatHoldId;
+  }
+
+  get seatHoldIds(): string[] {
+    return this.etc.seatHoldIds ?? [this.etc.seatHoldId];
   }
 
   get idempotencyKey(): string {
