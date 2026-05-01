@@ -1151,6 +1151,75 @@ h2 {
   gap: 8px;
 }
 
+.payment-complete-page {
+  display: grid;
+  gap: 18px;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.payment-complete-hero {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  border: 1px solid #b6ded1;
+  border-radius: 8px;
+  background: #f0faf5;
+  padding: 24px;
+  color: #087f5b;
+}
+
+.payment-complete-hero h2,
+.payment-complete-hero p {
+  margin: 0;
+}
+
+.payment-complete-hero h2 {
+  color: #1f2933;
+  font-size: 28px;
+}
+
+.payment-complete-hero p:last-child {
+  color: #32424a;
+  line-height: 1.6;
+}
+
+.payment-complete-layout {
+  display: grid;
+  align-items: start;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.payment-complete-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.payment-complete-list div {
+  display: grid;
+  gap: 6px;
+}
+
+.payment-complete-list dt {
+  color: #6b7c85;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.payment-complete-list dd {
+  margin: 0;
+  color: #1f2933;
+  font-weight: 900;
+  line-height: 1.5;
+}
+
+.payment-complete-actions {
+  display: grid;
+  gap: 10px;
+}
+
 .reservations-page {
   display: grid;
   gap: 18px;
@@ -1537,6 +1606,7 @@ h2 {
   }
 
   .payment-layout,
+  .payment-complete-layout,
   .payment-method-grid {
     grid-template-columns: 1fr;
   }

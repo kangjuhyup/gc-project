@@ -1,6 +1,6 @@
 import { useMutation, useQueries, useQueryClient, type Query } from '@tanstack/react-query';
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   createPaymentIdempotencyKey,
@@ -16,8 +16,10 @@ const PAYMENT_CONFIRMATION_POLLING_INTERVAL_MS = 5_000;
 
 export function usePaymentPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { movieId, screeningId } = useParams();
   const queryClient = useQueryClient();
+  const completeNavigationRef = useRef(false);
   const paymentState = isPaymentRouteState(location.state) ? location.state : null;
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CARD');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -56,10 +58,27 @@ export function usePaymentPage() {
   const seatSelectionPath = `/movies/${movieId ?? '1'}/screenings/${screeningId ?? ''}/seats`;
 
   useEffect(() => {
-    if (isPaymentApproved) {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.reservations.all });
+    if (!isPaymentApproved || !paymentState || completeNavigationRef.current) {
+      return;
     }
-  }, [isPaymentApproved, queryClient]);
+
+    const payment = paymentConfirmationDetails[0];
+
+    if (!payment) {
+      return;
+    }
+
+    completeNavigationRef.current = true;
+    void queryClient.invalidateQueries({ queryKey: queryKeys.reservations.all });
+    navigate(`/payments/${encodeURIComponent(payment.paymentId)}/complete`, {
+      replace: true,
+      state: {
+        payment,
+        payments: paymentConfirmationDetails,
+        paymentState,
+      },
+    });
+  }, [isPaymentApproved, navigate, paymentConfirmationDetails, paymentState, queryClient]);
 
   const handleSubmit = async () => {
     if (!paymentState || !agreedToTerms) {

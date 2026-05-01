@@ -1,4 +1,4 @@
-import { type PaymentSeat } from './paymentApi';
+import { type PaymentResultDto, type PaymentSeat } from './paymentApi';
 
 export interface PaymentRouteState {
   movieTitle: string;
@@ -38,6 +38,45 @@ export function isPaymentRouteState(value: unknown): value is PaymentRouteState 
   );
 }
 
+export interface PaymentCompleteRouteState {
+  payment: PaymentResultDto;
+  paymentState: PaymentRouteState;
+  payments: PaymentResultDto[];
+}
+
+export function isPaymentCompleteRouteState(value: unknown): value is PaymentCompleteRouteState {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const state = value as Partial<PaymentCompleteRouteState>;
+
+  return (
+    isPaymentResult(state.payment) &&
+    isPaymentRouteState(state.paymentState) &&
+    Array.isArray(state.payments) &&
+    state.payments.length > 0 &&
+    state.payments.every(isPaymentResult)
+  );
+}
+
 export function formatCurrency(value: number) {
   return `${value.toLocaleString()}원`;
+}
+
+function isPaymentResult(value: unknown): value is PaymentResultDto {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const payment = value as Partial<PaymentResultDto>;
+
+  return (
+    typeof payment.paymentId === 'string' &&
+    typeof payment.seatHoldId === 'string' &&
+    typeof payment.idempotencyKey === 'string' &&
+    typeof payment.provider === 'string' &&
+    typeof payment.status === 'string' &&
+    typeof payment.amount === 'number'
+  );
 }

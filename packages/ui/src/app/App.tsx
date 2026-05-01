@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/login/LoginPage';
 import { MoviesPage } from '@/features/movies/MoviesPage';
+import { PaymentCompletePage } from '@/features/payment/PaymentCompletePage';
 import { PaymentPage } from '@/features/payment/PaymentPage';
 import { PasswordChangePage } from '@/features/profile/PasswordChangePage';
 import { ProfilePage } from '@/features/profile/ProfilePage';
@@ -76,6 +77,14 @@ export default function App() {
           element={
             <RequireAuth>
               <PaymentPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/payments/:paymentId/complete"
+          element={
+            <RequireAuth>
+              <PaymentCompletePage />
             </RequireAuth>
           }
         />

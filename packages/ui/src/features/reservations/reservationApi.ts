@@ -28,6 +28,18 @@ export interface ReservationSummary {
   cancelReason?: string;
 }
 
+export interface ReservationDetail extends ReservationSummary {
+  paymentAmount?: number;
+  payment?: ReservationPaymentSummary;
+}
+
+export interface ReservationPaymentSummary {
+  id: string;
+  status: ReservationPaymentStatus;
+  amount: number;
+  providerPaymentId?: string;
+}
+
 export interface ReservationListResponse {
   items: ReservationSummary[];
   hasNext: boolean;
@@ -52,6 +64,10 @@ interface ReservationSummaryDto {
   screening: ReservationScreeningSummaryDto;
   seats: ReservationSeatSummaryDto[];
   payment?: ReservationPaymentSummaryDto;
+}
+
+interface ReservationDetailDto extends ReservationSummaryDto {
+  paymentAmount?: number;
 }
 
 interface ReservationMovieSummaryDto {
@@ -124,6 +140,14 @@ export async function fetchReservations({ limit = 20, cursor }: FetchReservation
   };
 }
 
+export async function fetchReservationDetail(reservationId: string) {
+  const response = await apiClient<ReservationDetailDto>(
+    `/reservations/${encodeURIComponent(reservationId)}`,
+  );
+
+  return mapReservationDetail(response);
+}
+
 export function cancelReservation(reservationId: string, payload: CancelReservationRequestDto) {
   return apiClient<ReservationCanceledDto>(
     `/reservations/${encodeURIComponent(reservationId)}/cancel`,
@@ -132,6 +156,14 @@ export function cancelReservation(reservationId: string, payload: CancelReservat
       method: 'POST',
     },
   );
+}
+
+function mapReservationDetail(reservation: ReservationDetailDto): ReservationDetail {
+  return {
+    ...mapReservationSummary(reservation),
+    paymentAmount: reservation.paymentAmount,
+    payment: reservation.payment,
+  };
 }
 
 function mapReservationSummary(reservation: ReservationSummaryDto): ReservationSummary {
