@@ -2,7 +2,7 @@ import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-option
 
 const DEV_ALLOWED_ORIGIN = 'http://localhost:5173';
 
-export function buildCorsOptions(nodeEnv = process.env.NODE_ENV): CorsOptions | undefined {
+export function buildCorsOptions(nodeEnv: string | undefined): CorsOptions | undefined {
   if (nodeEnv !== 'development') {
     return undefined;
   }

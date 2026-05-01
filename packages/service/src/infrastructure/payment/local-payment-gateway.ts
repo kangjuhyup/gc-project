@@ -7,11 +7,18 @@ import type {
   PaymentRefundRequestDto,
 } from '@application/commands/ports';
 
-const DEFAULT_LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS = 3;
+export interface LocalPaymentGatewayOptions {
+  readonly callbackUrl: string;
+  readonly callbackDelayMilliseconds: number;
+}
 
 @Injectable()
 @Logging
 export class LocalPaymentGateway implements PaymentGatewayPort {
+  constructor(
+    private readonly options: LocalPaymentGatewayOptions,
+  ) {}
+
   async request(params: {
     paymentId: string;
     amount: number;
@@ -52,7 +59,7 @@ export class LocalPaymentGateway implements PaymentGatewayPort {
   }
 
   private callbackDelayMilliseconds(): number {
-    return localPaymentCallbackDelayMilliseconds();
+    return this.options.callbackDelayMilliseconds;
   }
 
   private scheduleCallback(params: {
@@ -79,18 +86,6 @@ export class LocalPaymentGateway implements PaymentGatewayPort {
   }
 
   private callbackUrl(): string {
-    return process.env.LOCAL_PAYMENT_CALLBACK_URL ?? `http://localhost:${process.env.PORT ?? '3000'}/payments/callback`;
+    return this.options.callbackUrl;
   }
-}
-
-export function localPaymentCallbackDelayMilliseconds(
-  value = process.env.LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS,
-): number {
-  const seconds = Number(value ?? DEFAULT_LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS);
-
-  if (!Number.isFinite(seconds) || seconds < 0) {
-    return DEFAULT_LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS * 1000;
-  }
-
-  return Math.round(seconds * 1000);
 }

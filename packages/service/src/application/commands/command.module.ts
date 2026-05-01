@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ChangeMemberPasswordCommand,
   CancelReservationCommand,
@@ -60,6 +61,7 @@ import {
   type VerificationCodeGeneratorPort,
 } from '@application/commands/ports';
 import { InfrastructureModule } from '@infrastructure';
+import { ENV_KEY } from '@infrastructure/config';
 import { CommandBus } from './command-bus';
 import { TransactionalDecoratorProvider } from './transactional-decorator.provider';
 import {
@@ -138,6 +140,7 @@ import {
         logEventPublisher: LogEventPublisherPort,
         opaqueTokenGenerator: OpaqueTokenGeneratorPort,
         tokenRepository: TokenRepositoryPort,
+        configService: ConfigService,
       ) =>
         new LoginMemberCommandHandler(
           memberRepository,
@@ -146,6 +149,14 @@ import {
           logEventPublisher,
           opaqueTokenGenerator,
           tokenRepository,
+          {
+            accessTokenTtlSeconds: configService.getOrThrow<number>(
+              ENV_KEY.ACCESS_TOKEN_TTL_SECONDS,
+            ),
+            refreshTokenTtlSeconds: configService.getOrThrow<number>(
+              ENV_KEY.REFRESH_TOKEN_TTL_SECONDS,
+            ),
+          },
         ),
       inject: [
         MEMBER_REPOSITORY,
@@ -154,6 +165,7 @@ import {
         LOG_EVENT_PUBLISHER,
         OPAQUE_TOKEN_GENERATOR,
         TOKEN_REPOSITORY,
+        ConfigService,
       ],
     },
     {
@@ -227,15 +239,24 @@ import {
         seatHoldCache: SeatHoldCachePort,
         seatHoldLock: SeatHoldLockPort,
         clock: ClockPort,
+        configService: ConfigService,
       ) =>
         new CreateSeatHoldCommandHandler(
           seatHoldRepository,
           seatHoldCache,
           seatHoldLock,
           clock,
-          { ttlSeconds: seatHoldTtlSeconds() },
+          {
+            ttlSeconds: configService.getOrThrow<number>(ENV_KEY.SEAT_HOLD_TTL_SECONDS),
+          },
         ),
-      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, SEAT_HOLD_LOCK, CLOCK],
+      inject: [
+        SEAT_HOLD_REPOSITORY,
+        SEAT_HOLD_CACHE,
+        SEAT_HOLD_LOCK,
+        CLOCK,
+        ConfigService,
+      ],
     },
     {
       provide: ReleaseSeatHoldCommandHandler,
@@ -406,13 +427,3 @@ import {
   exports: [CommandBus],
 })
 export class CommandModule {}
-
-function seatHoldTtlSeconds(): number {
-  const parsed = Number(process.env.SEAT_HOLD_TTL_SECONDS);
-
-  if (Number.isInteger(parsed) && parsed > 0) {
-    return parsed;
-  }
-
-  return 3;
-}

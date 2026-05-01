@@ -12,6 +12,11 @@ import type {
 } from '../ports';
 import { TokenType } from '../ports';
 
+export interface LoginTokenTtlOptions {
+  readonly accessTokenTtlSeconds: number;
+  readonly refreshTokenTtlSeconds: number;
+}
+
 @Logging
 export class LoginMemberCommandHandler {
   constructor(
@@ -21,6 +26,7 @@ export class LoginMemberCommandHandler {
     private readonly logEventPublisher: LogEventPublisherPort,
     private readonly opaqueTokenGenerator: OpaqueTokenGeneratorPort,
     private readonly tokenRepository: TokenRepositoryPort,
+    private readonly ttlOptions: LoginTokenTtlOptions,
   ) {}
 
   @Transactional()
@@ -71,8 +77,8 @@ export class LoginMemberCommandHandler {
     );
     const accessToken = this.opaqueTokenGenerator.generate();
     const refreshToken = this.opaqueTokenGenerator.generate();
-    const accessTokenTtl = accessTokenTtlSeconds();
-    const refreshTokenTtl = refreshTokenTtlSeconds();
+    const accessTokenTtl = this.ttlOptions.accessTokenTtlSeconds;
+    const refreshTokenTtl = this.ttlOptions.refreshTokenTtlSeconds;
     const accessTokenExpiresAt = new Date(occurredAt);
     accessTokenExpiresAt.setUTCSeconds(accessTokenExpiresAt.getUTCSeconds() + accessTokenTtl);
     const refreshTokenExpiresAt = new Date(occurredAt);
@@ -101,24 +107,4 @@ export class LoginMemberCommandHandler {
       refreshTokenExpiresAt,
     });
   }
-}
-
-function accessTokenTtlSeconds(): number {
-  const parsed = Number(process.env.ACCESS_TOKEN_TTL_SECONDS);
-
-  if (Number.isInteger(parsed) && parsed > 0) {
-    return parsed;
-  }
-
-  return 15 * 60;
-}
-
-function refreshTokenTtlSeconds(): number {
-  const parsed = Number(process.env.REFRESH_TOKEN_TTL_SECONDS);
-
-  if (Number.isInteger(parsed) && parsed > 0) {
-    return parsed;
-  }
-
-  return 14 * 24 * 60 * 60;
 }

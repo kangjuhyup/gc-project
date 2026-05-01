@@ -1,6 +1,5 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   AddressSearchItemDto,
   AddressSearchResultDto,
@@ -40,7 +39,7 @@ interface JusoAddressItem {
 @Injectable()
 @Logging
 export class JusoAddressSearchAdapter implements AddressSearchPort {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly apiKey: string) {}
 
   async search(query: SearchAddressesQuery): Promise<AddressSearchResultDto> {
     const response = await fetch(this.buildUrl(query));
@@ -66,7 +65,7 @@ export class JusoAddressSearchAdapter implements AddressSearchPort {
 
   private buildUrl(query: SearchAddressesQuery): URL {
     const url = new URL('https://business.juso.go.kr/addrlink/addrLinkApi.do');
-    url.searchParams.set('confmKey', this.configService.getOrThrow<string>('JUSO_API_KEY'));
+    url.searchParams.set('confmKey', this.apiKey);
     url.searchParams.set('currentPage', String(query.currentPage));
     url.searchParams.set('countPerPage', String(query.countPerPage));
     url.searchParams.set('keyword', query.keyword);

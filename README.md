@@ -65,7 +65,32 @@ Compose 구성에는 다음 서비스가 포함됩니다.
 
 ### 5. 환경 변수 확인
 
-별도 `.env`가 없어도 개발용 기본값으로 실행됩니다. 필요한 경우 루트에 `.env`를 만들고 아래 값을 오버라이드할 수 있습니다.
+서비스는 실행 시 필수 config를 검증합니다. `packages/service/.env` 또는 실행 환경에 아래 service 필수값이 없으면 API 프로세스가 부팅에 실패합니다.
+
+```bash
+PORT=3000
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=gc_project
+DB_USER=gc_user
+DB_PASSWORD=gc_password
+
+REDIS_URL=redis://:gc_redis_password@localhost:6379
+
+ADDRESS_SEARCH_ADAPTER=local
+
+ACCESS_TOKEN_TTL_SECONDS=900
+REFRESH_TOKEN_TTL_SECONDS=1209600
+SEAT_HOLD_TTL_SECONDS=3
+
+LOCAL_PAYMENT_CALLBACK_URL=http://localhost:3000/payments/callback
+LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS=3
+
+MIGRATIONS_RUN_ON_STARTUP=true
+```
+
+Docker Compose 자체의 기본값을 바꾸려면 루트 `.env`에 아래 값을 둘 수 있습니다.
 
 ```bash
 POSTGRES_USER=gc_user
@@ -73,17 +98,17 @@ POSTGRES_PASSWORD=gc_password
 POSTGRES_DB=gc_project
 POSTGRES_REPLICATION_USER=replicator
 POSTGRES_REPLICATION_PASSWORD=replicator_password
-
 REDIS_PASSWORD=gc_redis_password
 REDIS_SENTINEL_PASSWORD=gc_sentinel_password
 REDIS_SENTINEL_MASTER_SET=mymaster
 ```
 
-worker 프로세스는 `packages/service/.env-worker`를 읽습니다. 결제 outbox worker 전용 설정이 필요하면 아래 값을 둘 수 있습니다.
+worker 프로세스는 `packages/service/.env-worker`를 읽습니다. worker도 DB/Redis/토큰/좌석 TTL 같은 공통 필수값을 검증하며, 추가로 아래 worker 전용 값이 필요합니다.
 
 ```bash
 PAYMENT_OUTBOX_WORKER_ENABLED=true
 PAYMENT_OUTBOX_WORKER_INTERVAL_MS=500
+LOCAL_PAYMENT_CALLBACK_URL=http://localhost:3000/payments/callback
 LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS=3
 ```
 

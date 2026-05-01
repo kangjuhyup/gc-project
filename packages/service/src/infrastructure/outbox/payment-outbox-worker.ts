@@ -10,7 +10,10 @@ import type {
   TransactionManagerPort,
 } from '@application/commands/ports';
 
-const DEFAULT_PAYMENT_OUTBOX_WORKER_INTERVAL_MS = 500;
+export interface PaymentOutboxWorkerOptions {
+  readonly enabled: boolean;
+  readonly intervalMilliseconds: number;
+}
 
 @Injectable()
 export class PaymentOutboxWorker implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -25,10 +28,11 @@ export class PaymentOutboxWorker implements OnApplicationBootstrap, OnApplicatio
     private readonly transactionManager: TransactionManagerPort,
     private readonly clock: ClockPort,
     private readonly orm: MikroORM,
+    private readonly options: PaymentOutboxWorkerOptions,
   ) {}
 
   onApplicationBootstrap(): void {
-    if (!shouldRunPaymentOutboxWorker()) {
+    if (!this.options.enabled) {
       return;
     }
 
@@ -47,7 +51,7 @@ export class PaymentOutboxWorker implements OnApplicationBootstrap, OnApplicatio
     void this.processSafely();
     this.interval = setInterval(
       () => void this.processSafely(),
-      paymentOutboxWorkerIntervalMilliseconds(),
+      this.options.intervalMilliseconds,
     );
   }
 
@@ -188,29 +192,4 @@ export class PaymentOutboxWorker implements OnApplicationBootstrap, OnApplicatio
       }),
     );
   }
-}
-
-export function shouldRunPaymentOutboxWorker(
-  value = process.env.PAYMENT_OUTBOX_WORKER_ENABLED,
-  nodeEnv = process.env.NODE_ENV,
-): boolean {
-  if (value === undefined && nodeEnv === 'test') {
-    return false;
-  }
-
-  return !['0', 'false', 'no', 'off'].includes(
-    value?.trim().toLocaleLowerCase() ?? '',
-  );
-}
-
-export function paymentOutboxWorkerIntervalMilliseconds(
-  value = process.env.PAYMENT_OUTBOX_WORKER_INTERVAL_MS,
-): number {
-  const milliseconds = Number(value ?? DEFAULT_PAYMENT_OUTBOX_WORKER_INTERVAL_MS);
-
-  if (!Number.isFinite(milliseconds) || milliseconds <= 0) {
-    return DEFAULT_PAYMENT_OUTBOX_WORKER_INTERVAL_MS;
-  }
-
-  return Math.round(milliseconds);
 }

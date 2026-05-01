@@ -1,15 +1,13 @@
 import { LogLevel } from '@kangjuhyup/rvlog';
 import { RvlogNestModule } from '@kangjuhyup/rvlog-nest';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { ApplicationModule } from '@application';
+import { ServiceConfigModule } from '@infrastructure/config';
 import { PresentationModule } from '@presentation';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ServiceConfigModule.forApi(),
     RvlogNestModule.forRoot({
       logger: {
         minLevel: LogLevel.INFO,
