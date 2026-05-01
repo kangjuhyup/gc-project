@@ -1,6 +1,7 @@
 export { CLOCK } from './clock.port';
 export { LOG_EVENT_PUBLISHER } from './log-event-publisher.port';
 export { MEMBER_REPOSITORY } from './member.repository.port';
+export { MOVIE_REPOSITORY } from './movie.repository.port';
 export { OPAQUE_TOKEN_GENERATOR } from './opaque-token-generator.port';
 export { OUTBOX_EVENT_REPOSITORY } from './outbox-event.repository.port';
 export { PASSWORD_HASHER } from './password-hasher.port';

@@ -13,6 +13,7 @@ import {
 } from '@application/query/ports';
 import {
   MEMBER_REPOSITORY,
+  MOVIE_REPOSITORY,
   OUTBOX_EVENT_REPOSITORY,
   PAYMENT_EVENT_LOG_REPOSITORY,
   PAYMENT_REPOSITORY,
@@ -26,6 +27,7 @@ import {
 import { persistenceEntities } from './entities';
 import {
   MikroOrmMemberRepository,
+  MikroOrmMovieRepository,
   MikroOrmMovieQueryRepository,
   MikroOrmOutboxEventRepository,
   MikroOrmPaymentEventLogRepository,
@@ -71,6 +73,7 @@ import { ENV_KEY } from '../config';
   ],
   providers: [
     MikroOrmMemberRepository,
+    MikroOrmMovieRepository,
     MikroOrmMovieQueryRepository,
     MikroOrmOutboxEventRepository,
     MikroOrmPaymentEventLogRepository,
@@ -92,6 +95,10 @@ import { ENV_KEY } from '../config';
     {
       provide: MEMBER_QUERY,
       useExisting: MikroOrmMemberRepository,
+    },
+    {
+      provide: MOVIE_REPOSITORY,
+      useExisting: MikroOrmMovieRepository,
     },
     {
       provide: MOVIE_QUERY,
@@ -152,6 +159,7 @@ import { ENV_KEY } from '../config';
   ],
   exports: [
     MEMBER_REPOSITORY,
+    MOVIE_REPOSITORY,
     MEMBER_QUERY,
     MOVIE_QUERY,
     PAYMENT_QUERY,

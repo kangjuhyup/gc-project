@@ -1,4 +1,5 @@
 export { MikroOrmMemberRepository } from './mikro-orm-member.repository';
+export { MikroOrmMovieRepository } from './mikro-orm-movie.repository';
 export { MikroOrmMovieQueryRepository } from './mikro-orm-movie-query.repository';
 export { MikroOrmOutboxEventRepository } from './mikro-orm-outbox-event.repository';
 export { MikroOrmPaymentEventLogRepository } from './mikro-orm-payment-event-log.repository';

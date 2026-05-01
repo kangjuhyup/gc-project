@@ -10,13 +10,16 @@ import {
 import {
   AdminProfileDto,
   CommandBus,
+  CreateMovieCommand,
   LoginAdminCommand,
   LoginAdminResultDto,
+  MovieCreatedDto,
 } from '@application';
+import { MovieRatingType } from '@domain';
 import { AuthenticatedAdminDto } from '@application/query/dto';
 import { Admin } from '@presentation/decorator';
 import { AdminAuthGuard } from '@presentation/guard';
-import { LoginAdminRequestDto } from '../dto';
+import { CreateMovieRequestDto, LoginAdminRequestDto } from '../dto';
 
 @ApiTags('Admin')
 @Controller()
@@ -51,5 +54,31 @@ export class AdminController {
   @Get('/admin/me')
   me(@Admin() admin: AuthenticatedAdminDto): AdminProfileDto {
     return AdminProfileDto.of({ adminId: admin.adminId });
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '관리자 영화 등록',
+    description: '관리자가 영화 기본 정보를 등록합니다. 상영 일정은 별도 관리자 API에서 연결합니다.',
+  })
+  @ApiCreatedResponse({ type: MovieCreatedDto, description: '영화 등록 완료' })
+  @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
+  @UseGuards(AdminAuthGuard)
+  @Post('/admin/movies')
+  createMovie(@Body() body: CreateMovieRequestDto) {
+    const request = CreateMovieRequestDto.of(body);
+
+    return this.commandBus.execute(
+      CreateMovieCommand.of({
+        title: request.title.trim(),
+        runningTime: request.runningTime,
+        director: request.director?.trim() || undefined,
+        genre: request.genre?.trim() || undefined,
+        rating: request.rating as MovieRatingType | undefined,
+        releaseDate: request.releaseDate === undefined ? undefined : new Date(request.releaseDate),
+        posterUrl: request.posterUrl?.trim() || undefined,
+        description: request.description?.trim() || undefined,
+      }),
+    );
   }
 }

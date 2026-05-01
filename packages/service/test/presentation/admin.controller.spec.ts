@@ -32,4 +32,33 @@ describe('AdminController', () => {
 
     expect(result.adminId).toBe('admin');
   });
+
+  it('관리자 영화 등록 요청을 command bus에 위임한다', async () => {
+    const commandBus = {
+      execute: vi.fn().mockResolvedValue({
+        movieId: 'movie-1',
+        title: '관리자 등록 영화',
+        runningTime: 121,
+      }),
+    };
+    const controller = new AdminController(commandBus as never);
+
+    const result = await controller.createMovie({
+      title: ' 관리자 등록 영화 ',
+      runningTime: 121,
+      director: ' 감독 ',
+      genre: ' 드라마 ',
+      rating: '15',
+      releaseDate: '2026-05-01',
+      posterUrl: 'https://images.example.com/admin-movie.jpg',
+      description: ' 관리자 등록 ',
+    } as never);
+
+    expect(commandBus.execute).toHaveBeenCalledOnce();
+    expect(result).toEqual({
+      movieId: 'movie-1',
+      title: '관리자 등록 영화',
+      runningTime: 121,
+    });
+  });
 });

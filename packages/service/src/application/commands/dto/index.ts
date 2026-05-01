@@ -1,6 +1,7 @@
 export { ChangeMemberPasswordCommand } from './change-member-password.command';
 export { CancelReservationCommand } from './cancel-reservation.command';
 export { ConfirmPhoneVerificationCommand } from './confirm-phone-verification.command';
+export { CreateMovieCommand } from './create-movie.command';
 export { CreateSeatHoldCommand } from './create-seat-hold.command';
 export { HandlePaymentCallbackCommand } from './handle-payment-callback.command';
 export { IssueTemporaryPasswordCommand } from './issue-temporary-password.command';
@@ -12,6 +13,7 @@ export { LogoutMemberCommand } from './logout-member.command';
 export { MemberLoggedOutDto } from './member-logged-out.dto';
 export { MemberPasswordChangedDto } from './member-password-changed.dto';
 export { MemberWithdrawnDto } from './member-withdrawn.dto';
+export { MovieCreatedDto } from './movie-created.dto';
 export { PhoneVerificationConfirmedDto } from './phone-verification-confirmed.dto';
 export { PhoneVerificationIssuedDto } from './phone-verification-issued.dto';
 export { PaymentCallbackResultDto } from './payment-callback-result.dto';

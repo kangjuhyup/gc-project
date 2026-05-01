@@ -1,6 +1,7 @@
 export { ChangeMemberPasswordCommandHandler } from './change-member-password.command-handler';
 export { CancelReservationCommandHandler } from './cancel-reservation.command-handler';
 export { ConfirmPhoneVerificationCommandHandler } from './confirm-phone-verification.command-handler';
+export { CreateMovieCommandHandler } from './create-movie.command-handler';
 export { CreateSeatHoldCommandHandler } from './create-seat-hold.command-handler';
 export { HandlePaymentCallbackCommandHandler } from './handle-payment-callback.command-handler';
 export { IssueTemporaryPasswordCommandHandler } from './issue-temporary-password.command-handler';
