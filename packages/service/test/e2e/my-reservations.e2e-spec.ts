@@ -102,21 +102,65 @@ describe('내 예매 목록 조회 e2e', () => {
     const otherMemberDetail = await e2e.get(`/reservations/${reservation.id}`, e2e.auth(otherMember));
     expect(otherMemberDetail.status).toBe(404);
   });
+
+  it('여러 좌석을 하나의 결제로 예매하면 내 예매 목록과 상세도 한 건으로 묶어 조회한다', async () => {
+    const member = await e2e.signupAndLogin('my_res_multi');
+    const screeningId = await e2e.firstScreeningId();
+    const seats = await e2e.availableSeats(screeningId, 3);
+
+    await createApprovedReservation(e2e, member, screeningId, seats, 'pay-my-res-multi-0001', 45000);
+
+    const reservations = await e2e.get('/reservations?limit=10', e2e.auth(member));
+    expect(reservations.status).toBe(200);
+    expect(reservations.body.items).toHaveLength(1);
+
+    const reservation = (reservations.body.items as Array<Record<string, unknown>>)[0];
+    expect(reservation).toEqual(expect.objectContaining({
+      status: 'CONFIRMED',
+      totalPrice: 45000,
+      payment: expect.objectContaining({
+        amount: 45000,
+        status: 'APPROVED',
+      }),
+      seats: seats.map((seat) => expect.objectContaining({ id: seat.id })),
+    }));
+
+    const detail = await e2e.get(`/reservations/${reservation.id}`, e2e.auth(member));
+    expect(detail.status).toBe(200);
+    expect(detail.body).toEqual(expect.objectContaining({
+      id: reservation.id,
+      paymentAmount: 45000,
+      totalPrice: 45000,
+      payment: expect.objectContaining({
+        amount: 45000,
+        status: 'APPROVED',
+      }),
+      seats: seats.map((seat) =>
+        expect.objectContaining({
+          id: seat.id,
+          row: seat.row,
+          col: seat.col,
+        }),
+      ),
+    }));
+  });
 });
 
 async function createApprovedReservation(
   e2e: ServiceE2eContext,
   member: E2eMember,
   screeningId: string,
-  seat: E2eSeat,
+  seat: E2eSeat | E2eSeat[],
   idempotencyKey: string,
+  amount = 15000,
 ): Promise<void> {
-  const hold = await e2e.createSeatHold(member, screeningId, [seat.id]);
+  const seats = Array.isArray(seat) ? seat : [seat];
+  const hold = await e2e.createSeatHold(member, screeningId, seats.map((item) => item.id));
   expect(hold.status).toBe(201);
 
-  const payment = await e2e.requestPayment(member, String((hold.body.holdIds as string[])[0]), idempotencyKey);
+  const payment = await e2e.requestPayment(member, hold.body.holdIds as string[], idempotencyKey, amount);
   expect(payment.status).toBe(201);
 
-  const callback = await e2e.approvePayment(payment.body);
+  const callback = await e2e.approvePayment(payment.body, amount);
   expect(callback.status).toBe(201);
 }
