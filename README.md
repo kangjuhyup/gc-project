@@ -1,66 +1,33 @@
 # GC Project
 
-pnpm workspace 기반 모노레포입니다.
+영화 예매 과제를 위한 pnpm workspace 기반 모노레포입니다.
 
-- `packages/ui`: React 19 + Vite
-- `packages/service`: NestJS
+- `packages/service`: NestJS 기반 API/worker
+- `packages/ui`: React 19 + Vite 기반 웹 UI
 
-## 프로젝트 구조 문서
+## 구현 기능
 
-- [모노레포 아키텍처](ARCHITECTURE.md)
-- [Service 비즈니스 프로세스](packages/service/docs/PROCCESS.md)
-- [Service 도메인 설계](packages/service/docs/DOMAIN.md)
-- [Service 데이터베이스 구조](packages/service/docs/DATABASE.md)
-- [Service 환경 변수 설정](packages/service/docs/ENVIRONMENT.md)
-- [UI 프로젝트 구조](packages/ui/docs/ARCHITECTURE.md)
-- [UI 환경 변수 설정](packages/ui/docs/ENVIRONMENT.md)
+- 회원가입, 로그인
+- 영화 목록 조회
+- 영화별 상영 시간 조회
+- 상영 좌석 조회
+- 좌석 선택 및 예매
+- 내 예매 목록/상세 조회
+- 예매 취소
 
-## 로컬 실행 전 준비사항
+영화 및 상영 데이터는 임의의 seed 데이터로 구성했습니다. 상영 시간 목록은 `GET /movies` 응답의 `screenings`로 제공하며, 좌석은 `GET /screenings/:screeningId/seats`로 조회합니다.
 
-### 1. Node.js 24 사용
-
-이 프로젝트는 `.nvmrc`와 `package.json`에서 Node.js 24 이상을 기준으로 합니다.
+## 실행 방법
 
 ```bash
 nvm install
 nvm use
-node -v
-```
-
-`node -v` 결과가 `v24.x`인지 확인합니다.
-
-### 2. pnpm 활성화
-
-패키지 매니저는 `pnpm@10.0.0`을 사용합니다. Node 24 환경에서 Corepack을 활성화합니다.
-
-```bash
 corepack enable
 corepack prepare pnpm@10.0.0 --activate
-pnpm -v
-```
-
-### 3. 의존성 설치
-
-루트에서 모든 workspace 의존성을 설치합니다.
-
-```bash
 pnpm install
 ```
 
-### 4. Docker 실행 환경 준비
-
-로컬 인프라는 Docker Compose로 실행합니다. Docker Desktop 또는 Docker Engine이 실행 중이어야 합니다.
-
-```bash
-docker compose version
-docker compose config --quiet
-```
-
-Compose 구성의 DB/Redis 상세는 [Service 데이터베이스 구조](packages/service/docs/DATABASE.md)를 참고합니다.
-
-### 5. 환경 변수 확인
-
-service 실행 환경 변수는 API와 worker 프로세스별로 검증됩니다. UI 환경 변수는 브라우저에 노출되는 `VITE_` 값만 사용합니다.
+환경 변수 파일을 준비합니다.
 
 ```bash
 cp packages/service/.env.example packages/service/.env
@@ -68,64 +35,77 @@ cp packages/service/.env.worker.example packages/service/.env.worker
 cp packages/ui/.env.example packages/ui/.env
 ```
 
-필수 값과 프로세스 구분은 [Service 환경 변수 설정](packages/service/docs/ENVIRONMENT.md), [UI 환경 변수 설정](packages/ui/docs/ENVIRONMENT.md)을 참고합니다.
-
-### 6. 로컬 인프라 실행
+로컬 인프라와 앱을 실행합니다.
 
 ```bash
 pnpm run compose:up
+pnpm run dev:apps
 ```
 
-상태 확인:
+기본 주소:
+
+- UI: `http://localhost:5173`
+- API: `http://localhost:3000`
+
+UI만 mock/real API 모드로 실행할 수도 있습니다.
 
 ```bash
-docker compose ps
+pnpm run dev:ui:mock
+pnpm run dev:ui:real
 ```
 
-### 7. 빌드 확인
-
-로컬 실행 전 전체 workspace 빌드가 통과하는지 확인합니다.
+검증:
 
 ```bash
 pnpm build
-```
-
-## 로컬 실행
-
-전체 개발 모드를 실행합니다.
-
-```bash
-pnpm dev
-```
-
-일부 프로세스만 실행할 수도 있습니다. 세부 역할은 [모노레포 아키텍처](ARCHITECTURE.md)와 [UI 프로젝트 구조](packages/ui/docs/ARCHITECTURE.md)를 참고합니다.
-
-```bash
-pnpm run dev:apps
-pnpm run dev:service:all
-pnpm run dev:ui
-pnpm run dev:service
-pnpm run dev:worker
-```
-
-빌드된 산출물 실행:
-
-```bash
-pnpm run service
-pnpm run worker
-pnpm run service:all
-```
-
-## 검증
-
-전체 테스트:
-
-```bash
 pnpm test
-```
-
-service e2e 테스트:
-
-```bash
 pnpm run service:test:e2e
 ```
+
+자세한 실행 환경은 [Service 환경 변수 설정](packages/service/docs/ENVIRONMENT.md), [UI 환경 변수 설정](packages/ui/docs/ENVIRONMENT.md)을 참고합니다.
+
+## 프로젝트 구조
+
+```text
+packages/
+├── service   # NestJS, domain/application/infrastructure/presentation 계층
+└── ui        # React, feature 중심 UI 구성
+```
+
+자세한 구조:
+
+- [모노레포 아키텍처](ARCHITECTURE.md)
+- [Service 도메인 설계](packages/service/docs/DOMAIN.md)
+- [Service 데이터베이스 구조](packages/service/docs/DATABASE.md)
+- [UI 프로젝트 구조](packages/ui/docs/ARCHITECTURE.md)
+
+## 설계 의도
+
+- Backend는 헥사고날 아키텍처를 기준으로 도메인, 유스케이스, 인프라, HTTP 계층을 분리했습니다.
+- Domain은 NestJS/MikroORM/Redis 같은 기술 의존성을 갖지 않도록 구성했습니다.
+- Frontend는 TanStack Query로 서버 상태를 관리하고, 좌석 선택 등 클라이언트 흐름 상태만 Zustand로 관리합니다.
+- 결제는 멱등성 키와 request hash를 저장해 재시도와 중복 요청을 구분합니다.
+- 여러 좌석 예매는 결제 1건, 예매 1건으로 묶어 처리합니다.
+
+자세한 설계 내용:
+
+- [Service 비즈니스 프로세스](packages/service/docs/PROCCESS.md)
+- [Service 도메인 설계](packages/service/docs/DOMAIN.md)
+- [UI 프로젝트 구조](packages/ui/docs/ARCHITECTURE.md)
+
+## 고려한 사항
+
+- 좌석 중복 예매 방지를 위한 임시점유와 트랜잭션 처리
+- 결제 요청 멱등성 처리
+- 결제 callback 이후 예매 확정과 환불 요청 흐름
+- 개인정보 마스킹과 관리자 감사 로그
+- real/mock API 전환 가능한 UI 개발 환경
+
+## 추가 구현 내용
+
+- 로그 레벨 환경 변수 관리
+- API/worker 프로세스 분리
+- 로컬 결제 callback delay 설정
+- refresh token 재발급
+- 관리자 인증 및 관리자 조회 API
+- OpenAPI 문서: [packages/service/docs/openapi.json](packages/service/docs/openapi.json)
