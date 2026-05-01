@@ -50,6 +50,14 @@ describe('ApplicationErrorInterceptor', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('관리자 개인정보 마스킹 해제 사유 누락을 bad request 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('ADMIN_UNMASK_REASON_REQUIRED')) as never)),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('관리자 로그인 실패 에러를 unauthorized 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 

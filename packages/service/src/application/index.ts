@@ -1,5 +1,7 @@
 export { ApplicationModule } from './application.module';
 export { assertDefined, assertNonEmpty, assertTrue } from './assertions';
+export { getPrivacyFields, Privacy } from './privacy';
+export type { PrivacyFieldMetadata, PrivacyMaskType } from './privacy';
 export {
   ChangeMemberPasswordCommand,
   CancelReservationCommand,
@@ -22,6 +24,7 @@ export {
   PaymentCallbackResultDto,
   PaymentRefundResultDto,
   PaymentResultDto,
+  RecordAdminAuditCommand,
   ReservationCanceledDto,
   RequestPhoneVerificationCommand,
   RequestPaymentCommand,
@@ -52,6 +55,7 @@ export {
   LoginAdminCommandHandler,
   LoginMemberCommandHandler,
   LogoutMemberCommandHandler,
+  RecordAdminAuditCommandHandler,
   RequestPhoneVerificationCommandHandler,
   RefundPaymentCommandHandler,
   RequestPaymentCommandHandler,

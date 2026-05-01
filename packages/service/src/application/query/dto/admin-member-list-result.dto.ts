@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Privacy } from '../../privacy';
 
 export class AdminMemberSummaryDto {
   @ApiProperty({ example: '1', description: '회원 ID' })
@@ -7,9 +8,11 @@ export class AdminMemberSummaryDto {
   @ApiProperty({ example: 'movie_user', description: '회원 로그인 ID' })
   readonly userId: string;
 
+  @Privacy({ mask: 'name' })
   @ApiProperty({ example: '홍길동', description: '회원 이름' })
   readonly name: string;
 
+  @Privacy({ mask: 'phoneNumber' })
   @ApiProperty({ example: '01000000000', description: '휴대전화번호' })
   readonly phoneNumber: string;
 

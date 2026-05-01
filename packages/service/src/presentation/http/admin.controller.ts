@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -25,6 +25,7 @@ import { MemberStatusType } from '@domain';
 import { AuthenticatedAdminDto } from '@application/query/dto';
 import { Admin } from '@presentation/decorator';
 import { AdminAuthGuard } from '@presentation/guard';
+import { AdminPiiMaskInterceptor } from '@presentation/interceptor';
 import {
   CreateMovieRequestDto,
   ListAdminMembersRequestDto,
@@ -125,6 +126,7 @@ export class AdminController {
   @ApiOkResponse({ type: AdminMemberListResultDto, description: '관리자 회원 목록' })
   @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
   @UseGuards(AdminAuthGuard)
+  @UseInterceptors(AdminPiiMaskInterceptor)
   @Get('/admin/members')
   listMembers(@Query() query: ListAdminMembersRequestDto) {
     const request = ListAdminMembersRequestDto.of(query);

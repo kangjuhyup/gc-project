@@ -1,3 +1,4 @@
+export { ADMIN_AUDIT_REPOSITORY } from './admin-audit.repository.port';
 export { CLOCK } from './clock.port';
 export { LOG_EVENT_PUBLISHER } from './log-event-publisher.port';
 export { MEMBER_REPOSITORY } from './member.repository.port';
@@ -21,6 +22,7 @@ export { TEMPORARY_PASSWORD_GENERATOR } from './temporary-password-generator.por
 export { TOKEN_REPOSITORY, TokenType } from './token.repository.port';
 export { TRANSACTION_MANAGER } from './transaction-manager.port';
 export { VERIFICATION_CODE_GENERATOR } from './verification-code-generator.port';
+export type { AdminAuditRepositoryPort, RecordAdminAuditParams } from './admin-audit.repository.port';
 export type { ClockPort } from './clock.port';
 export type { LogEventPublisherPort } from './log-event-publisher.port';
 export type { MemberRepositoryPort } from './member.repository.port';

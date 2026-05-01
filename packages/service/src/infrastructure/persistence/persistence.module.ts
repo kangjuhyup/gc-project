@@ -12,6 +12,7 @@ import {
   THEATER_QUERY,
 } from '@application/query/ports';
 import {
+  ADMIN_AUDIT_REPOSITORY,
   MEMBER_REPOSITORY,
   MOVIE_REPOSITORY,
   OUTBOX_EVENT_REPOSITORY,
@@ -26,6 +27,7 @@ import {
 } from '@application/commands/ports';
 import { persistenceEntities } from './entities';
 import {
+  MikroOrmAdminAuditRepository,
   MikroOrmMemberRepository,
   MikroOrmMovieRepository,
   MikroOrmMovieQueryRepository,
@@ -45,6 +47,7 @@ import {
 } from './repositories';
 import { Migration202604300001CreateTables } from './migrations/Migration202604300001CreateTables';
 import { Migration202604300002SeedTempMovieData } from './migrations/Migration202604300002SeedTempMovieData';
+import { Migration202605010001CreateAdminAudit } from './migrations/Migration202605010001CreateAdminAudit';
 import { ENV_KEY } from '../config';
 
 @Module({
@@ -66,12 +69,14 @@ import { ENV_KEY } from '../config';
           migrationsList: [
             { name: 'Migration202604300001CreateTables', class: Migration202604300001CreateTables },
             { name: 'Migration202604300002SeedTempMovieData', class: Migration202604300002SeedTempMovieData },
+            { name: 'Migration202605010001CreateAdminAudit', class: Migration202605010001CreateAdminAudit },
           ],
         },
       }),
     }),
   ],
   providers: [
+    MikroOrmAdminAuditRepository,
     MikroOrmMemberRepository,
     MikroOrmMovieRepository,
     MikroOrmMovieQueryRepository,
@@ -88,6 +93,10 @@ import { ENV_KEY } from '../config';
     MikroOrmSeatQueryRepository,
     MikroOrmTheaterQueryRepository,
     MikroOrmTransactionManager,
+    {
+      provide: ADMIN_AUDIT_REPOSITORY,
+      useExisting: MikroOrmAdminAuditRepository,
+    },
     {
       provide: MEMBER_REPOSITORY,
       useExisting: MikroOrmMemberRepository,
@@ -158,6 +167,7 @@ import { ENV_KEY } from '../config';
     },
   ],
   exports: [
+    ADMIN_AUDIT_REPOSITORY,
     MEMBER_REPOSITORY,
     MOVIE_REPOSITORY,
     MEMBER_QUERY,

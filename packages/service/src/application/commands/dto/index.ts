@@ -19,6 +19,7 @@ export { PhoneVerificationIssuedDto } from './phone-verification-issued.dto';
 export { PaymentCallbackResultDto } from './payment-callback-result.dto';
 export { PaymentRefundResultDto } from './payment-refund-result.dto';
 export { PaymentResultDto } from './payment-result.dto';
+export { RecordAdminAuditCommand } from './record-admin-audit.command';
 export { ReservationCanceledDto } from './reservation-canceled.dto';
 export { RequestPhoneVerificationCommand } from './request-phone-verification.command';
 export { RequestPaymentCommand } from './request-payment.command';

@@ -1,3 +1,4 @@
+export { AdminAuditEntity } from './admin-audit.entity';
 export { MemberEntity } from './member.entity';
 export { MovieImageEntity } from './movie-image.entity';
 export { MovieEntity } from './movie.entity';
@@ -15,6 +16,7 @@ export { SeatEntity } from './seat.entity';
 export { SeatHoldEntity } from './seat-hold.entity';
 export { TheaterEntity } from './theater.entity';
 
+import { AdminAuditEntity } from './admin-audit.entity';
 import { MemberEntity } from './member.entity';
 import { MovieImageEntity } from './movie-image.entity';
 import { MovieEntity } from './movie.entity';
@@ -33,6 +35,7 @@ import { SeatHoldEntity } from './seat-hold.entity';
 import { TheaterEntity } from './theater.entity';
 
 export const persistenceEntities = [
+  AdminAuditEntity,
   MemberEntity,
   MovieImageEntity,
   MovieEntity,

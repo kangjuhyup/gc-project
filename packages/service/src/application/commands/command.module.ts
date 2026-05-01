@@ -11,6 +11,7 @@ import {
   LoginAdminCommand,
   LoginMemberCommand,
   LogoutMemberCommand,
+  RecordAdminAuditCommand,
   ReleaseSeatHoldCommand,
   RefundPaymentCommand,
   RequestPhoneVerificationCommand,
@@ -19,6 +20,7 @@ import {
   WithdrawMemberCommand,
 } from './dto';
 import {
+  ADMIN_AUDIT_REPOSITORY,
   CLOCK,
   LOG_EVENT_PUBLISHER,
   MEMBER_REPOSITORY,
@@ -41,6 +43,7 @@ import {
   TEMPORARY_PASSWORD_GENERATOR,
   TOKEN_REPOSITORY,
   VERIFICATION_CODE_GENERATOR,
+  type AdminAuditRepositoryPort,
   type ClockPort,
   type LogEventPublisherPort,
   type MemberRepositoryPort,
@@ -79,6 +82,7 @@ import {
   LoginAdminCommandHandler,
   LoginMemberCommandHandler,
   LogoutMemberCommandHandler,
+  RecordAdminAuditCommandHandler,
   ReleaseSeatHoldCommandHandler,
   RefundPaymentCommandHandler,
   RequestPhoneVerificationCommandHandler,
@@ -261,6 +265,12 @@ import {
       inject: [TOKEN_REPOSITORY, CLOCK],
     },
     {
+      provide: RecordAdminAuditCommandHandler,
+      useFactory: (adminAuditRepository: AdminAuditRepositoryPort) =>
+        new RecordAdminAuditCommandHandler(adminAuditRepository),
+      inject: [ADMIN_AUDIT_REPOSITORY],
+    },
+    {
       provide: CreateMovieCommandHandler,
       useFactory: (movieRepository: MovieRepositoryPort) =>
         new CreateMovieCommandHandler(movieRepository),
@@ -415,6 +425,7 @@ import {
         loginAdminCommandHandler: LoginAdminCommandHandler,
         loginMemberCommandHandler: LoginMemberCommandHandler,
         logoutMemberCommandHandler: LogoutMemberCommandHandler,
+        recordAdminAuditCommandHandler: RecordAdminAuditCommandHandler,
         issueTemporaryPasswordCommandHandler: IssueTemporaryPasswordCommandHandler,
         changeMemberPasswordCommandHandler: ChangeMemberPasswordCommandHandler,
         withdrawMemberCommandHandler: WithdrawMemberCommandHandler,
@@ -433,6 +444,7 @@ import {
           { command: LoginAdminCommand, handler: loginAdminCommandHandler },
           { command: LoginMemberCommand, handler: loginMemberCommandHandler },
           { command: LogoutMemberCommand, handler: logoutMemberCommandHandler },
+          { command: RecordAdminAuditCommand, handler: recordAdminAuditCommandHandler },
           { command: IssueTemporaryPasswordCommand, handler: issueTemporaryPasswordCommandHandler },
           { command: ChangeMemberPasswordCommand, handler: changeMemberPasswordCommandHandler },
           { command: WithdrawMemberCommand, handler: withdrawMemberCommandHandler },
@@ -451,6 +463,7 @@ import {
         LoginAdminCommandHandler,
         LoginMemberCommandHandler,
         LogoutMemberCommandHandler,
+        RecordAdminAuditCommandHandler,
         IssueTemporaryPasswordCommandHandler,
         ChangeMemberPasswordCommandHandler,
         WithdrawMemberCommandHandler,

@@ -24,6 +24,7 @@ const conflictErrors = new Set([
 
 const badRequestErrors = new Set([
   'CURRENT_PASSWORD_MISMATCH',
+  'ADMIN_UNMASK_REASON_REQUIRED',
   'INVALID_LOGIN_CREDENTIALS',
   'INVALID_MOVIE_CURSOR',
   'INVALID_ADDRESS',

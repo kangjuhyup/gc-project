@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ApplicationModule } from '@application';
 import { InfrastructureModule } from '@infrastructure';
 import { AdminAuthGuard, MemberAuthGuard } from './guard';
+import { AdminPiiMaskInterceptor } from './interceptor';
 import {
   AdminController,
   AddressController,
@@ -27,6 +28,6 @@ import {
     TheaterController,
     SeatController,
   ],
-  providers: [AdminAuthGuard, MemberAuthGuard],
+  providers: [AdminAuthGuard, AdminPiiMaskInterceptor, MemberAuthGuard],
 })
 export class PresentationModule {}

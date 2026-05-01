@@ -8,6 +8,7 @@ export { IssueTemporaryPasswordCommandHandler } from './issue-temporary-password
 export { LoginAdminCommandHandler } from './login-admin.command-handler';
 export { LoginMemberCommandHandler } from './login-member.command-handler';
 export { LogoutMemberCommandHandler } from './logout-member.command-handler';
+export { RecordAdminAuditCommandHandler } from './record-admin-audit.command-handler';
 export { RequestPhoneVerificationCommandHandler } from './request-phone-verification.command-handler';
 export { RefundPaymentCommandHandler } from './refund-payment.command-handler';
 export { RequestPaymentCommandHandler } from './request-payment.command-handler';

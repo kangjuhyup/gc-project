@@ -9,5 +9,5 @@ export {
   TheaterController,
 } from './http';
 export { AdminAuthGuard, MemberAuthGuard } from './guard';
-export { ApplicationErrorInterceptor } from './interceptor';
+export { AdminPiiMaskInterceptor, ApplicationErrorInterceptor } from './interceptor';
 export { PresentationModule } from './presentation.module';
