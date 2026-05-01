@@ -1,4 +1,5 @@
 import { Logging } from '@kangjuhyup/rvlog';
+import { assertDefined } from '@application/assertions';
 import {
   ConfirmPhoneVerificationCommand,
   PhoneVerificationConfirmedDto,
@@ -16,10 +17,7 @@ export class ConfirmPhoneVerificationCommandHandler {
   @Transactional()
   async execute(command: ConfirmPhoneVerificationCommand): Promise<PhoneVerificationConfirmedDto> {
     const verification = await this.phoneVerificationRepository.findById(command.verificationId);
-
-    if (verification === undefined) {
-      throw new Error('PHONE_VERIFICATION_NOT_FOUND');
-    }
+    assertDefined(verification, () => new Error('PHONE_VERIFICATION_NOT_FOUND'));
 
     const confirmed = verification.confirm({
       phoneNumber: command.phoneNumber,

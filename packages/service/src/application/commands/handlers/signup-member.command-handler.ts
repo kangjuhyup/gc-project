@@ -1,5 +1,6 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { MemberModel, MemberSignedUpLogEvent } from '@domain';
+import { assertDefined, assertTrue } from '@application/assertions';
 import { SignupMemberCommand, SignupMemberResultDto } from '../dto';
 import { Transactional } from '../decorators';
 import type {
@@ -22,23 +23,18 @@ export class SignupMemberCommandHandler {
 
   @Transactional()
   async execute(command: SignupMemberCommand): Promise<SignupMemberResultDto> {
-    if (await this.memberRepository.existsByUserId(command.userId)) {
-      throw new Error('USER_ID_ALREADY_EXISTS');
-    }
+    const userIdAvailable = !(await this.memberRepository.existsByUserId(command.userId));
+    assertTrue(userIdAvailable, () => new Error('USER_ID_ALREADY_EXISTS'));
 
-    if ((await this.memberRepository.findByPhoneNumber(command.phoneNumber)) !== undefined) {
-      throw new Error('PHONE_NUMBER_ALREADY_EXISTS');
-    }
+    const existingPhoneMember = await this.memberRepository.findByPhoneNumber(command.phoneNumber);
+    assertTrue(existingPhoneMember === undefined, () => new Error('PHONE_NUMBER_ALREADY_EXISTS'));
 
     const verification = await this.phoneVerificationRepository.findById(command.phoneVerificationId);
-
-    if (
-      verification === undefined ||
-      verification.phoneNumber !== command.phoneNumber ||
-      verification.status !== 'VERIFIED'
-    ) {
-      throw new Error('PHONE_VERIFICATION_REQUIRED');
-    }
+    assertDefined(verification, () => new Error('PHONE_VERIFICATION_REQUIRED'));
+    assertTrue(
+      verification.phoneNumber === command.phoneNumber && verification.status === 'VERIFIED',
+      () => new Error('PHONE_VERIFICATION_REQUIRED'),
+    );
 
     const passwordHash = await this.passwordHasher.hash(command.password);
 

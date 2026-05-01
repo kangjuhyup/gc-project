@@ -1,4 +1,5 @@
 import { Logging } from '@kangjuhyup/rvlog';
+import { assertDefined } from '@application/assertions';
 import { ReleaseSeatHoldCommand, SeatHoldReleasedDto } from '../dto';
 import { Transactional } from '../decorators';
 import type { SeatHoldCachePort, SeatHoldRepositoryPort } from '../ports';
@@ -13,10 +14,7 @@ export class ReleaseSeatHoldCommandHandler {
   @Transactional()
   async execute(command: ReleaseSeatHoldCommand): Promise<SeatHoldReleasedDto> {
     const hold = await this.seatHoldRepository.findById(command.holdId);
-
-    if (hold === undefined) {
-      throw new Error('SEAT_HOLD_NOT_FOUND');
-    }
+    assertDefined(hold, () => new Error('SEAT_HOLD_NOT_FOUND'));
 
     const released = hold.release({ memberId: command.memberId });
     await this.seatHoldRepository.save(released);

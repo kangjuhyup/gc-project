@@ -1,5 +1,6 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import type { PaymentResultDto } from '@application/commands/dto';
+import { assertDefined } from '@application/assertions';
 import { GetPaymentQuery } from '../dto';
 import type { PaymentQueryPort } from '../ports';
 
@@ -12,10 +13,7 @@ export class GetPaymentQueryHandler {
       paymentId: query.paymentId,
       memberId: query.memberId,
     });
-
-    if (payment === undefined) {
-      throw new Error('PAYMENT_NOT_FOUND');
-    }
+    assertDefined(payment, () => new Error('PAYMENT_NOT_FOUND'));
 
     return payment;
   }

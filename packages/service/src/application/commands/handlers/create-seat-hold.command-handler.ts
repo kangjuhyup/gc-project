@@ -1,5 +1,6 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { SeatHoldModel, SeatHoldStatus } from '@domain';
+import { assertDefined, assertNonEmpty, assertTrue } from '@application/assertions';
 import { CreateSeatHoldCommand, SeatHoldCreatedDto } from '../dto';
 import { Transactional } from '../decorators';
 import type {
@@ -51,10 +52,7 @@ export class CreateSeatHoldCommandHandler {
       );
       for (const hold of holds) {
         const cached = await this.seatHoldCache.hold(hold, this.ttlOptions.ttlSeconds);
-
-        if (!cached) {
-          throw new Error('SEAT_ALREADY_HELD');
-        }
+        assertTrue(cached, () => new Error('SEAT_ALREADY_HELD'));
 
         cachedHolds.push(hold);
       }
@@ -84,30 +82,22 @@ export class CreateSeatHoldCommandHandler {
       seatIds,
       ttlMilliseconds: SEAT_HOLD_LOCK_TTL_MILLISECONDS,
     });
-
-    if (lock === undefined) {
-      throw new Error('SEAT_ALREADY_HELD');
-    }
+    assertDefined(lock, () => new Error('SEAT_ALREADY_HELD'));
 
     return lock;
   }
 
   private uniqueSeatIds(seatIds: string[]): string[] {
     const unique = [...new Set(seatIds)];
-
-    if (unique.length === 0 || unique.length !== seatIds.length) {
-      throw new Error('INVALID_SEAT_HOLD_REQUEST');
-    }
+    assertNonEmpty(unique, () => new Error('INVALID_SEAT_HOLD_REQUEST'));
+    assertTrue(unique.length === seatIds.length, () => new Error('INVALID_SEAT_HOLD_REQUEST'));
 
     return unique;
   }
 
   private async ensureSeatsBelongToScreening(screeningId: string, seatIds: string[]): Promise<void> {
     const matchedSeatIds = await this.seatHoldRepository.findSeatIdsInScreening({ screeningId, seatIds });
-
-    if (matchedSeatIds.length !== seatIds.length) {
-      throw new Error('SEAT_NOT_FOUND');
-    }
+    assertTrue(matchedSeatIds.length === seatIds.length, () => new Error('SEAT_NOT_FOUND'));
   }
 
   private async ensureSeatsAvailable(screeningId: string, seatIds: string[], now: Date): Promise<void> {
@@ -116,9 +106,6 @@ export class CreateSeatHoldCommandHandler {
       seatIds,
       now,
     });
-
-    if (unavailableSeatIds.length > 0) {
-      throw new Error('SEAT_ALREADY_HELD');
-    }
+    assertTrue(unavailableSeatIds.length === 0, () => new Error('SEAT_ALREADY_HELD'));
   }
 }

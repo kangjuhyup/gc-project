@@ -1,4 +1,5 @@
 import { Logging } from '@kangjuhyup/rvlog';
+import { assertDefined, assertTrue } from '@application/assertions';
 import { IssueTemporaryPasswordCommand, TemporaryPasswordIssuedDto } from '../dto';
 import { Transactional } from '../decorators';
 import type {
@@ -22,20 +23,14 @@ export class IssueTemporaryPasswordCommandHandler {
   @Transactional()
   async execute(command: IssueTemporaryPasswordCommand): Promise<TemporaryPasswordIssuedDto> {
     const member = await this.memberRepository.findByUserId(command.userId);
-
-    if (member === undefined) {
-      throw new Error('MEMBER_NOT_FOUND');
-    }
+    assertDefined(member, () => new Error('MEMBER_NOT_FOUND'));
 
     const verification = await this.phoneVerificationRepository.findById(command.phoneVerificationId);
-
-    if (
-      verification === undefined ||
-      verification.phoneNumber !== member.phoneNumber ||
-      verification.status !== 'VERIFIED'
-    ) {
-      throw new Error('PHONE_VERIFICATION_REQUIRED');
-    }
+    assertDefined(verification, () => new Error('PHONE_VERIFICATION_REQUIRED'));
+    assertTrue(
+      verification.phoneNumber === member.phoneNumber && verification.status === 'VERIFIED',
+      () => new Error('PHONE_VERIFICATION_REQUIRED'),
+    );
 
     const temporaryPassword = this.temporaryPasswordGenerator.generate();
     const passwordHash = await this.passwordHasher.hash(temporaryPassword);

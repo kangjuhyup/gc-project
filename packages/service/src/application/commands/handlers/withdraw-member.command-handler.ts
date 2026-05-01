@@ -1,5 +1,6 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { MemberWithdrawnLogEvent } from '@domain';
+import { assertDefined } from '@application/assertions';
 import { MemberWithdrawnDto, WithdrawMemberCommand } from '../dto';
 import { Transactional } from '../decorators';
 import type {
@@ -22,10 +23,7 @@ export class WithdrawMemberCommandHandler {
   @Transactional()
   async execute(command: WithdrawMemberCommand): Promise<MemberWithdrawnDto> {
     const member = await this.memberRepository.findById(command.memberId);
-
-    if (member === undefined) {
-      throw new Error('MEMBER_NOT_FOUND');
-    }
+    assertDefined(member, () => new Error('MEMBER_NOT_FOUND'));
 
     const occurredAt = this.clock.now();
     const saved = await this.memberRepository.save(member.withdraw(occurredAt));

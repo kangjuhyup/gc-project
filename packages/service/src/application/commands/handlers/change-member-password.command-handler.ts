@@ -1,5 +1,6 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { MemberPasswordChangedLogEvent } from '@domain';
+import { assertDefined, assertTrue } from '@application/assertions';
 import { ChangeMemberPasswordCommand, MemberPasswordChangedDto } from '../dto';
 import { Transactional } from '../decorators';
 import type {
@@ -21,19 +22,13 @@ export class ChangeMemberPasswordCommandHandler {
   @Transactional()
   async execute(command: ChangeMemberPasswordCommand): Promise<MemberPasswordChangedDto> {
     const member = await this.memberRepository.findByUserId(command.userId);
-
-    if (member === undefined) {
-      throw new Error('MEMBER_NOT_FOUND');
-    }
+    assertDefined(member, () => new Error('MEMBER_NOT_FOUND'));
 
     const currentPasswordMatched = await this.passwordHasher.verify({
       password: command.currentPassword,
       passwordHash: member.passwordHash,
     });
-
-    if (!currentPasswordMatched) {
-      throw new Error('CURRENT_PASSWORD_MISMATCH');
-    }
+    assertTrue(currentPasswordMatched, () => new Error('CURRENT_PASSWORD_MISMATCH'));
 
     const newPasswordHash = await this.passwordHasher.hash(command.newPassword);
     const occurredAt = this.clock.now();
