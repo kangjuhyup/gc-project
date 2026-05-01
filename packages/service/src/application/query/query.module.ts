@@ -3,6 +3,7 @@ import {
   CheckUserIdAvailabilityQuery,
   GetPaymentQuery,
   GetHealthQuery,
+  ListAdminMembersQuery,
   ListAdminMoviesQuery,
   ListMoviesQuery,
   ListMyReservationsQuery,
@@ -32,6 +33,7 @@ import {
   CheckUserIdAvailabilityQueryHandler,
   GetPaymentQueryHandler,
   GetHealthQueryHandler,
+  ListAdminMembersQueryHandler,
   ListAdminMoviesQueryHandler,
   ListMoviesQueryHandler,
   ListMyReservationsQueryHandler,
@@ -53,6 +55,11 @@ import {
       provide: SearchAddressesQueryHandler,
       useFactory: (addressSearch: AddressSearchPort) => new SearchAddressesQueryHandler(addressSearch),
       inject: [ADDRESS_SEARCH],
+    },
+    {
+      provide: ListAdminMembersQueryHandler,
+      useFactory: (memberQuery: MemberQueryPort) => new ListAdminMembersQueryHandler(memberQuery),
+      inject: [MEMBER_QUERY],
     },
     {
       provide: ListAdminMoviesQueryHandler,
@@ -89,6 +96,7 @@ import {
       useFactory: (
         getHealthQueryHandler: GetHealthQueryHandler,
         checkUserIdAvailabilityQueryHandler: CheckUserIdAvailabilityQueryHandler,
+        listAdminMembersQueryHandler: ListAdminMembersQueryHandler,
         searchAddressesQueryHandler: SearchAddressesQueryHandler,
         listMoviesQueryHandler: ListMoviesQueryHandler,
         listAdminMoviesQueryHandler: ListAdminMoviesQueryHandler,
@@ -99,6 +107,7 @@ import {
       ) =>
         QueryBus.of([
           { query: CheckUserIdAvailabilityQuery, handler: checkUserIdAvailabilityQueryHandler },
+          { query: ListAdminMembersQuery, handler: listAdminMembersQueryHandler },
           { query: SearchAddressesQuery, handler: searchAddressesQueryHandler },
           { query: ListMoviesQuery, handler: listMoviesQueryHandler },
           { query: ListAdminMoviesQuery, handler: listAdminMoviesQueryHandler },
@@ -111,6 +120,7 @@ import {
       inject: [
         GetHealthQueryHandler,
         CheckUserIdAvailabilityQueryHandler,
+        ListAdminMembersQueryHandler,
         SearchAddressesQueryHandler,
         ListMoviesQueryHandler,
         ListAdminMoviesQueryHandler,

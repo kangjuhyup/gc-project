@@ -50,6 +50,14 @@ describe('ApplicationErrorInterceptor', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('잘못된 관리자 회원 목록 커서를 bad request 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('INVALID_MEMBER_CURSOR')) as never)),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('관리자 로그인 실패 에러를 unauthorized 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 

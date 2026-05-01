@@ -9,9 +9,11 @@ import {
 } from '@nestjs/swagger';
 import {
   AdminMovieListResultDto,
+  AdminMemberListResultDto,
   AdminProfileDto,
   CommandBus,
   CreateMovieCommand,
+  ListAdminMembersQuery,
   ListAdminMoviesQuery,
   LoginAdminCommand,
   LoginAdminResultDto,
@@ -19,10 +21,16 @@ import {
   QueryBus,
 } from '@application';
 import { MovieRatingType } from '@domain';
+import { MemberStatusType } from '@domain';
 import { AuthenticatedAdminDto } from '@application/query/dto';
 import { Admin } from '@presentation/decorator';
 import { AdminAuthGuard } from '@presentation/guard';
-import { CreateMovieRequestDto, ListAdminMoviesRequestDto, LoginAdminRequestDto } from '../dto';
+import {
+  CreateMovieRequestDto,
+  ListAdminMembersRequestDto,
+  ListAdminMoviesRequestDto,
+  LoginAdminRequestDto,
+} from '../dto';
 
 @ApiTags('Admin')
 @Controller()
@@ -104,6 +112,28 @@ export class AdminController {
       ListAdminMoviesQuery.of({
         limit: request.limit,
         keyword: request.keyword?.trim() || undefined,
+        cursor: request.cursor,
+      }),
+    );
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '관리자 회원 목록 조회',
+    description: '관리자가 회원 상태와 기본 정보를 커서 기반으로 조회합니다.',
+  })
+  @ApiOkResponse({ type: AdminMemberListResultDto, description: '관리자 회원 목록' })
+  @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
+  @UseGuards(AdminAuthGuard)
+  @Get('/admin/members')
+  listMembers(@Query() query: ListAdminMembersRequestDto) {
+    const request = ListAdminMembersRequestDto.of(query);
+
+    return this.queryBus.execute(
+      ListAdminMembersQuery.of({
+        limit: request.limit,
+        keyword: request.keyword?.trim() || undefined,
+        status: request.status as MemberStatusType | undefined,
         cursor: request.cursor,
       }),
     );

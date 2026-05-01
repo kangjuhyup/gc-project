@@ -87,4 +87,28 @@ describe('AdminController', () => {
       hasNext: false,
     });
   });
+
+  it('관리자 회원 목록 조회 요청을 query bus에 위임한다', async () => {
+    const commandBus = { execute: vi.fn() };
+    const queryBus = {
+      execute: vi.fn().mockResolvedValue({
+        items: [],
+        hasNext: false,
+      }),
+    };
+    const controller = new AdminController(commandBus as never, queryBus as never);
+
+    const result = await controller.listMembers({
+      limit: 10,
+      keyword: ' member ',
+      status: 'ACTIVE',
+      cursor: 'next-cursor',
+    } as never);
+
+    expect(queryBus.execute).toHaveBeenCalledOnce();
+    expect(result).toEqual({
+      items: [],
+      hasNext: false,
+    });
+  });
 });

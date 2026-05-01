@@ -1,3 +1,4 @@
+export { AdminMemberListResultDto, AdminMemberSummaryDto } from './admin-member-list-result.dto';
 export { AdminProfileDto } from './admin-profile.dto';
 export { AdminMovieListResultDto, AdminMovieSummaryDto } from './admin-movie-list-result.dto';
 export { AuthenticatedAdminDto } from './authenticated-admin.dto';
@@ -9,6 +10,7 @@ export { GetHealthQuery } from './get-health.query';
 export { GetPaymentQuery } from './get-payment.query';
 export { HealthStatusDto } from './health-status.dto';
 export { ListMoviesQuery } from './list-movies.query';
+export { ListAdminMembersQuery } from './list-admin-members.query';
 export { ListAdminMoviesQuery } from './list-admin-movies.query';
 export { ListMyReservationsQuery } from './list-my-reservations.query';
 export { ListScreeningSeatsQuery } from './list-screening-seats.query';

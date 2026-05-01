@@ -7,6 +7,7 @@ describe('CheckUserIdAvailabilityQueryHandler', () => {
   it('회원 아이디가 이미 존재하면 사용 불가능으로 응답한다', async () => {
     const memberQuery = {
       existsByUserId: vi.fn().mockResolvedValue(true),
+      listAdminMembers: vi.fn(),
     } satisfies MemberQueryPort;
     const handler = new CheckUserIdAvailabilityQueryHandler(memberQuery);
 
@@ -18,6 +19,7 @@ describe('CheckUserIdAvailabilityQueryHandler', () => {
   it('회원 아이디가 존재하지 않으면 사용 가능으로 응답한다', async () => {
     const memberQuery = {
       existsByUserId: vi.fn().mockResolvedValue(false),
+      listAdminMembers: vi.fn(),
     } satisfies MemberQueryPort;
     const handler = new CheckUserIdAvailabilityQueryHandler(memberQuery);
 
