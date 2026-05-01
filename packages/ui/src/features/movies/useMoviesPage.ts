@@ -6,9 +6,10 @@ import { demoMovies, filterMoviesForKeyword, groupMoviesByTimeline } from './mov
 
 export function useMoviesPage() {
   const [keyword, setKeyword] = useState('');
+  const [currentTime] = useState(() => new Date().toISOString());
   const moviesQuery = useQuery({
-    queryKey: queryKeys.movies.list(keyword),
-    queryFn: () => fetchMovies(keyword),
+    queryKey: queryKeys.movies.list(keyword, currentTime),
+    queryFn: () => fetchMovies({ keyword, time: currentTime }),
     retry: 1,
   });
   const movies = moviesQuery.data?.items.length ? moviesQuery.data.items : demoMovies;

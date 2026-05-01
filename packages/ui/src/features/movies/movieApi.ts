@@ -34,12 +34,18 @@ export interface MovieListResponse {
 
 type MovieListApiResponse = MovieListResponse | MovieSummary[];
 
-export async function fetchMovies(keyword: string) {
+export interface FetchMoviesParams {
+  keyword: string;
+  time: string;
+}
+
+export async function fetchMovies(params: FetchMoviesParams) {
   const searchParams = new URLSearchParams();
   searchParams.set('limit', '20');
+  searchParams.set('time', params.time);
 
-  if (keyword.trim()) {
-    searchParams.set('keyword', keyword.trim());
+  if (params.keyword.trim()) {
+    searchParams.set('keyword', params.keyword.trim());
   }
 
   const queryString = searchParams.toString();

@@ -277,6 +277,40 @@ h2 {
   color: #52616b;
 }
 
+.auth-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.auth-dialog {
+  width: min(100%, 360px);
+  padding: 24px;
+  border: 1px solid #e4ece9;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+}
+
+.auth-dialog h2 {
+  margin: 6px 0 10px;
+  font-size: 1.2rem;
+}
+
+.auth-dialog p:last-of-type {
+  margin: 0 0 20px;
+  color: #52616b;
+  line-height: 1.6;
+}
+
+.auth-dialog .button {
+  width: 100%;
+}
+
 .form-actions {
   display: flex;
   align-items: center;

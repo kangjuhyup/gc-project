@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { clearStoredAccessToken, setStoredAccessToken } from '@/lib/apiClient';
 import { loginWithPassword } from '@/features/login/loginApi';
-import { logoutMember } from '@/features/auth/authApi';
+import { logoutMember, refreshMemberToken } from '@/features/auth/authApi';
 import { withdrawMember } from '@/features/profile/profileApi';
 
 describe('auth api', () => {
@@ -71,6 +71,37 @@ describe('auth api', () => {
         headers: expect.objectContaining({
           authorization: 'Bearer member:7:token',
         }),
+      }),
+    );
+  });
+
+  it('refresh token으로 토큰 재발급 요청을 전송한다', async () => {
+    vi.stubGlobal('crypto', {
+      randomUUID: () => 'correlation-refresh',
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          memberId: '7',
+          userId: 'movie_user',
+          accessToken: 'new-access-token',
+          accessTokenExpiresAt: '2026-04-29T00:15:00.000Z',
+          refreshToken: 'new-refresh-token',
+          refreshTokenExpiresAt: '2026-05-13T00:00:00.000Z',
+        }),
+        { status: 201 },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const refreshed = await refreshMemberToken('old-refresh-token');
+
+    expect(refreshed.accessToken).toBe('new-access-token');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:3000/members/token/refresh',
+      expect.objectContaining({
+        body: JSON.stringify({ refreshToken: 'old-refresh-token' }),
+        method: 'POST',
       }),
     );
   });
