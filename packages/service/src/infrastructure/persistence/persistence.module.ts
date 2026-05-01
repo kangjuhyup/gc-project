@@ -1,4 +1,10 @@
 import { Module } from '@nestjs/common';
+import {
+  DefaultLogger,
+  type Logger,
+  type LoggerNamespace,
+  type LogContext,
+} from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
@@ -50,29 +56,61 @@ import { Migration202604300002SeedTempMovieData } from './migrations/Migration20
 import { Migration202605010001CreateAdminAudit } from './migrations/Migration202605010001CreateAdminAudit';
 import { ENV_KEY } from '../config';
 
+class ThresholdMikroOrmLogger implements Logger {
+  constructor(private readonly threshold: 'WARN' | 'ERROR') {}
+
+  log(): void {}
+
+  warn(namespace: LoggerNamespace | string, message: string, _context?: LogContext): void {
+    if (this.threshold === 'WARN') {
+      console.warn(`[${namespace}] ${message}`);
+    }
+  }
+
+  logQuery(): void {}
+
+  setDebugMode(): void {}
+
+  isEnabled(): boolean {
+    return false;
+  }
+
+  error(namespace: LoggerNamespace | string, message: string, _context?: LogContext): void {
+    console.error(`[${namespace}] ${message}`);
+  }
+}
+
 @Module({
   imports: [
     MikroOrmModule.forRootAsync({
       driver: PostgreSqlDriver,
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        driver: PostgreSqlDriver,
-        entities: persistenceEntities,
-        extensions: [Migrator],
-        host: configService.getOrThrow<string>(ENV_KEY.DB_HOST),
-        port: configService.getOrThrow<number>(ENV_KEY.DB_PORT),
-        dbName: configService.getOrThrow<string>(ENV_KEY.DB_NAME),
-        user: configService.getOrThrow<string>(ENV_KEY.DB_USER),
-        password: configService.getOrThrow<string>(ENV_KEY.DB_PASSWORD),
-        debug: configService.getOrThrow<string>(ENV_KEY.NODE_ENV) !== 'production',
-        migrations: {
-          migrationsList: [
-            { name: 'Migration202604300001CreateTables', class: Migration202604300001CreateTables },
-            { name: 'Migration202604300002SeedTempMovieData', class: Migration202604300002SeedTempMovieData },
-            { name: 'Migration202605010001CreateAdminAudit', class: Migration202605010001CreateAdminAudit },
-          ],
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const nodeEnv = configService.getOrThrow<string>(ENV_KEY.NODE_ENV);
+        const logLevel = configService.getOrThrow<string>(ENV_KEY.LOG_LEVEL);
+
+        return {
+          driver: PostgreSqlDriver,
+          entities: persistenceEntities,
+          extensions: [Migrator],
+          host: configService.getOrThrow<string>(ENV_KEY.DB_HOST),
+          port: configService.getOrThrow<number>(ENV_KEY.DB_PORT),
+          dbName: configService.getOrThrow<string>(ENV_KEY.DB_NAME),
+          user: configService.getOrThrow<string>(ENV_KEY.DB_USER),
+          password: configService.getOrThrow<string>(ENV_KEY.DB_PASSWORD),
+          debug: !['production', 'test'].includes(nodeEnv),
+          loggerFactory: ['WARN', 'ERROR'].includes(logLevel)
+            ? () => new ThresholdMikroOrmLogger(logLevel as 'WARN' | 'ERROR')
+            : DefaultLogger.create,
+          migrations: {
+            migrationsList: [
+              { name: 'Migration202604300001CreateTables', class: Migration202604300001CreateTables },
+              { name: 'Migration202604300002SeedTempMovieData', class: Migration202604300002SeedTempMovieData },
+              { name: 'Migration202605010001CreateAdminAudit', class: Migration202605010001CreateAdminAudit },
+            ],
+          },
+        };
+      },
     }),
   ],
   providers: [

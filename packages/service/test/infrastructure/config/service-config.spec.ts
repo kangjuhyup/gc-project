@@ -31,8 +31,26 @@ describe('service config validation', () => {
     });
 
     expect(config.NODE_ENV).toBe('development');
+    expect(config.LOG_LEVEL).toBe('INFO');
     expect(config.DB_HOST).toBe('localhost');
     expect(config.DB_PORT).toBe(5432);
+  });
+
+  it('로그 레벨은 허용된 값만 사용할 수 있다', () => {
+    const config = validateApiConfig({
+      ...baseConfig,
+      PORT: '3000',
+      LOG_LEVEL: 'ERROR',
+    });
+
+    expect(config.LOG_LEVEL).toBe('ERROR');
+    expect(() =>
+      validateApiConfig({
+        ...baseConfig,
+        PORT: '3000',
+        LOG_LEVEL: 'TRACE',
+      }),
+    ).toThrow(/LOG_LEVEL/);
   });
 
   it('필수 config가 없으면 서비스 부팅 전에 명시적으로 실패한다', () => {

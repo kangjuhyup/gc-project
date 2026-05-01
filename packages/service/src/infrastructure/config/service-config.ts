@@ -13,6 +13,7 @@ export const commonEnvSpec = {
   NODE_ENV: {
     joi: Joi.string().valid('development', 'production', 'test').default('development'),
   },
+  LOG_LEVEL: { joi: Joi.string().valid('DEBUG', 'INFO', 'WARN', 'ERROR').default('INFO') },
   DB_HOST: { joi: Joi.string().trim().required() },
   DB_PORT: { joi: Joi.number().integer().positive().required() },
   DB_NAME: { joi: Joi.string().trim().required() },

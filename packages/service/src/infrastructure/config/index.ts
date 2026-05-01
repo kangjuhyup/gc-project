@@ -1,4 +1,5 @@
 export { EnvironmentAdapterFlag } from './environment-adapter-flag';
+export { resolveLogLevel } from './log-level.config';
 export { ServiceConfigModule } from './service-config.module';
 export {
   ENV_KEY,

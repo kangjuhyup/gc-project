@@ -152,7 +152,9 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
   }
 
   private buildScreeningWhere(query: ListMoviesQuery): FilterQuery<ScreeningEntity> {
-    const where: FilterQuery<ScreeningEntity> = {};
+    const where: FilterQuery<ScreeningEntity> = {
+      startAt: { $gte: query.time },
+    };
     const normalizedKeyword = query.keyword?.trim();
 
     if (normalizedKeyword) {

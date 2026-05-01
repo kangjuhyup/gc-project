@@ -1,7 +1,7 @@
 import { LogLevel } from '@kangjuhyup/rvlog';
 import { RvlogNestModule } from '@kangjuhyup/rvlog-nest';
 import { Module } from '@nestjs/common';
-import { ServiceConfigModule } from '@infrastructure/config';
+import { resolveLogLevel, ServiceConfigModule } from '@infrastructure/config';
 import { OutboxWorkerModule } from '@infrastructure/outbox';
 
 @Module({
@@ -9,7 +9,7 @@ import { OutboxWorkerModule } from '@infrastructure/outbox';
     ServiceConfigModule.forWorker(),
     RvlogNestModule.forRoot({
       logger: {
-        minLevel: LogLevel.WARN,
+        minLevel: resolveLogLevel(process.env.LOG_LEVEL, LogLevel.WARN),
         pretty: true,
       },
     }),

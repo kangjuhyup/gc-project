@@ -1,8 +1,7 @@
-import { LogLevel } from '@kangjuhyup/rvlog';
 import { RvlogNestModule } from '@kangjuhyup/rvlog-nest';
 import { Module } from '@nestjs/common';
 import { ApplicationModule } from '@application';
-import { ServiceConfigModule } from '@infrastructure/config';
+import { resolveLogLevel, ServiceConfigModule } from '@infrastructure/config';
 import { PresentationModule } from '@presentation';
 
 @Module({
@@ -10,7 +9,7 @@ import { PresentationModule } from '@presentation';
     ServiceConfigModule.forApi(),
     RvlogNestModule.forRoot({
       logger: {
-        minLevel: LogLevel.INFO,
+        minLevel: resolveLogLevel(process.env.LOG_LEVEL),
         pretty: true,
       },
       http: {

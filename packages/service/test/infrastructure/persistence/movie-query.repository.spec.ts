@@ -30,6 +30,7 @@ describe('MikroOrmMovieQueryRepository', () => {
     );
 
     expect(entityManager.find).toHaveBeenCalledWith(expect.any(Function), {
+      startAt: { $gte: new Date('2026-04-28T01:00:00.000Z') },
       movie: {
         $or: [
           { title: { $ilike: '%파묘%' } },

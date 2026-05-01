@@ -56,6 +56,7 @@ export class ServiceE2eContext {
 
   static async create(): Promise<ServiceE2eContext> {
     process.env.NODE_ENV = 'test';
+    process.env.LOG_LEVEL = 'ERROR';
     process.env.PORT = '3000';
     process.env.DB_HOST = 'localhost';
     process.env.DB_PORT = '55432';
