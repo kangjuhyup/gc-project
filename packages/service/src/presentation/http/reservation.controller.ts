@@ -14,15 +14,22 @@ import {
 import {
   CancelReservationCommand,
   CommandBus,
+  GetMyReservationQuery,
   ListMyReservationsQuery,
   QueryBus,
   ReservationCanceledDto,
+  ReservationDetailDto,
   ReservationListResultDto,
 } from '@application';
 import { AuthenticatedUserDto } from '@application/query/dto';
 import { User } from '@presentation/decorator';
 import { MemberAuthGuard } from '@presentation/guard';
-import { CancelReservationParamRequestDto, CancelReservationRequestDto, ListMyReservationsRequestDto } from '../dto';
+import {
+  CancelReservationParamRequestDto,
+  CancelReservationRequestDto,
+  GetMyReservationRequestDto,
+  ListMyReservationsRequestDto,
+} from '../dto';
 
 @ApiTags('Reservations')
 @Controller('/reservations')
@@ -48,6 +55,26 @@ export class ReservationController {
         memberId: user.memberId,
         limit: request.limit,
         cursor: request.cursor,
+      }),
+    );
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '내 예매 상세 조회',
+    description: '인증된 회원 본인의 예매번호, 영화, 상영시간, 좌석, 결제금액, 상태를 조회합니다.',
+  })
+  @ApiOkResponse({ type: ReservationDetailDto, description: '내 예매 상세' })
+  @ApiNotFoundResponse({ description: '본인 예매를 찾을 수 없는 경우' })
+  @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
+  @UseGuards(MemberAuthGuard)
+  @Get('/:reservationId')
+  getMine(@Param() params: GetMyReservationRequestDto, @User() user: AuthenticatedUserDto) {
+    const request = GetMyReservationRequestDto.of(params);
+    return this.queryBus.execute(
+      GetMyReservationQuery.of({
+        memberId: user.memberId,
+        reservationId: request.reservationId,
       }),
     );
   }

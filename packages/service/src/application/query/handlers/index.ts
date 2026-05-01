@@ -1,5 +1,6 @@
 export { CheckUserIdAvailabilityQueryHandler } from './check-user-id-availability.query-handler';
 export { GetHealthQueryHandler } from './get-health.query-handler';
+export { GetMyReservationQueryHandler } from './get-my-reservation.query-handler';
 export { GetPaymentQueryHandler } from './get-payment.query-handler';
 export { ListAdminMembersQueryHandler } from './list-admin-members.query-handler';
 export { ListMoviesQueryHandler } from './list-movies.query-handler';

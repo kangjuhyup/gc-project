@@ -56,6 +56,52 @@ describe('내 예매 목록 조회 e2e', () => {
       seats: [expect.objectContaining({ id: seats[0].id })],
     }));
   });
+
+  it('내 예매 상세에서 예매번호, 영화, 상영시간, 좌석, 결제금액, 상태를 조회한다', async () => {
+    const member = await e2e.signupAndLogin('my_res_detail');
+    const otherMember = await e2e.signupAndLogin('my_res_other');
+    const screeningId = await e2e.firstScreeningId();
+    const [seat] = await e2e.availableSeats(screeningId, 1);
+
+    await createApprovedReservation(e2e, member, screeningId, seat, 'pay-my-res-detail-0001');
+
+    const reservations = await e2e.get('/reservations?limit=1', e2e.auth(member));
+    expect(reservations.status).toBe(200);
+    const reservation = (reservations.body.items as Array<Record<string, unknown>>)[0];
+    expect(reservation).toBeDefined();
+
+    const detail = await e2e.get(`/reservations/${reservation.id}`, e2e.auth(member));
+    expect(detail.status).toBe(200);
+    expect(detail.body).toEqual(expect.objectContaining({
+      id: reservation.id,
+      reservationNumber: expect.stringMatching(/^R[0-9]+$/),
+      status: 'CONFIRMED',
+      totalPrice: 15000,
+      paymentAmount: 15000,
+      movie: expect.objectContaining({
+        title: expect.any(String),
+      }),
+      screening: expect.objectContaining({
+        id: screeningId,
+        startAt: expect.any(String),
+        endAt: expect.any(String),
+      }),
+      seats: [
+        expect.objectContaining({
+          id: seat.id,
+          row: seat.row,
+          col: seat.col,
+        }),
+      ],
+      payment: expect.objectContaining({
+        amount: 15000,
+        status: 'APPROVED',
+      }),
+    }));
+
+    const otherMemberDetail = await e2e.get(`/reservations/${reservation.id}`, e2e.auth(otherMember));
+    expect(otherMemberDetail.status).toBe(404);
+  });
 });
 
 async function createApprovedReservation(

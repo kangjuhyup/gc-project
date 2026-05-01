@@ -79,6 +79,7 @@ export {
   CheckUserIdAvailabilityQuery,
   CheckUserIdAvailabilityResultDto,
   GetHealthQuery,
+  GetMyReservationQuery,
   GetPaymentQuery,
   HealthStatusDto,
   ListAdminMembersQuery,
@@ -91,6 +92,7 @@ export {
   MovieScreeningSummaryDto,
   MovieSummaryDto,
   MovieTheaterSummaryDto,
+  ReservationDetailDto,
   ReservationListResultDto,
   ReservationMovieSummaryDto,
   ReservationPaymentSummaryDto,
@@ -107,6 +109,7 @@ export {
 export {
   CheckUserIdAvailabilityQueryHandler,
   GetHealthQueryHandler,
+  GetMyReservationQueryHandler,
   GetPaymentQueryHandler,
   ListAdminMembersQueryHandler,
   ListAdminMoviesQueryHandler,

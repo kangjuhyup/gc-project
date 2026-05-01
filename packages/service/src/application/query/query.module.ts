@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import {
   CheckUserIdAvailabilityQuery,
+  GetMyReservationQuery,
   GetPaymentQuery,
   GetHealthQuery,
   ListAdminMembersQuery,
@@ -33,6 +34,7 @@ import {
   CheckUserIdAvailabilityQueryHandler,
   GetPaymentQueryHandler,
   GetHealthQueryHandler,
+  GetMyReservationQueryHandler,
   ListAdminMembersQueryHandler,
   ListAdminMoviesQueryHandler,
   ListMoviesQueryHandler,
@@ -87,6 +89,11 @@ import {
       inject: [PAYMENT_QUERY],
     },
     {
+      provide: GetMyReservationQueryHandler,
+      useFactory: (reservationQuery: ReservationQueryPort) => new GetMyReservationQueryHandler(reservationQuery),
+      inject: [RESERVATION_QUERY],
+    },
+    {
       provide: ListMyReservationsQueryHandler,
       useFactory: (reservationQuery: ReservationQueryPort) => new ListMyReservationsQueryHandler(reservationQuery),
       inject: [RESERVATION_QUERY],
@@ -103,6 +110,7 @@ import {
         listTheatersQueryHandler: ListTheatersQueryHandler,
         listScreeningSeatsQueryHandler: ListScreeningSeatsQueryHandler,
         getPaymentQueryHandler: GetPaymentQueryHandler,
+        getMyReservationQueryHandler: GetMyReservationQueryHandler,
         listMyReservationsQueryHandler: ListMyReservationsQueryHandler,
       ) =>
         QueryBus.of([
@@ -114,6 +122,7 @@ import {
           { query: ListTheatersQuery, handler: listTheatersQueryHandler },
           { query: ListScreeningSeatsQuery, handler: listScreeningSeatsQueryHandler },
           { query: GetPaymentQuery, handler: getPaymentQueryHandler },
+          { query: GetMyReservationQuery, handler: getMyReservationQueryHandler },
           { query: ListMyReservationsQuery, handler: listMyReservationsQueryHandler },
           { query: GetHealthQuery, handler: getHealthQueryHandler },
         ]),
@@ -127,6 +136,7 @@ import {
         ListTheatersQueryHandler,
         ListScreeningSeatsQueryHandler,
         GetPaymentQueryHandler,
+        GetMyReservationQueryHandler,
         ListMyReservationsQueryHandler,
       ],
     },

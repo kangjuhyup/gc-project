@@ -7,6 +7,7 @@ export { AuthenticatedUserDto } from './authenticated-user.dto';
 export { CheckUserIdAvailabilityQuery } from './check-user-id-availability.query';
 export { CheckUserIdAvailabilityResultDto } from './check-user-id-availability-result.dto';
 export { GetHealthQuery } from './get-health.query';
+export { GetMyReservationQuery } from './get-my-reservation.query';
 export { GetPaymentQuery } from './get-payment.query';
 export { HealthStatusDto } from './health-status.dto';
 export { ListMoviesQuery } from './list-movies.query';
@@ -23,6 +24,7 @@ export {
 } from './movie-list-result.dto';
 export { SearchAddressesQuery } from './search-addresses.query';
 export {
+  ReservationDetailDto,
   ReservationListResultDto,
   ReservationMovieSummaryDto,
   ReservationPaymentSummaryDto,

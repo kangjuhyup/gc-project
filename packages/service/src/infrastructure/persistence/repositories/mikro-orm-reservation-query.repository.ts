@@ -3,7 +3,9 @@ import type { FilterQuery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import {
+  GetMyReservationQuery,
   ListMyReservationsQuery,
+  ReservationDetailDto,
   ReservationListResultDto,
   ReservationMovieSummaryDto,
   ReservationPaymentSummaryDto,
@@ -30,6 +32,30 @@ interface ReservationCursor {
 @Logging
 export class MikroOrmReservationQueryRepository implements ReservationQueryPort {
   constructor(private readonly entityManager: EntityManager) {}
+
+  async getMyReservation(query: GetMyReservationQuery): Promise<ReservationDetailDto | undefined> {
+    const reservation = await this.entityManager.findOne(ReservationEntity, {
+      id: query.reservationId,
+      member: query.memberId,
+    }, {
+      populate: [
+        'screening.movie.images',
+        'screening.screen.theater',
+        'reservationSeats.seat',
+      ],
+    });
+
+    if (reservation === null) {
+      return undefined;
+    }
+
+    const payment = await this.entityManager.findOne(PaymentEntity, {
+      member: query.memberId,
+      reservation: query.reservationId,
+    }, { orderBy: { createdAt: 'DESC', id: 'DESC' } });
+
+    return this.toDetailDto({ reservation, payment: payment ?? undefined });
+  }
 
   async listMyReservations(query: ListMyReservationsQuery): Promise<ReservationListResultDto> {
     const cursor = this.decodeCursor(query.cursor);
@@ -97,6 +123,61 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     ];
 
     return where;
+  }
+
+  @NoLog
+  private toDetailDto(item: ReservationListItem): ReservationDetailDto {
+    const { reservation, payment } = item;
+    const screening = reservation.screening;
+    const movie = screening.movie;
+    const screen = screening.screen;
+    const theater = screen.theater;
+
+    return ReservationDetailDto.of({
+      id: reservation.id,
+      reservationNumber: reservation.reservationNumber,
+      status: reservation.status as ReservationStatusType,
+      totalPrice: reservation.totalPrice,
+      paymentAmount: payment?.amount,
+      createdAt: this.toIsoString(reservation.createdAt),
+      canceledAt: this.toOptionalIsoString(reservation.canceledAt),
+      cancelReason: reservation.cancelReason,
+      movie: ReservationMovieSummaryDto.of({
+        id: movie.id,
+        title: movie.title,
+        rating: movie.rating,
+        posterUrl: this.posterUrl(movie),
+      }),
+      screening: ReservationScreeningSummaryDto.of({
+        id: screening.id,
+        screenName: screen.name,
+        startAt: this.toIsoString(screening.startAt),
+        endAt: this.toIsoString(screening.endAt),
+        theater: ReservationTheaterSummaryDto.of({
+          id: theater.id,
+          name: theater.name,
+          address: theater.address,
+        }),
+      }),
+      seats: reservation.reservationSeats.getItems().map((reservationSeat) => reservationSeat.seat)
+        .sort((left, right) => this.compareSeat(left, right))
+        .map((seat) =>
+        ReservationSeatSummaryDto.of({
+          id: seat.id,
+          row: seat.seatRow,
+          col: seat.seatCol,
+          type: seat.seatType ?? 'NORMAL',
+        }),
+      ),
+      payment: payment === undefined
+        ? undefined
+        : ReservationPaymentSummaryDto.of({
+            id: payment.id,
+            status: payment.status as PaymentStatusType,
+            amount: payment.amount,
+            providerPaymentId: payment.providerPaymentId,
+          }),
+    });
   }
 
   @NoLog

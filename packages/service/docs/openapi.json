@@ -772,6 +772,51 @@
         ]
       }
     },
+    "/reservations/{reservationId}": {
+      "get": {
+        "description": "인증된 회원 본인의 예매번호, 영화, 상영시간, 좌석, 결제금액, 상태를 조회합니다.",
+        "operationId": "ReservationController_getMine",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "required": true,
+            "in": "path",
+            "description": "조회할 예매 ID",
+            "schema": {
+              "example": "5001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "내 예매 상세",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authorization 검증에 실패한 경우"
+          },
+          "404": {
+            "description": "본인 예매를 찾을 수 없는 경우"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "내 예매 상세 조회",
+        "tags": [
+          "Reservations"
+        ]
+      }
+    },
     "/reservations/{reservationId}/cancel": {
       "post": {
         "description": "인증된 회원 본인이 결제 완료한 예매를 취소합니다. 현재 결제 1건은 예약 1건과 연결되므로 예매 전체를 취소하고 환불 요청 이벤트를 outbox에 기록합니다.",
@@ -2263,6 +2308,98 @@
         "required": [
           "items",
           "hasNext"
+        ]
+      },
+      "ReservationDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "5001",
+            "description": "예매 ID"
+          },
+          "reservationNumber": {
+            "type": "string",
+            "example": "R00000000000005001",
+            "description": "예매 번호"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "CANCELED",
+              "EXPIRED"
+            ],
+            "example": "CONFIRMED",
+            "description": "예매 상태"
+          },
+          "totalPrice": {
+            "type": "number",
+            "example": 15000,
+            "description": "총 결제 금액"
+          },
+          "paymentAmount": {
+            "type": "number",
+            "example": 15000,
+            "description": "연결된 결제 금액"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-04-30T10:20:00.000Z",
+            "description": "예매 생성 시각"
+          },
+          "canceledAt": {
+            "type": "string",
+            "example": "2026-04-30T10:30:00.000Z",
+            "description": "예매 취소 시각"
+          },
+          "cancelReason": {
+            "type": "string",
+            "example": "user request",
+            "description": "예매 취소 사유"
+          },
+          "movie": {
+            "description": "영화 정보",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReservationMovieSummaryDto"
+              }
+            ]
+          },
+          "screening": {
+            "description": "상영 정보",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReservationScreeningSummaryDto"
+              }
+            ]
+          },
+          "seats": {
+            "description": "예매 좌석 목록",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReservationSeatSummaryDto"
+            }
+          },
+          "payment": {
+            "description": "연결된 결제 정보",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReservationPaymentSummaryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reservationNumber",
+          "status",
+          "totalPrice",
+          "createdAt",
+          "movie",
+          "screening",
+          "seats"
         ]
       },
       "CancelReservationRequestDto": {

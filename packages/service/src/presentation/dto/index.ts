@@ -15,6 +15,7 @@ export { ListTheatersRequestDto } from './list-theaters.request.dto';
 export { LoginAdminRequestDto } from './login-admin.request.dto';
 export { LoginMemberRequestDto } from './login-member.request.dto';
 export { GetPaymentRequestDto } from './get-payment.request.dto';
+export { GetMyReservationRequestDto } from './get-my-reservation.request.dto';
 export { HandlePaymentCallbackRequestDto } from './handle-payment-callback.request.dto';
 export { RequestPhoneVerificationRequestDto } from './request-phone-verification.request.dto';
 export { RefundPaymentRequestDto } from './refund-payment.request.dto';

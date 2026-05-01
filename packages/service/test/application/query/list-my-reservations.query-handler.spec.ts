@@ -11,6 +11,7 @@ describe('ListMyReservationsQueryHandler', () => {
     });
     const reservationQuery: ReservationQueryPort = {
       listMyReservations: vi.fn(async () => reservations),
+      getMyReservation: vi.fn(),
     };
     const handler = new ListMyReservationsQueryHandler(reservationQuery);
 

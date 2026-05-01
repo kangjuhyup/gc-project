@@ -225,6 +225,89 @@ export class ReservationSummaryDto {
   }
 }
 
+export class ReservationDetailDto {
+  @ApiProperty({ example: '5001', description: '예매 ID' })
+  readonly id: string;
+
+  @ApiProperty({ example: 'R00000000000005001', description: '예매 번호' })
+  readonly reservationNumber: string;
+
+  @ApiProperty({ enum: Object.values(ReservationStatus), example: ReservationStatus.CONFIRMED, description: '예매 상태' })
+  readonly status: ReservationStatusType;
+
+  @ApiProperty({ example: 15000, description: '총 결제 금액' })
+  readonly totalPrice: number;
+
+  @ApiPropertyOptional({ example: 15000, description: '연결된 결제 금액' })
+  readonly paymentAmount?: number;
+
+  @ApiProperty({ example: '2026-04-30T10:20:00.000Z', description: '예매 생성 시각' })
+  readonly createdAt: string;
+
+  @ApiPropertyOptional({ example: '2026-04-30T10:30:00.000Z', description: '예매 취소 시각' })
+  readonly canceledAt?: string;
+
+  @ApiPropertyOptional({ example: 'user request', description: '예매 취소 사유' })
+  readonly cancelReason?: string;
+
+  @ApiProperty({ type: ReservationMovieSummaryDto, description: '영화 정보' })
+  readonly movie: ReservationMovieSummaryDto;
+
+  @ApiProperty({ type: ReservationScreeningSummaryDto, description: '상영 정보' })
+  readonly screening: ReservationScreeningSummaryDto;
+
+  @ApiProperty({ type: [ReservationSeatSummaryDto], description: '예매 좌석 목록' })
+  readonly seats: ReservationSeatSummaryDto[];
+
+  @ApiPropertyOptional({ type: ReservationPaymentSummaryDto, description: '연결된 결제 정보' })
+  readonly payment?: ReservationPaymentSummaryDto;
+
+  private constructor(params: {
+    id: string;
+    reservationNumber: string;
+    status: ReservationStatusType;
+    totalPrice: number;
+    paymentAmount?: number;
+    createdAt: string;
+    canceledAt?: string;
+    cancelReason?: string;
+    movie: ReservationMovieSummaryDto;
+    screening: ReservationScreeningSummaryDto;
+    seats: ReservationSeatSummaryDto[];
+    payment?: ReservationPaymentSummaryDto;
+  }) {
+    this.id = params.id;
+    this.reservationNumber = params.reservationNumber;
+    this.status = params.status;
+    this.totalPrice = params.totalPrice;
+    this.paymentAmount = params.paymentAmount;
+    this.createdAt = params.createdAt;
+    this.canceledAt = params.canceledAt;
+    this.cancelReason = params.cancelReason;
+    this.movie = params.movie;
+    this.screening = params.screening;
+    this.seats = params.seats;
+    this.payment = params.payment;
+  }
+
+  static of(params: {
+    id: string;
+    reservationNumber: string;
+    status: ReservationStatusType;
+    totalPrice: number;
+    paymentAmount?: number;
+    createdAt: string;
+    canceledAt?: string;
+    cancelReason?: string;
+    movie: ReservationMovieSummaryDto;
+    screening: ReservationScreeningSummaryDto;
+    seats: ReservationSeatSummaryDto[];
+    payment?: ReservationPaymentSummaryDto;
+  }): ReservationDetailDto {
+    return new ReservationDetailDto(params);
+  }
+}
+
 export class ReservationListResultDto {
   @ApiProperty({ type: [ReservationSummaryDto], description: '내 예매 목록' })
   readonly items: ReservationSummaryDto[];
