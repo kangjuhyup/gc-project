@@ -5,14 +5,15 @@ pnpm workspace 기반 모노레포입니다.
 - `packages/ui`: React 19 + Vite
 - `packages/service`: NestJS
 
-## 서비스 구성
+## 프로젝트 구조 문서
 
-백엔드 서비스는 API 프로세스와 worker 프로세스를 분리해서 실행합니다.
-
-- API: HTTP controller, Swagger, application command/query 진입점
-- Worker: `outbox_event` polling 기반 결제/환불 후속 작업 처리
-
-현재 outbox 구조와 향후 message broker 확장 방향은 [`architect.md`](architect.md)의 “결제 이벤트 로그와 아웃박스” 섹션을 참고합니다.
+- [모노레포 아키텍처](ARCHITECTURE.md)
+- [Service 비즈니스 프로세스](packages/service/docs/PROCCESS.md)
+- [Service 도메인 설계](packages/service/docs/DOMAIN.md)
+- [Service 데이터베이스 구조](packages/service/docs/DATABASE.md)
+- [Service 환경 변수 설정](packages/service/docs/ENVIRONMENT.md)
+- [UI 프로젝트 구조](packages/ui/docs/ARCHITECTURE.md)
+- [UI 환경 변수 설정](packages/ui/docs/ENVIRONMENT.md)
 
 ## 로컬 실행 전 준비사항
 
@@ -55,62 +56,19 @@ docker compose version
 docker compose config --quiet
 ```
 
-Compose 구성에는 다음 서비스가 포함됩니다.
-
-- PostgreSQL master: `localhost:5432`
-- PostgreSQL replica: `localhost:5433`
-- Redis master: `localhost:6379`
-- Redis replica: `localhost:6380`
-- Redis Sentinel: `localhost:26379`, `26380`, `26381`
+Compose 구성의 DB/Redis 상세는 [Service 데이터베이스 구조](packages/service/docs/DATABASE.md)를 참고합니다.
 
 ### 5. 환경 변수 확인
 
-서비스는 실행 시 필수 config를 검증합니다. `packages/service/.env` 또는 실행 환경에 아래 service 필수값이 없으면 API 프로세스가 부팅에 실패합니다.
+service 실행 환경 변수는 API와 worker 프로세스별로 검증됩니다. UI 환경 변수는 브라우저에 노출되는 `VITE_` 값만 사용합니다.
 
 ```bash
-PORT=3000
-
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=gc_project
-DB_USER=gc_user
-DB_PASSWORD=gc_password
-
-REDIS_URL=redis://:gc_redis_password@localhost:6379
-
-ADDRESS_SEARCH_ADAPTER=local
-
-ACCESS_TOKEN_TTL_SECONDS=900
-REFRESH_TOKEN_TTL_SECONDS=1209600
-SEAT_HOLD_TTL_SECONDS=3
-
-LOCAL_PAYMENT_CALLBACK_URL=http://localhost:3000/payments/callback
-LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS=3
-
-MIGRATIONS_RUN_ON_STARTUP=true
+cp packages/service/.env.example packages/service/.env
+cp packages/service/.env.example packages/service/.env-worker
+cp packages/ui/.env.example packages/ui/.env
 ```
 
-Docker Compose 자체의 기본값을 바꾸려면 루트 `.env`에 아래 값을 둘 수 있습니다.
-
-```bash
-POSTGRES_USER=gc_user
-POSTGRES_PASSWORD=gc_password
-POSTGRES_DB=gc_project
-POSTGRES_REPLICATION_USER=replicator
-POSTGRES_REPLICATION_PASSWORD=replicator_password
-REDIS_PASSWORD=gc_redis_password
-REDIS_SENTINEL_PASSWORD=gc_sentinel_password
-REDIS_SENTINEL_MASTER_SET=mymaster
-```
-
-worker 프로세스는 `packages/service/.env-worker`를 읽습니다. worker도 DB/Redis/토큰/좌석 TTL 같은 공통 필수값을 검증하며, 추가로 아래 worker 전용 값이 필요합니다.
-
-```bash
-PAYMENT_OUTBOX_WORKER_ENABLED=true
-PAYMENT_OUTBOX_WORKER_INTERVAL_MS=500
-LOCAL_PAYMENT_CALLBACK_URL=http://localhost:3000/payments/callback
-LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS=3
-```
+필수 값과 프로세스 구분은 [Service 환경 변수 설정](packages/service/docs/ENVIRONMENT.md), [UI 환경 변수 설정](packages/ui/docs/ENVIRONMENT.md)을 참고합니다.
 
 ### 6. 로컬 인프라 실행
 
@@ -134,33 +92,23 @@ pnpm build
 
 ## 로컬 실행
 
-UI, API, worker를 한 번에 개발 모드로 실행합니다.
+전체 개발 모드를 실행합니다.
 
 ```bash
 pnpm dev
 ```
 
-UI와 API만 실행합니다.
+일부 프로세스만 실행할 수도 있습니다. 세부 역할은 [모노레포 아키텍처](ARCHITECTURE.md)와 [UI 프로젝트 구조](packages/ui/docs/ARCHITECTURE.md)를 참고합니다.
 
 ```bash
 pnpm run dev:apps
-```
-
-API와 worker를 함께 실행합니다.
-
-```bash
 pnpm run dev:service:all
-```
-
-개별 프로세스만 실행할 수도 있습니다.
-
-```bash
 pnpm run dev:ui
 pnpm run dev:service
 pnpm run dev:worker
 ```
 
-빌드된 산출물을 실행할 때는 다음 명령을 사용합니다.
+빌드된 산출물 실행:
 
 ```bash
 pnpm run service
