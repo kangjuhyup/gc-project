@@ -10,7 +10,8 @@ describe('AdminController', () => {
         accessToken: 'admin-access-token',
       }),
     };
-    const controller = new AdminController(commandBus as never);
+    const queryBus = { execute: vi.fn() };
+    const controller = new AdminController(commandBus as never, queryBus as never);
 
     const result = await controller.login({
       userId: 'admin',
@@ -26,7 +27,8 @@ describe('AdminController', () => {
 
   it('관리자 인증 확인 요청에서 인증된 관리자 정보를 반환한다', () => {
     const commandBus = { execute: vi.fn() };
-    const controller = new AdminController(commandBus as never);
+    const queryBus = { execute: vi.fn() };
+    const controller = new AdminController(commandBus as never, queryBus as never);
 
     const result = controller.me(AuthenticatedAdminDto.of({ adminId: 'admin' }));
 
@@ -41,7 +43,8 @@ describe('AdminController', () => {
         runningTime: 121,
       }),
     };
-    const controller = new AdminController(commandBus as never);
+    const queryBus = { execute: vi.fn() };
+    const controller = new AdminController(commandBus as never, queryBus as never);
 
     const result = await controller.createMovie({
       title: ' 관리자 등록 영화 ',
@@ -59,6 +62,29 @@ describe('AdminController', () => {
       movieId: 'movie-1',
       title: '관리자 등록 영화',
       runningTime: 121,
+    });
+  });
+
+  it('관리자 영화 목록 조회 요청을 query bus에 위임한다', async () => {
+    const commandBus = { execute: vi.fn() };
+    const queryBus = {
+      execute: vi.fn().mockResolvedValue({
+        items: [],
+        hasNext: false,
+      }),
+    };
+    const controller = new AdminController(commandBus as never, queryBus as never);
+
+    const result = await controller.listMovies({
+      limit: 10,
+      keyword: ' 관리자 ',
+      cursor: 'next-cursor',
+    } as never);
+
+    expect(queryBus.execute).toHaveBeenCalledOnce();
+    expect(result).toEqual({
+      items: [],
+      hasNext: false,
     });
   });
 });

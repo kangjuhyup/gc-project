@@ -65,4 +65,46 @@ describe('관리자 영화 관리 e2e', () => {
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('AUTHORIZATION_REQUIRED');
   });
+
+  it('관리자는 상영 일정이 없는 영화도 목록에서 조회할 수 있다', async () => {
+    const accessToken = await loginAdmin(e2e);
+    const auth = { Authorization: `Bearer ${accessToken}` };
+    const created = await e2e.post('/admin/movies', {
+      title: '목록 조회용 관리자 영화',
+      runningTime: 110,
+      director: '목록 감독',
+      genre: '스릴러',
+      rating: '12',
+      releaseDate: '2026-05-02',
+    }, auth);
+    expect(created.status).toBe(201);
+
+    const list = await e2e.get(
+      '/admin/movies?keyword=%EB%AA%A9%EB%A1%9D&limit=5',
+      auth,
+    );
+
+    expect(list.status).toBe(200);
+    expect(list.body.hasNext).toBe(false);
+    expect(list.body.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: created.body.movieId,
+          title: '목록 조회용 관리자 영화',
+          runningTime: 110,
+          director: '목록 감독',
+          genre: '스릴러',
+          rating: '12',
+          releaseDate: '2026-05-02',
+        }),
+      ]),
+    );
+  });
+
+  it('관리자 access token이 없으면 영화 목록을 조회할 수 없다', async () => {
+    const list = await e2e.get('/admin/movies');
+
+    expect(list.status).toBe(401);
+    expect(list.body.message).toBe('AUTHORIZATION_REQUIRED');
+  });
 });

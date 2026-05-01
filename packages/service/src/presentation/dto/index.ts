@@ -7,6 +7,7 @@ export { CreateMovieRequestDto } from './create-movie.request.dto';
 export { CreateSeatHoldRequestDto } from './create-seat-hold.request.dto';
 export { IssueTemporaryPasswordRequestDto } from './issue-temporary-password.request.dto';
 export { ListMoviesRequestDto } from './list-movies.request.dto';
+export { ListAdminMoviesRequestDto } from './list-admin-movies.request.dto';
 export { ListMyReservationsRequestDto } from './list-my-reservations.request.dto';
 export { ListScreeningSeatsRequestDto } from './list-screening-seats.request.dto';
 export { ListTheatersRequestDto } from './list-theaters.request.dto';

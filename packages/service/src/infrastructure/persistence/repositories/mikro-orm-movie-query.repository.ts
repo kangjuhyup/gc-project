@@ -2,6 +2,9 @@ import { Logging } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import {
+  AdminMovieListResultDto,
+  AdminMovieSummaryDto,
+  ListAdminMoviesQuery,
   ListMoviesQuery,
   MovieListResultDto,
   MovieScreeningSummaryDto,
@@ -38,6 +41,24 @@ interface MovieCursor {
   screeningId: number;
 }
 
+interface AdminMovieListRow {
+  id: string | number;
+  title: string;
+  director?: string;
+  genre?: string;
+  runningTime: string | number;
+  rating?: string;
+  releaseDate?: string | Date;
+  posterUrl?: string;
+  description?: string;
+  createdAt: string | Date;
+}
+
+interface AdminMovieCursor {
+  createdAt: string;
+  id: number;
+}
+
 @Injectable()
 @Logging
 export class MikroOrmMovieQueryRepository implements MovieQueryPort {
@@ -55,6 +76,127 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
       hasNext,
       nextCursor,
     });
+  }
+
+  async listAdminMovies(query: ListAdminMoviesQuery): Promise<AdminMovieListResultDto> {
+    const cursor = this.decodeAdminCursor(query.cursor);
+    const rows = await this.findAdminRows(query, cursor);
+    const hasNext = rows.length > query.limit;
+    const items = rows.slice(0, query.limit);
+
+    return AdminMovieListResultDto.of({
+      items: items.map((row) => this.toAdminDto(row)),
+      hasNext,
+      nextCursor: hasNext ? this.encodeAdminCursor(items[items.length - 1]) : undefined,
+    });
+  }
+
+  private async findAdminRows(
+    query: ListAdminMoviesQuery,
+    cursor?: AdminMovieCursor,
+  ): Promise<AdminMovieListRow[]> {
+    const params: Array<string | number> = [];
+    const where: string[] = [];
+    const normalizedKeyword = query.keyword?.trim();
+
+    if (normalizedKeyword) {
+      const keyword = `%${normalizedKeyword}%`;
+      where.push('(title ILIKE ? OR director ILIKE ? OR genre ILIKE ? OR rating ILIKE ? OR description ILIKE ?)');
+      params.push(keyword, keyword, keyword, keyword, keyword);
+    }
+
+    const cursorWhere = this.buildAdminCursorWhere(cursor, params);
+    params.push(query.limit + 1);
+
+    return this.entityManager.execute<AdminMovieListRow[]>(
+      `
+        SELECT
+          id::text AS "id",
+          title,
+          director,
+          genre,
+          running_time AS "runningTime",
+          rating,
+          release_date AS "releaseDate",
+          poster_url AS "posterUrl",
+          description,
+          created_at AS "createdAt"
+        FROM movie
+        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+        ${cursorWhere}
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+      `,
+      params,
+    );
+  }
+
+  private buildAdminCursorWhere(
+    cursor: AdminMovieCursor | undefined,
+    params: Array<string | number>,
+  ): string {
+    if (cursor === undefined) {
+      return '';
+    }
+
+    params.push(cursor.createdAt, cursor.createdAt, cursor.id);
+
+    return `
+      ${params.length > 3 ? 'AND' : 'WHERE'} (
+        created_at < ?::timestamptz
+        OR (created_at = ?::timestamptz AND id < ?)
+      )
+    `;
+  }
+
+  private toAdminDto(row: AdminMovieListRow): AdminMovieSummaryDto {
+    return AdminMovieSummaryDto.of({
+      id: String(row.id),
+      title: row.title,
+      director: row.director,
+      genre: row.genre,
+      runningTime: Number(row.runningTime),
+      rating: row.rating,
+      releaseDate: this.toOptionalDateLabel(row.releaseDate),
+      posterUrl: row.posterUrl,
+      description: row.description,
+      createdAt: this.toIsoString(row.createdAt),
+    });
+  }
+
+  private encodeAdminCursor(row: AdminMovieListRow | undefined): string | undefined {
+    if (row === undefined) {
+      return undefined;
+    }
+
+    return Buffer.from(
+      JSON.stringify({
+        createdAt: this.toIsoString(row.createdAt),
+        id: Number(row.id),
+      } satisfies AdminMovieCursor),
+      'utf8',
+    ).toString('base64url');
+  }
+
+  private decodeAdminCursor(cursor: string | undefined): AdminMovieCursor | undefined {
+    if (cursor === undefined) {
+      return undefined;
+    }
+
+    try {
+      const decoded = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Partial<AdminMovieCursor>;
+
+      if (typeof decoded.createdAt !== 'string' || typeof decoded.id !== 'number') {
+        throw new Error('INVALID_MOVIE_CURSOR');
+      }
+
+      return {
+        createdAt: decoded.createdAt,
+        id: decoded.id,
+      };
+    } catch {
+      throw new Error('INVALID_MOVIE_CURSOR');
+    }
   }
 
   private async findRows(query: ListMoviesQuery, cursor?: MovieCursor): Promise<MovieListRow[]> {
@@ -242,6 +384,14 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
   private toDateLabel(value: string | Date | undefined): string {
     if (value === undefined) {
       return '';
+    }
+
+    return this.toIsoString(value).slice(0, 10);
+  }
+
+  private toOptionalDateLabel(value: string | Date | undefined): string | undefined {
+    if (value === undefined) {
+      return undefined;
     }
 
     return this.toIsoString(value).slice(0, 10);

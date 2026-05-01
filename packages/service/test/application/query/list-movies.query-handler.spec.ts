@@ -43,6 +43,7 @@ describe('ListMoviesQueryHandler', () => {
     });
     const movieQuery = {
       list: vi.fn().mockResolvedValue(expected),
+      listAdminMovies: vi.fn(),
     } satisfies MovieQueryPort;
     const handler = new ListMoviesQueryHandler(movieQuery);
     const query = ListMoviesQuery.of({
