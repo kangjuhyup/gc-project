@@ -4,11 +4,12 @@ import { Injectable } from '@nestjs/common';
 import { ListScreeningSeatsQuery, ScreeningSeatListResultDto, ScreeningSeatSummaryDto } from '@application/query/dto';
 import type { SeatQueryPort } from '@application/query/ports';
 import { SeatAvailabilityStatus, type SeatAvailabilityStatusType } from '@domain';
+import { ScreeningEntity, SeatEntity } from '../entities';
 
 interface ScreeningSeatRow {
-  seatId: string | number;
+  seatId: string;
   seatRow: string;
-  seatCol: string | number;
+  seatCol: number;
   seatType?: string;
   status: SeatAvailabilityStatusType;
 }
@@ -27,38 +28,65 @@ export class MikroOrmSeatQueryRepository implements SeatQueryPort {
     });
   }
 
-  private findRows(screeningId: string): Promise<ScreeningSeatRow[]> {
-    return this.entityManager.execute<ScreeningSeatRow[]>(
-      `
-        SELECT
-          seat.id AS "seatId",
-          seat.seat_row AS "seatRow",
-          seat.seat_col AS "seatCol",
-          COALESCE(seat.seat_type, 'NORMAL') AS "seatType",
-          CASE
-            WHEN COUNT(reserved.id) > 0 THEN 'RESERVED'
-            WHEN COUNT(active_hold.id) > 0 THEN 'HELD'
-            ELSE 'AVAILABLE'
-          END AS "status"
-        FROM screening
-        JOIN seat ON seat.screen_id = screening.screen_id
-        LEFT JOIN reservation_seat reserved_seat
-          ON reserved_seat.screening_id = screening.id
-          AND reserved_seat.seat_id = seat.id
-        LEFT JOIN reservation reserved
-          ON reserved.id = reserved_seat.reservation_id
-          AND reserved.status IN ('PENDING', 'CONFIRMED')
-        LEFT JOIN seat_hold active_hold
-          ON active_hold.screening_id = screening.id
-          AND active_hold.seat_id = seat.id
-          AND active_hold.status = 'HELD'
-          AND active_hold.expires_at > now()
-        WHERE screening.id = ?
-        GROUP BY seat.id, seat.seat_row, seat.seat_col, seat.seat_type
-        ORDER BY seat.seat_row ASC, seat.seat_col ASC, seat.id ASC
-      `,
-      [screeningId],
+  private async findRows(screeningId: string): Promise<ScreeningSeatRow[]> {
+    const screening = await this.entityManager.findOne(ScreeningEntity, { id: screeningId }, {
+      populate: [
+        'screen.seats',
+        'reservationSeats.seat',
+        'reservationSeats.reservation',
+        'seatHolds.seat',
+      ],
+    });
+
+    if (screening === null) {
+      return [];
+    }
+
+    const reservedSeatIds = new Set(
+      screening.reservationSeats
+        .getItems()
+        .filter((reservationSeat) => ['PENDING', 'CONFIRMED'].includes(reservationSeat.reservation.status))
+        .map((reservationSeat) => reservationSeat.seat.id),
     );
+    const now = new Date();
+    const heldSeatIds = new Set(
+      screening.seatHolds
+        .getItems()
+        .filter((seatHold) => seatHold.status === 'HELD' && seatHold.expiresAt > now)
+        .map((seatHold) => seatHold.seat.id),
+    );
+
+    return screening.screen.seats
+      .getItems()
+      .slice()
+      .sort((left, right) => this.compareSeat(left, right))
+      .map((seat) => ({
+        seatId: seat.id,
+        seatRow: seat.seatRow,
+        seatCol: seat.seatCol,
+        seatType: seat.seatType ?? 'NORMAL',
+        status: this.resolveStatus(seat.id, reservedSeatIds, heldSeatIds),
+      }));
+  }
+
+  private resolveStatus(
+    seatId: string,
+    reservedSeatIds: Set<string>,
+    heldSeatIds: Set<string>,
+  ): SeatAvailabilityStatusType {
+    if (reservedSeatIds.has(seatId)) {
+      return SeatAvailabilityStatus.RESERVED;
+    }
+
+    if (heldSeatIds.has(seatId)) {
+      return SeatAvailabilityStatus.HELD;
+    }
+
+    return SeatAvailabilityStatus.AVAILABLE;
+  }
+
+  private compareSeat(left: SeatEntity, right: SeatEntity): number {
+    return left.seatRow.localeCompare(right.seatRow) || left.seatCol - right.seatCol || Number(left.id) - Number(right.id);
   }
 
   private toDto(row: ScreeningSeatRow): ScreeningSeatSummaryDto {

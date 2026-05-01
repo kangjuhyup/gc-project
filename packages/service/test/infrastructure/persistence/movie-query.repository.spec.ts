@@ -4,22 +4,20 @@ import { MikroOrmMovieQueryRepository } from '@infrastructure/persistence/reposi
 
 describe('MikroOrmMovieQueryRepository', () => {
   it('기준 시간과 가까운 상영 순서로 영화 목록을 조회하고 다음 커서를 만든다', async () => {
-    const rows = [
-      createRow({
+    const screenings = [
+      createScreening({
         movieId: '1',
         screeningId: '101',
         screeningStartAt: new Date('2026-04-28T01:20:00.000Z'),
-        distanceMs: '1200000',
       }),
-      createRow({
+      createScreening({
         movieId: '2',
         screeningId: '201',
         screeningStartAt: new Date('2026-04-28T02:10:00.000Z'),
-        distanceMs: '4200000',
       }),
     ];
     const entityManager = {
-      execute: vi.fn().mockResolvedValue(rows),
+      find: vi.fn().mockResolvedValue(screenings),
     };
     const repository = new MikroOrmMovieQueryRepository(entityManager as never);
 
@@ -31,15 +29,25 @@ describe('MikroOrmMovieQueryRepository', () => {
       }),
     );
 
-    const [sql, params] = entityManager.execute.mock.calls[0] as [string, Array<string | number>];
-    expect(sql).toContain('FROM movie_image');
-    expect(sql).toContain("movie_image.image_type = 'POSTER'");
-    expect(sql).toContain('ORDER BY "distanceMs" ASC, "screeningStartAt" ASC, "screeningId" ASC');
-    expect(params).toContain('2026-04-28T01:00:00.000Z');
-    expect(params).toContain('%파묘%');
-    expect(params.at(-1)).toBe(2);
+    expect(entityManager.find).toHaveBeenCalledWith(expect.any(Function), {
+      movie: {
+        $or: [
+          { title: { $ilike: '%파묘%' } },
+          { genre: { $ilike: '%파묘%' } },
+          { rating: { $ilike: '%파묘%' } },
+          { description: { $ilike: '%파묘%' } },
+        ],
+      },
+    }, {
+      populate: [
+        'movie.images',
+        'screen.theater',
+        'reservationSeats.reservation',
+      ],
+      orderBy: { startAt: 'ASC', id: 'ASC' },
+    });
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]?.screenings[0]?.remainingSeats).toBe(36);
+    expect(result.items[0]?.screenings[0]?.remainingSeats).toBe(79);
     expect(result.items[0]?.screenings[0]?.theater).toEqual({
       id: 1,
       name: 'GC 시네마 강남',
@@ -50,21 +58,20 @@ describe('MikroOrmMovieQueryRepository', () => {
   });
 
   it('커서가 있으면 이전 페이지 마지막 상영 이후 조건을 추가한다', async () => {
+    const screenings = [
+      createScreening({
+        movieId: '1',
+        screeningId: '101',
+        screeningStartAt: new Date('2026-04-28T01:20:00.000Z'),
+      }),
+      createScreening({
+        movieId: '2',
+        screeningId: '201',
+        screeningStartAt: new Date('2026-04-28T02:10:00.000Z'),
+      }),
+    ];
     const entityManager = {
-      execute: vi.fn().mockResolvedValue([
-        createRow({
-          movieId: '1',
-          screeningId: '101',
-          screeningStartAt: new Date('2026-04-28T01:20:00.000Z'),
-          distanceMs: '1200000',
-        }),
-        createRow({
-          movieId: '2',
-          screeningId: '201',
-          screeningStartAt: new Date('2026-04-28T02:10:00.000Z'),
-          distanceMs: '4200000',
-        }),
-      ]),
+      find: vi.fn().mockResolvedValue(screenings),
     };
     const repository = new MikroOrmMovieQueryRepository(entityManager as never);
     const firstPage = await repository.list(
@@ -73,9 +80,8 @@ describe('MikroOrmMovieQueryRepository', () => {
         limit: 1,
       }),
     );
-    entityManager.execute.mockResolvedValueOnce([]);
 
-    await repository.list(
+    const secondPage = await repository.list(
       ListMoviesQuery.of({
         time: new Date('2026-04-28T10:30:00+09:00'),
         limit: 1,
@@ -83,15 +89,12 @@ describe('MikroOrmMovieQueryRepository', () => {
       }),
     );
 
-    const [sql, params] = entityManager.execute.mock.calls[1] as [string, Array<string | number>];
-    expect(sql).toContain('"distanceMs" > ?');
-    expect(params).toContain(1200000);
-    expect(params).toContain('2026-04-28T01:20:00.000Z');
-    expect(params).toContain(101);
+    expect(secondPage.items).toHaveLength(1);
+    expect(secondPage.items[0]?.id).toBe(2);
   });
 
   it('잘못된 영화 목록 커서는 거부한다', async () => {
-    const repository = new MikroOrmMovieQueryRepository({ execute: vi.fn() } as never);
+    const repository = new MikroOrmMovieQueryRepository({ find: vi.fn() } as never);
 
     await expect(
       repository.list(
@@ -104,31 +107,56 @@ describe('MikroOrmMovieQueryRepository', () => {
   });
 });
 
-function createRow(params: {
+function createScreening(params: {
   movieId: string;
   screeningId: string;
   screeningStartAt: Date;
-  distanceMs: string;
 }) {
-  return {
-    movieId: params.movieId,
+  const movie = {
+    id: params.movieId,
     title: params.movieId === '1' ? '파묘' : '듄: 파트 2',
     genre: params.movieId === '1' ? '미스터리' : 'SF',
     rating: '15',
-    runningTime: '134',
-    releaseDate: '2024-02-22',
-    posterUrl: 'https://example.com/poster.jpg',
+    runningTime: 134,
+    releaseDate: new Date('2024-02-22T00:00:00.000Z'),
+    posterUrl: 'https://example.com/fallback-poster.jpg',
     description: '오컬트 미스터리',
-    screeningId: params.screeningId,
-    theaterId: '1',
-    theaterName: 'GC 시네마 강남',
-    theaterAddress: '서울특별시 강남구 테헤란로 427',
-    screenId: '1',
-    screenName: '1관',
-    screeningStartAt: params.screeningStartAt,
-    screeningEndAt: new Date(params.screeningStartAt.getTime() + 134 * 60 * 1000),
-    remainingSeats: '36',
-    totalSeats: '80',
-    distanceMs: params.distanceMs,
+    images: collection([
+      {
+        id: '1',
+        imageType: 'POSTER',
+        url: 'https://example.com/poster.jpg',
+        sortOrder: 0,
+      },
+    ]),
+  };
+  const screen = {
+    id: '1',
+    name: '1관',
+    totalSeats: 80,
+    theater: {
+      id: '1',
+      name: 'GC 시네마 강남',
+      address: '서울특별시 강남구 테헤란로 427',
+    },
+  };
+
+  return {
+    id: params.screeningId,
+    movie,
+    screen,
+    startAt: params.screeningStartAt,
+    endAt: new Date(params.screeningStartAt.getTime() + 134 * 60 * 1000),
+    reservationSeats: collection([
+      {
+        reservation: { status: 'CONFIRMED' },
+      },
+    ]),
+  };
+}
+
+function collection<T>(items: T[]) {
+  return {
+    getItems: () => items,
   };
 }

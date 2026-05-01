@@ -5,6 +5,19 @@ import { NestFactory } from '@nestjs/core';
 import type Redis from 'ioredis';
 import { expect } from 'vitest';
 import { REDIS } from '../../../src/infrastructure/cache/redis.module';
+import {
+  MemberEntity,
+  MovieEntity,
+  OutboxEventEntity,
+  PaymentEntity,
+  PaymentEventLogEntity,
+  RefreshTokenEntity,
+  ReservationEntity,
+  ReservationEventEntity,
+  ReservationSeatEntity,
+  ScreeningEntity,
+  SeatEntity,
+} from '../../../src/infrastructure/persistence/entities';
 import { ApplicationErrorInterceptor } from '../../../src/presentation/interceptor/application-error.interceptor';
 
 export type JsonObject = Record<string, unknown>;
@@ -155,21 +168,19 @@ export class ServiceE2eContext {
   }
 
   async availableSeats(screeningId: string, count = 1): Promise<E2eSeat[]> {
-    const rows: E2eSeatRow[] = await this.orm.em.getConnection().execute(
-      `
-        SELECT
-          seat.id::text AS id,
-          seat.seat_row AS row,
-          seat.seat_col AS col,
-          COALESCE(seat.seat_type, 'NORMAL') AS type
-        FROM screening
-        JOIN seat ON seat.screen_id = screening.screen_id
-        WHERE screening.id = ?
-        ORDER BY seat.seat_row ASC, seat.seat_col ASC, seat.id ASC
-        LIMIT ?
-      `,
-      [screeningId, count],
-    );
+    const em = this.orm.em.fork();
+    const screening = await em.findOne(ScreeningEntity, { id: screeningId }, { populate: ['screen.seats'] });
+    const rows: E2eSeatRow[] = screening?.screen.seats
+      .getItems()
+      .slice()
+      .sort((left, right) => this.compareSeat(left, right))
+      .slice(0, count)
+      .map((seat) => ({
+        id: seat.id,
+        row: seat.seatRow,
+        col: seat.seatCol,
+        type: seat.seatType ?? 'NORMAL',
+      })) ?? [];
     expect(rows.length).toBeGreaterThanOrEqual(count);
 
     return rows.map((seat) => ({
@@ -179,35 +190,32 @@ export class ServiceE2eContext {
   }
 
   async seatStatus(screeningId: string, seatId: string): Promise<string | undefined> {
-    const rows = await this.orm.em.getConnection().execute<Array<{ status: string }>>(
-      `
-        SELECT
-          CASE
-            WHEN COUNT(reserved.id) > 0 THEN 'RESERVED'
-            WHEN COUNT(active_hold.id) > 0 THEN 'HELD'
-            ELSE 'AVAILABLE'
-          END AS status
-        FROM screening
-        JOIN seat ON seat.screen_id = screening.screen_id
-        LEFT JOIN reservation_seat reserved_seat
-          ON reserved_seat.screening_id = screening.id
-          AND reserved_seat.seat_id = seat.id
-        LEFT JOIN reservation reserved
-          ON reserved.id = reserved_seat.reservation_id
-          AND reserved.status IN ('PENDING', 'CONFIRMED')
-        LEFT JOIN seat_hold active_hold
-          ON active_hold.screening_id = screening.id
-          AND active_hold.seat_id = seat.id
-          AND active_hold.status = 'HELD'
-          AND active_hold.expires_at > now()
-        WHERE screening.id = ?
-          AND seat.id = ?
-        GROUP BY seat.id
-      `,
-      [screeningId, seatId],
-    );
+    const em = this.orm.em.fork();
+    const screening = await em.findOne(ScreeningEntity, { id: screeningId }, {
+      populate: ['reservationSeats.seat', 'reservationSeats.reservation', 'seatHolds.seat'],
+    });
 
-    return rows[0]?.status;
+    if (screening === null) {
+      return undefined;
+    }
+
+    const reserved = screening.reservationSeats
+      .getItems()
+      .some((reservationSeat) =>
+        reservationSeat.seat.id === seatId &&
+        ['PENDING', 'CONFIRMED'].includes(reservationSeat.reservation.status),
+      );
+
+    if (reserved) {
+      return 'RESERVED';
+    }
+
+    const now = new Date();
+    const held = screening.seatHolds
+      .getItems()
+      .some((seatHold) => seatHold.seat.id === seatId && seatHold.status === 'HELD' && seatHold.expiresAt > now);
+
+    return held ? 'HELD' : 'AVAILABLE';
   }
 
   async apiSeatStatus(screeningId: string, seatId: string): Promise<string | undefined> {
@@ -258,21 +266,70 @@ export class ServiceE2eContext {
   }
 
   async countRows(tableName: string, where = 'TRUE', params: unknown[] = []): Promise<number> {
-    const rows = await this.orm.em.getConnection().execute<{ count: string }[]>(
-      `SELECT COUNT(*)::int AS count FROM ${tableName} WHERE ${where}`,
-      params,
-    );
+    const em = this.orm.em.fork();
 
-    return Number(rows[0].count);
+    if (tableName === 'member' && where === "id = ? AND status = 'WITHDRAWN'") {
+      return em.count(MemberEntity, { id: String(params[0]), status: 'WITHDRAWN' });
+    }
+
+    if (tableName === 'member_refresh_token' && where === 'member_id = ? AND revoked_at IS NOT NULL') {
+      return em.count(RefreshTokenEntity, { member: String(params[0]), revokedAt: { $ne: null } });
+    }
+
+    if (tableName === 'movie' && where === 'title = ?') {
+      return em.count(MovieEntity, { title: String(params[0]) });
+    }
+
+    if (tableName === 'payment' && where === 'member_id = ? AND idempotency_key = ?') {
+      return em.count(PaymentEntity, { member: String(params[0]), idempotencyKey: String(params[1]) });
+    }
+
+    if (tableName === 'payment' && where === "id = ? AND status = 'REFUND_REQUIRED'") {
+      return em.count(PaymentEntity, { id: String(params[0]), status: 'REFUND_REQUIRED' });
+    }
+
+    if (tableName === 'outbox_event' && where === "aggregate_type = 'PAYMENT' AND event_type = 'PAYMENT_REQUESTED'") {
+      return em.count(OutboxEventEntity, { aggregateType: 'PAYMENT', eventType: 'PAYMENT_REQUESTED' });
+    }
+
+    if (tableName === 'reservation' && where === 'member_id = ?') {
+      return em.count(ReservationEntity, { member: String(params[0]) });
+    }
+
+    if (tableName === 'reservation' && where === "id = ? AND status = 'CANCELED'") {
+      return em.count(ReservationEntity, { id: String(params[0]), status: 'CANCELED' });
+    }
+
+    if (tableName === 'reservation_seat' && where === 'screening_id = ? AND seat_id = ?') {
+      return em.count(ReservationSeatEntity, { screening: String(params[0]), seat: String(params[1]) });
+    }
+
+    if (tableName === 'reservation_event' && where === 'TRUE') {
+      return em.count(ReservationEventEntity, {});
+    }
+
+    if (tableName === 'payment_event_log' && where === "payment_id = ? AND event_type = 'PAYMENT_REFUND_REQUESTED'") {
+      return em.count(PaymentEventLogEntity, { payment: String(params[0]), eventType: 'PAYMENT_REFUND_REQUESTED' });
+    }
+
+    throw new Error(`UNSUPPORTED_E2E_COUNT_ROWS: ${tableName} ${where}`);
   }
 
   async findPayment(paymentId: string): Promise<JsonObject | undefined> {
-    const rows = await this.orm.em.getConnection().execute<JsonObject[]>(
-      'SELECT id::text, status, reservation_id::text AS "reservationId" FROM payment WHERE id = ?',
-      [paymentId],
-    );
+    const em = this.orm.em.fork();
+    const payment = await em.findOne(PaymentEntity, { id: paymentId }, { populate: ['reservation'] });
 
-    return rows[0];
+    return payment === null
+      ? undefined
+      : {
+          id: payment.id,
+          status: payment.status,
+          reservationId: payment.reservation?.id,
+        };
+  }
+
+  private compareSeat(left: SeatEntity, right: SeatEntity): number {
+    return left.seatRow.localeCompare(right.seatRow) || left.seatCol - right.seatCol || Number(left.id) - Number(right.id);
   }
 
   auth(member: E2eMember): Record<string, string> {

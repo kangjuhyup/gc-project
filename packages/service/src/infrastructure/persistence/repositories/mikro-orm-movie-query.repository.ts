@@ -1,4 +1,5 @@
 import { Logging } from '@kangjuhyup/rvlog';
+import type { FilterQuery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import {
@@ -12,6 +13,7 @@ import {
   MovieTheaterSummaryDto,
 } from '@application/query/dto';
 import type { MovieQueryPort } from '@application/query/ports';
+import { MovieEntity, ScreeningEntity } from '../entities';
 
 interface MovieListRow {
   movieId: string | number;
@@ -39,19 +41,6 @@ interface MovieCursor {
   distanceMs: number;
   screeningStartAt: string;
   screeningId: number;
-}
-
-interface AdminMovieListRow {
-  id: string | number;
-  title: string;
-  director?: string;
-  genre?: string;
-  runningTime: string | number;
-  rating?: string;
-  releaseDate?: string | Date;
-  posterUrl?: string;
-  description?: string;
-  createdAt: string | Date;
 }
 
 @Injectable()
@@ -87,71 +76,43 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     });
   }
 
-  private async findAdminRows(query: ListAdminMoviesQuery): Promise<AdminMovieListRow[]> {
-    const { where, params } = this.buildAdminWhere(query);
-    params.push(query.countPerPage, this.offset(query.currentPage, query.countPerPage));
-
-    return this.entityManager.execute<AdminMovieListRow[]>(
-      `
-        SELECT
-          id::text AS "id",
-          title,
-          director,
-          genre,
-          running_time AS "runningTime",
-          rating,
-          release_date AS "releaseDate",
-          poster_url AS "posterUrl",
-          description,
-          created_at AS "createdAt"
-        FROM movie
-        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-        ORDER BY created_at DESC, id DESC
-        LIMIT ?
-        OFFSET ?
-      `,
-      params,
-    );
+  private findAdminRows(query: ListAdminMoviesQuery): Promise<MovieEntity[]> {
+    return this.entityManager.find(MovieEntity, this.buildAdminWhere(query), {
+      orderBy: { createdAt: 'DESC', id: 'DESC' },
+      limit: query.countPerPage,
+      offset: this.offset(query.currentPage, query.countPerPage),
+    });
   }
 
-  private async countAdminRows(query: ListAdminMoviesQuery): Promise<number> {
-    const { where, params } = this.buildAdminWhere(query);
-    const rows = await this.entityManager.execute<Array<{ count: string | number }>>(
-      `
-        SELECT COUNT(*)::int AS count
-        FROM movie
-        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-      `,
-      params,
-    );
-
-    return Number(rows[0]?.count ?? 0);
+  private countAdminRows(query: ListAdminMoviesQuery): Promise<number> {
+    return this.entityManager.count(MovieEntity, this.buildAdminWhere(query));
   }
 
-  private buildAdminWhere(query: ListAdminMoviesQuery): {
-    where: string[];
-    params: Array<string | number>;
-  } {
-    const params: Array<string | number> = [];
-    const where: string[] = [];
+  private buildAdminWhere(query: ListAdminMoviesQuery): FilterQuery<MovieEntity> {
+    const where: FilterQuery<MovieEntity> = {};
     const normalizedKeyword = query.keyword?.trim();
 
     if (normalizedKeyword) {
       const keyword = `%${normalizedKeyword}%`;
-      where.push('(title ILIKE ? OR director ILIKE ? OR genre ILIKE ? OR rating ILIKE ? OR description ILIKE ?)');
-      params.push(keyword, keyword, keyword, keyword, keyword);
+      where.$or = [
+        { title: { $ilike: keyword } },
+        { director: { $ilike: keyword } },
+        { genre: { $ilike: keyword } },
+        { rating: { $ilike: keyword } },
+        { description: { $ilike: keyword } },
+      ];
     }
 
-    return { where, params };
+    return where;
   }
 
-  private toAdminDto(row: AdminMovieListRow): AdminMovieSummaryDto {
+  private toAdminDto(row: MovieEntity): AdminMovieSummaryDto {
     return AdminMovieSummaryDto.of({
       id: String(row.id),
       title: row.title,
       director: row.director,
       genre: row.genre,
-      runningTime: Number(row.runningTime),
+      runningTime: row.runningTime,
       rating: row.rating,
       releaseDate: this.toOptionalDateLabel(row.releaseDate),
       posterUrl: row.posterUrl,
@@ -165,112 +126,100 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
   }
 
   private async findRows(query: ListMoviesQuery, cursor?: MovieCursor): Promise<MovieListRow[]> {
-    const params: Array<string | number> = [
-      query.time.toISOString(),
-      query.time.toISOString(),
-    ];
-    const innerWhere: string[] = [];
+    const screenings = await this.entityManager.find(ScreeningEntity, this.buildScreeningWhere(query), {
+      populate: [
+        'movie.images',
+        'screen.theater',
+        'reservationSeats.reservation',
+      ],
+      orderBy: { startAt: 'ASC', id: 'ASC' },
+    });
+    const nearestRowsByMovieId = new Map<string, MovieListRow>();
+
+    for (const screening of screenings) {
+      const row = this.toRow(screening, query.time);
+      const current = nearestRowsByMovieId.get(row.movieId.toString());
+
+      if (current === undefined || this.compareMovieRows(row, current) < 0) {
+        nearestRowsByMovieId.set(row.movieId.toString(), row);
+      }
+    }
+
+    return Array.from(nearestRowsByMovieId.values())
+      .sort((left, right) => this.compareMovieRows(left, right))
+      .filter((row) => cursor === undefined || this.compareCursor(row, cursor) > 0)
+      .slice(0, query.limit + 1);
+  }
+
+  private buildScreeningWhere(query: ListMoviesQuery): FilterQuery<ScreeningEntity> {
+    const where: FilterQuery<ScreeningEntity> = {};
     const normalizedKeyword = query.keyword?.trim();
 
     if (normalizedKeyword) {
       const keyword = `%${normalizedKeyword}%`;
-      innerWhere.push('(m.title ILIKE ? OR m.genre ILIKE ? OR m.rating ILIKE ? OR m.description ILIKE ?)');
-      params.push(keyword, keyword, keyword, keyword);
+      where.movie = {
+        $or: [
+          { title: { $ilike: keyword } },
+          { genre: { $ilike: keyword } },
+          { rating: { $ilike: keyword } },
+          { description: { $ilike: keyword } },
+        ],
+      };
     }
 
-    const cursorWhere = this.buildCursorWhere(cursor, params);
-    params.push(query.limit + 1);
-
-    return this.entityManager.execute<MovieListRow[]>(
-      `
-        WITH ranked AS (
-          SELECT
-            m.id AS "movieId",
-            m.title AS "title",
-            m.genre AS "genre",
-            m.rating AS "rating",
-            m.running_time AS "runningTime",
-            m.release_date AS "releaseDate",
-            COALESCE(mi.url, m.poster_url) AS "posterUrl",
-            m.description AS "description",
-            s.id AS "screeningId",
-            t.id AS "theaterId",
-            t.name AS "theaterName",
-            t.address AS "theaterAddress",
-            sc.id AS "screenId",
-            sc.name AS "screenName",
-            s.start_at AS "screeningStartAt",
-            s.end_at AS "screeningEndAt",
-            GREATEST(sc.total_seats - COUNT(r.id), 0) AS "remainingSeats",
-            sc.total_seats AS "totalSeats",
-            ABS(EXTRACT(EPOCH FROM (s.start_at - ?::timestamptz)) * 1000)::bigint AS "distanceMs",
-            ROW_NUMBER() OVER (
-              PARTITION BY m.id
-              ORDER BY
-                ABS(EXTRACT(EPOCH FROM (s.start_at - ?::timestamptz)) * 1000) ASC,
-                s.start_at ASC,
-                s.id ASC
-            ) AS "movieRank"
-          FROM screening s
-          JOIN movie m ON m.id = s.movie_id
-          JOIN screen sc ON sc.id = s.screen_id
-          JOIN theater t ON t.id = sc.theater_id
-          LEFT JOIN LATERAL (
-            SELECT movie_image.url
-            FROM movie_image
-            WHERE movie_image.movie_id = m.id
-              AND movie_image.image_type = 'POSTER'
-            ORDER BY movie_image.sort_order ASC, movie_image.id ASC
-            LIMIT 1
-          ) mi ON true
-          LEFT JOIN reservation_seat rs ON rs.screening_id = s.id
-          LEFT JOIN reservation r ON r.id = rs.reservation_id AND r.status = 'CONFIRMED'
-          ${innerWhere.length ? `WHERE ${innerWhere.join(' AND ')}` : ''}
-          GROUP BY
-            m.id,
-            m.title,
-            m.genre,
-            m.rating,
-            m.running_time,
-            m.release_date,
-            m.poster_url,
-            mi.url,
-            m.description,
-            s.id,
-            t.id,
-            t.name,
-            t.address,
-            sc.id,
-            sc.name,
-            s.start_at,
-            s.end_at,
-            sc.total_seats
-        )
-        SELECT *
-        FROM ranked
-        WHERE "movieRank" = 1
-        ${cursorWhere}
-        ORDER BY "distanceMs" ASC, "screeningStartAt" ASC, "screeningId" ASC
-        LIMIT ?
-      `,
-      params,
-    );
+    return where;
   }
 
-  private buildCursorWhere(cursor: MovieCursor | undefined, params: Array<string | number>): string {
-    if (cursor === undefined) {
-      return '';
-    }
+  private toRow(screening: ScreeningEntity, time: Date): MovieListRow {
+    const movie = screening.movie;
+    const screen = screening.screen;
+    const theater = screen.theater;
+    const reservedSeatCount = screening.reservationSeats
+      .getItems()
+      .filter((reservationSeat) => reservationSeat.reservation.status === 'CONFIRMED').length;
 
-    params.push(cursor.distanceMs, cursor.distanceMs, cursor.screeningStartAt, cursor.distanceMs, cursor.screeningStartAt, cursor.screeningId);
+    return {
+      movieId: movie.id,
+      title: movie.title,
+      genre: movie.genre,
+      rating: movie.rating,
+      runningTime: movie.runningTime,
+      releaseDate: movie.releaseDate,
+      posterUrl: this.posterUrl(movie),
+      description: movie.description,
+      screeningId: screening.id,
+      theaterId: theater.id,
+      theaterName: theater.name,
+      theaterAddress: theater.address,
+      screenId: screen.id,
+      screenName: screen.name,
+      screeningStartAt: screening.startAt,
+      screeningEndAt: screening.endAt,
+      remainingSeats: Math.max(screen.totalSeats - reservedSeatCount, 0),
+      totalSeats: screen.totalSeats,
+      distanceMs: Math.abs(screening.startAt.getTime() - time.getTime()),
+    };
+  }
 
-    return `
-      AND (
-        "distanceMs" > ?
-        OR ("distanceMs" = ? AND "screeningStartAt" > ?::timestamptz)
-        OR ("distanceMs" = ? AND "screeningStartAt" = ?::timestamptz AND "screeningId" > ?)
-      )
-    `;
+  private posterUrl(movie: MovieEntity): string | undefined {
+    const poster = movie.images
+      .getItems()
+      .filter((image) => image.imageType === 'POSTER')
+      .sort((left, right) => left.sortOrder - right.sortOrder || Number(left.id) - Number(right.id))[0];
+
+    return poster?.url ?? movie.posterUrl;
+  }
+
+  private compareMovieRows(left: MovieListRow, right: MovieListRow): number {
+    return Number(left.distanceMs) - Number(right.distanceMs)
+      || new Date(left.screeningStartAt).getTime() - new Date(right.screeningStartAt).getTime()
+      || Number(left.screeningId) - Number(right.screeningId);
+  }
+
+  private compareCursor(row: MovieListRow, cursor: MovieCursor): number {
+    return Number(row.distanceMs) - cursor.distanceMs
+      || new Date(row.screeningStartAt).getTime() - new Date(cursor.screeningStartAt).getTime()
+      || Number(row.screeningId) - cursor.screeningId;
   }
 
   private toDto(row: MovieListRow): MovieSummaryDto {

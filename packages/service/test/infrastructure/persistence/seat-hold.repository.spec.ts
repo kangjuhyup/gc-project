@@ -4,7 +4,9 @@ import { MikroOrmSeatHoldRepository } from '@infrastructure/persistence/reposito
 describe('MikroOrmSeatHoldRepository', () => {
   it('예약 좌석과 아직 만료되지 않은 임시점유 좌석을 사용 불가 좌석으로 조회한다', async () => {
     const entityManager = {
-      execute: vi.fn().mockResolvedValue([{ seatId: '1001' }]),
+      find: vi.fn()
+        .mockResolvedValueOnce([{ seat: { id: '1001' } }])
+        .mockResolvedValueOnce([{ seat: { id: '1002' } }]),
     };
     const repository = new MikroOrmSeatHoldRepository(entityManager as never);
     const now = new Date('2026-04-29T00:00:00.000Z');
@@ -15,25 +17,24 @@ describe('MikroOrmSeatHoldRepository', () => {
       now,
     });
 
-    const [sql, params] = entityManager.execute.mock.calls[0] as [string, string[]];
-    expect(sql).toContain("reservation.status IN ('PENDING', 'CONFIRMED')");
-    expect(sql).toContain("seat_hold.status = 'HELD'");
-    expect(sql).toContain('seat_hold.expires_at > ?::timestamptz');
-    expect(params).toEqual([
-      '101',
-      '1001',
-      '1002',
-      '101',
-      '1001',
-      '1002',
-      '2026-04-29T00:00:00.000Z',
-    ]);
-    expect(result).toEqual(['1001']);
+    expect(entityManager.find).toHaveBeenNthCalledWith(1, expect.any(Function), {
+      screening: '101',
+      seat: { $in: ['1001', '1002'] },
+      reservation: { status: { $in: ['PENDING', 'CONFIRMED'] } },
+    }, { populate: ['seat'] });
+    expect(entityManager.find).toHaveBeenNthCalledWith(2, expect.any(Function), {
+      screening: '101',
+      seat: { $in: ['1001', '1002'] },
+      status: 'HELD',
+      expiresAt: { $gt: now },
+    }, { populate: ['seat'] });
+    expect(result).toEqual(['1001', '1002']);
   });
 
   it('상영관에 속한 좌석만 임시점유 대상 좌석으로 조회한다', async () => {
     const entityManager = {
-      execute: vi.fn().mockResolvedValue([{ seatId: '1001' }, { seatId: '1002' }]),
+      findOne: vi.fn().mockResolvedValue({ screen: { id: '10' } }),
+      find: vi.fn().mockResolvedValue([{ id: '1001' }, { id: '1002' }]),
     };
     const repository = new MikroOrmSeatHoldRepository(entityManager as never);
 
@@ -42,9 +43,11 @@ describe('MikroOrmSeatHoldRepository', () => {
       seatIds: ['1001', '1002'],
     });
 
-    const [sql, params] = entityManager.execute.mock.calls[0] as [string, string[]];
-    expect(sql).toContain('JOIN screening ON screening.screen_id = seat.screen_id');
-    expect(params).toEqual(['101', '1001', '1002']);
+    expect(entityManager.findOne).toHaveBeenCalledWith(expect.any(Function), { id: '101' }, { populate: ['screen'] });
+    expect(entityManager.find).toHaveBeenCalledWith(expect.any(Function), {
+      id: { $in: ['1001', '1002'] },
+      screen: '10',
+    }, { orderBy: { id: 'ASC' } });
     expect(result).toEqual(['1001', '1002']);
   });
 });

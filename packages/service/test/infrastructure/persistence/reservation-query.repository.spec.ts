@@ -4,19 +4,29 @@ import { MikroOrmReservationQueryRepository } from '@infrastructure/persistence/
 
 describe('MikroOrmReservationQueryRepository', () => {
   it('내 예매 목록을 최신순 커서 페이지네이션 응답으로 매핑한다', async () => {
-    const rows = [
-      reservationRow({ reservationId: '5003', reservationCreatedAt: new Date('2026-04-30T10:03:00.000Z') }),
-      reservationRow({ reservationId: '5002', reservationCreatedAt: new Date('2026-04-30T10:02:00.000Z') }),
-      reservationRow({ reservationId: '5001', reservationCreatedAt: new Date('2026-04-30T10:01:00.000Z') }),
+    const reservations = [
+      reservationRow({ id: '5003', createdAt: new Date('2026-04-30T10:03:00.000Z') }),
+      reservationRow({ id: '5002', createdAt: new Date('2026-04-30T10:02:00.000Z') }),
+      reservationRow({ id: '5001', createdAt: new Date('2026-04-30T10:01:00.000Z') }),
     ];
     const entityManager = {
-      execute: vi.fn().mockResolvedValue(rows),
+      find: vi.fn()
+        .mockResolvedValueOnce(reservations)
+        .mockResolvedValueOnce([paymentRow({ reservation: reservations[0] })]),
     };
     const repository = new MikroOrmReservationQueryRepository(entityManager as never);
 
     const result = await repository.listMyReservations(ListMyReservationsQuery.of({ memberId: '1', limit: 2 }));
 
-    expect(entityManager.execute).toHaveBeenCalledWith(expect.stringContaining('ORDER BY r.created_at DESC, r.id DESC'), ['1', 3]);
+    expect(entityManager.find).toHaveBeenNthCalledWith(1, expect.any(Function), { member: '1' }, {
+      populate: [
+        'screening.movie.images',
+        'screening.screen.theater',
+        'reservationSeats.seat',
+      ],
+      orderBy: { createdAt: 'DESC', id: 'DESC' },
+      limit: 3,
+    });
     expect(result.items).toHaveLength(2);
     expect(result.items[0]).toMatchObject({
       id: '5003',
@@ -62,20 +72,23 @@ describe('MikroOrmReservationQueryRepository', () => {
       'utf8',
     ).toString('base64url');
     const entityManager = {
-      execute: vi.fn().mockResolvedValue([]),
+      find: vi.fn().mockResolvedValue([]),
     };
     const repository = new MikroOrmReservationQueryRepository(entityManager as never);
 
     await repository.listMyReservations(ListMyReservationsQuery.of({ memberId: '1', limit: 10, cursor }));
 
-    expect(entityManager.execute).toHaveBeenCalledWith(
-      expect.stringContaining('r.created_at < ?::timestamptz'),
-      ['1', '2026-04-30T10:02:00.000Z', '2026-04-30T10:02:00.000Z', 5002, 11],
-    );
+    expect(entityManager.find).toHaveBeenCalledWith(expect.any(Function), {
+      member: '1',
+      $or: [
+        { createdAt: { $lt: new Date('2026-04-30T10:02:00.000Z') } },
+        { createdAt: new Date('2026-04-30T10:02:00.000Z'), id: { $lt: '5002' } },
+      ],
+    }, expect.objectContaining({ limit: 11 }));
   });
 
   it('잘못된 커서가 들어오면 예매 커서 오류를 던진다', async () => {
-    const repository = new MikroOrmReservationQueryRepository({ execute: vi.fn() } as never);
+    const repository = new MikroOrmReservationQueryRepository({ find: vi.fn() } as never);
 
     await expect(
       repository.listMyReservations(ListMyReservationsQuery.of({ memberId: '1', cursor: 'invalid' })),
@@ -84,37 +97,70 @@ describe('MikroOrmReservationQueryRepository', () => {
 });
 
 function reservationRow(overrides: Partial<Record<string, unknown>> = {}) {
+  const seat = {
+    id: '1001',
+    seatRow: 'A',
+    seatCol: 1,
+    seatType: 'NORMAL',
+  };
+  const movie = {
+    id: '1',
+    title: '파묘',
+    rating: '15',
+    posterUrl: 'https://images.example.com/fallback-poster.jpg',
+    images: collection([
+      {
+        id: '1',
+        imageType: 'POSTER',
+        url: 'https://images.example.com/poster.jpg',
+        sortOrder: 0,
+      },
+    ]),
+  };
+
   return {
-    reservationId: '5001',
+    id: '5001',
     reservationNumber: 'R00000000000005003',
-    reservationStatus: 'CONFIRMED',
+    status: 'CONFIRMED',
     totalPrice: 15000,
-    reservationCreatedAt: new Date('2026-04-30T10:03:00.000Z'),
+    createdAt: new Date('2026-04-30T10:03:00.000Z'),
     canceledAt: undefined,
     cancelReason: undefined,
-    movieId: '1',
-    movieTitle: '파묘',
-    movieRating: '15',
-    moviePosterUrl: 'https://images.example.com/poster.jpg',
-    screeningId: '101',
-    screenName: '1관',
-    screeningStartAt: new Date('2026-04-30T11:00:00.000Z'),
-    screeningEndAt: new Date('2026-04-30T13:00:00.000Z'),
-    theaterId: '1',
-    theaterName: 'GC 시네마 강남',
-    theaterAddress: '서울특별시 강남구 테헤란로 427',
-    paymentId: '7001',
-    paymentStatus: 'APPROVED',
-    paymentAmount: 15000,
-    providerPaymentId: 'local-payment-7001',
-    seats: [
-      {
-        id: '1001',
-        row: 'A',
-        col: 1,
-        type: 'NORMAL',
+    screening: {
+      id: '101',
+      movie,
+      screen: {
+        name: '1관',
+        theater: {
+          id: '1',
+          name: 'GC 시네마 강남',
+          address: '서울특별시 강남구 테헤란로 427',
+        },
       },
-    ],
+      startAt: new Date('2026-04-30T11:00:00.000Z'),
+      endAt: new Date('2026-04-30T13:00:00.000Z'),
+    },
+    reservationSeats: collection([
+      {
+        seat,
+      },
+    ]),
     ...overrides,
+  };
+}
+
+function paymentRow(params: { reservation: unknown }) {
+  return {
+    id: '7001',
+    reservation: params.reservation,
+    status: 'APPROVED',
+    amount: 15000,
+    providerPaymentId: 'local-payment-7001',
+  };
+}
+
+function collection<T>(items: T[]) {
+  return {
+    getItems: () => items,
   };
 }

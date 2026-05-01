@@ -5,22 +5,20 @@ import { MikroOrmSeatQueryRepository } from '@infrastructure/persistence/reposit
 describe('MikroOrmSeatQueryRepository', () => {
   it('상영 좌석을 예매 완료, 임시 점유, 예매 가능 상태로 매핑한다', async () => {
     const entityManager = {
-      execute: vi.fn().mockResolvedValue([
-        createRow({ seatId: '1001', seatRow: 'A', seatCol: '1', status: 'RESERVED' }),
-        createRow({ seatId: '1002', seatRow: 'A', seatCol: '2', status: 'HELD' }),
-        createRow({ seatId: '1003', seatRow: 'A', seatCol: '3', status: 'AVAILABLE' }),
-      ]),
+      findOne: vi.fn().mockResolvedValue(createScreening()),
     };
     const repository = new MikroOrmSeatQueryRepository(entityManager as never);
 
     const result = await repository.listByScreening(ListScreeningSeatsQuery.of({ screeningId: '101' }));
 
-    const [sql, params] = entityManager.execute.mock.calls[0] as [string, string[]];
-    expect(sql).toContain("reserved.status IN ('PENDING', 'CONFIRMED')");
-    expect(sql).toContain("active_hold.status = 'HELD'");
-    expect(sql).toContain('active_hold.expires_at > now()');
-    expect(sql).toContain('ORDER BY seat.seat_row ASC, seat.seat_col ASC, seat.id ASC');
-    expect(params).toEqual(['101']);
+    expect(entityManager.findOne).toHaveBeenCalledWith(expect.any(Function), { id: '101' }, {
+      populate: [
+        'screen.seats',
+        'reservationSeats.seat',
+        'reservationSeats.reservation',
+        'seatHolds.seat',
+      ],
+    });
     expect(result).toEqual({
       screeningId: '101',
       seats: [
@@ -32,17 +30,42 @@ describe('MikroOrmSeatQueryRepository', () => {
   });
 });
 
-function createRow(params: {
-  seatId: string;
-  seatRow: string;
-  seatCol: string;
-  status: 'RESERVED' | 'HELD' | 'AVAILABLE';
-}) {
+function createScreening() {
+  const reservedSeat = createSeat('1001', 1);
+  const heldSeat = createSeat('1002', 2);
+  const availableSeat = createSeat('1003', 3);
+
   return {
-    seatId: params.seatId,
-    seatRow: params.seatRow,
-    seatCol: params.seatCol,
+    screen: {
+      seats: collection([reservedSeat, heldSeat, availableSeat]),
+    },
+    reservationSeats: collection([
+      {
+        seat: reservedSeat,
+        reservation: { status: 'CONFIRMED' },
+      },
+    ]),
+    seatHolds: collection([
+      {
+        seat: heldSeat,
+        status: 'HELD',
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    ]),
+  };
+}
+
+function createSeat(id: string, col: number) {
+  return {
+    id,
+    seatRow: 'A',
+    seatCol: col,
     seatType: 'NORMAL',
-    status: params.status,
+  };
+}
+
+function collection<T>(items: T[]) {
+  return {
+    getItems: () => items,
   };
 }

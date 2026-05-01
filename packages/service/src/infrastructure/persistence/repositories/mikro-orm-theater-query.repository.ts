@@ -3,14 +3,11 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ListTheatersQuery, TheaterListResultDto, TheaterSummaryDto } from '@application/query/dto';
 import type { TheaterQueryPort } from '@application/query/ports';
+import { TheaterEntity } from '../entities';
 
-interface TheaterListRow {
-  id: string | number;
-  name: string;
-  address: string;
-  latitude?: string | number | null;
-  longitude?: string | number | null;
-  distanceMeters?: string | number | null;
+interface TheaterWithDistance {
+  theater: TheaterEntity;
+  distanceMeters?: number;
 }
 
 @Injectable()
@@ -19,78 +16,82 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
   constructor(private readonly entityManager: EntityManager) {}
 
   async list(query: ListTheatersQuery): Promise<TheaterListResultDto> {
-    const rows = query.hasCurrentLocation()
-      ? await this.findRowsNearLocation(query.latitude, query.longitude)
-      : await this.findRows();
+    const rows = await this.findRows(query);
 
     return TheaterListResultDto.of({
       items: rows.map((row) => this.toDto(row)),
     });
   }
 
-  private findRows(): Promise<TheaterListRow[]> {
-    return this.entityManager.execute<TheaterListRow[]>(
-      `
-        SELECT
-          id,
-          name,
-          address,
-          latitude,
-          longitude
-        FROM theater
-        ORDER BY id ASC
-      `,
-    );
+  private async findRows(query: ListTheatersQuery): Promise<TheaterWithDistance[]> {
+    const theaters = await this.entityManager.find(TheaterEntity, {}, { orderBy: { id: 'ASC' } });
+
+    if (!query.hasCurrentLocation()) {
+      return theaters.map((theater) => ({ theater }));
+    }
+
+    return theaters
+      .map((theater) => ({
+        theater,
+        distanceMeters: this.calculateDistanceMeters(query.latitude, query.longitude, theater.latitude, theater.longitude),
+      }))
+      .sort((left, right) => this.compareDistance(left, right));
   }
 
-  private findRowsNearLocation(latitude: number | undefined, longitude: number | undefined): Promise<TheaterListRow[]> {
-    return this.entityManager.execute<TheaterListRow[]>(
-      `
-        SELECT
-          id,
-          name,
-          address,
-          latitude,
-          longitude,
-          CASE
-            WHEN latitude IS NULL OR longitude IS NULL THEN NULL
-            ELSE (
-              6371000 * 2 * ASIN(
-                SQRT(
-                  POWER(SIN(RADIANS((latitude - ?) / 2)), 2)
-                  + COS(RADIANS(?))
-                    * COS(RADIANS(latitude))
-                    * POWER(SIN(RADIANS((longitude - ?) / 2)), 2)
-                )
-              )
-            )
-          END AS "distanceMeters"
-        FROM theater
-        ORDER BY
-          CASE WHEN latitude IS NULL OR longitude IS NULL THEN 1 ELSE 0 END ASC,
-          "distanceMeters" ASC,
-          id ASC
-      `,
-      [latitude, latitude, longitude],
-    );
-  }
-
-  private toDto(row: TheaterListRow): TheaterSummaryDto {
-    return TheaterSummaryDto.of({
-      id: Number(row.id),
-      name: row.name,
-      address: row.address,
-      latitude: this.toOptionalNumber(row.latitude),
-      longitude: this.toOptionalNumber(row.longitude),
-      distanceMeters: this.toOptionalNumber(row.distanceMeters),
-    });
-  }
-
-  private toOptionalNumber(value: string | number | null | undefined): number | undefined {
-    if (value === null || value === undefined) {
+  private calculateDistanceMeters(
+    currentLatitude: number | undefined,
+    currentLongitude: number | undefined,
+    theaterLatitude: number | undefined,
+    theaterLongitude: number | undefined,
+  ): number | undefined {
+    if (
+      currentLatitude === undefined ||
+      currentLongitude === undefined ||
+      theaterLatitude === undefined ||
+      theaterLongitude === undefined
+    ) {
       return undefined;
     }
 
-    return Number(value);
+    const earthRadiusMeters = 6_371_000;
+    const latitudeDelta = this.toRadians(theaterLatitude - currentLatitude);
+    const longitudeDelta = this.toRadians(theaterLongitude - currentLongitude);
+    const currentLatitudeRadians = this.toRadians(currentLatitude);
+    const theaterLatitudeRadians = this.toRadians(theaterLatitude);
+    const haversine = Math.sin(latitudeDelta / 2) ** 2
+      + Math.cos(currentLatitudeRadians) * Math.cos(theaterLatitudeRadians) * Math.sin(longitudeDelta / 2) ** 2;
+
+    return earthRadiusMeters * 2 * Math.asin(Math.sqrt(haversine));
+  }
+
+  private compareDistance(left: TheaterWithDistance, right: TheaterWithDistance): number {
+    if (left.distanceMeters === undefined && right.distanceMeters === undefined) {
+      return Number(left.theater.id) - Number(right.theater.id);
+    }
+
+    if (left.distanceMeters === undefined) {
+      return 1;
+    }
+
+    if (right.distanceMeters === undefined) {
+      return -1;
+    }
+
+    return left.distanceMeters - right.distanceMeters || Number(left.theater.id) - Number(right.theater.id);
+  }
+
+  private toRadians(value: number): number {
+    return value * Math.PI / 180;
+  }
+
+  private toDto(row: TheaterWithDistance): TheaterSummaryDto {
+    return TheaterSummaryDto.of({
+      id: Number(row.theater.id),
+      name: row.theater.name,
+      address: row.theater.address,
+      latitude: row.theater.latitude,
+      longitude: row.theater.longitude,
+      distanceMeters: row.distanceMeters,
+    });
   }
 }

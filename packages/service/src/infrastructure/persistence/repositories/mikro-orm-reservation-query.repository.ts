@@ -1,4 +1,5 @@
 import { Logging } from '@kangjuhyup/rvlog';
+import type { FilterQuery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import {
@@ -13,38 +14,11 @@ import {
 } from '@application/query/dto';
 import type { ReservationQueryPort } from '@application/query/ports';
 import type { PaymentStatusType, ReservationStatusType } from '@domain';
+import { PaymentEntity, ReservationEntity, SeatEntity } from '../entities';
 
-interface ReservationListRow {
-  reservationId: string | number;
-  reservationNumber: string;
-  reservationStatus: ReservationStatusType;
-  totalPrice: string | number;
-  reservationCreatedAt: string | Date;
-  canceledAt?: string | Date;
-  cancelReason?: string;
-  movieId: string | number;
-  movieTitle: string;
-  movieRating?: string;
-  moviePosterUrl?: string;
-  screeningId: string | number;
-  screenName: string;
-  screeningStartAt: string | Date;
-  screeningEndAt: string | Date;
-  theaterId: string | number;
-  theaterName: string;
-  theaterAddress: string;
-  paymentId?: string | number;
-  paymentStatus?: PaymentStatusType;
-  paymentAmount?: string | number;
-  providerPaymentId?: string;
-  seats: ReservationSeatJson[] | string;
-}
-
-interface ReservationSeatJson {
-  id: string | number;
-  row: string;
-  col: string | number;
-  type?: string;
+interface ReservationListItem {
+  reservation: ReservationEntity;
+  payment?: PaymentEntity;
 }
 
 interface ReservationCursor {
@@ -59,177 +33,132 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
 
   async listMyReservations(query: ListMyReservationsQuery): Promise<ReservationListResultDto> {
     const cursor = this.decodeCursor(query.cursor);
-    const rows = await this.findRows(query, cursor);
-    const hasNext = rows.length > query.limit;
-    const items = rows.slice(0, query.limit);
+    const results = await this.findRows(query, cursor);
+    const hasNext = results.length > query.limit;
+    const items = results.slice(0, query.limit);
 
     return ReservationListResultDto.of({
-      items: items.map((row) => this.toDto(row)),
+      items: items.map((item) => this.toDto(item)),
       hasNext,
       nextCursor: hasNext ? this.encodeCursor(items[items.length - 1]) : undefined,
     });
   }
 
-  private findRows(query: ListMyReservationsQuery, cursor?: ReservationCursor): Promise<ReservationListRow[]> {
-    const params: Array<string | number> = [query.memberId];
-    const cursorWhere = this.buildCursorWhere(cursor, params);
-    params.push(query.limit + 1);
+  private async findRows(query: ListMyReservationsQuery, cursor?: ReservationCursor): Promise<ReservationListItem[]> {
+    const reservations = await this.entityManager.find(ReservationEntity, this.buildWhere(query, cursor), {
+      populate: [
+        'screening.movie.images',
+        'screening.screen.theater',
+        'reservationSeats.seat',
+      ],
+      orderBy: { createdAt: 'DESC', id: 'DESC' },
+      limit: query.limit + 1,
+    });
 
-    return this.entityManager.execute<ReservationListRow[]>(
-      `
-        SELECT
-          r.id AS "reservationId",
-          r.reservation_number AS "reservationNumber",
-          r.status AS "reservationStatus",
-          r.total_price AS "totalPrice",
-          r.created_at AS "reservationCreatedAt",
-          r.canceled_at AS "canceledAt",
-          r.cancel_reason AS "cancelReason",
-          m.id AS "movieId",
-          m.title AS "movieTitle",
-          m.rating AS "movieRating",
-          COALESCE(mi.url, m.poster_url) AS "moviePosterUrl",
-          sg.id AS "screeningId",
-          sc.name AS "screenName",
-          sg.start_at AS "screeningStartAt",
-          sg.end_at AS "screeningEndAt",
-          t.id AS "theaterId",
-          t.name AS "theaterName",
-          t.address AS "theaterAddress",
-          p.id AS "paymentId",
-          p.status AS "paymentStatus",
-          p.amount AS "paymentAmount",
-          p.provider_payment_id AS "providerPaymentId",
-          COALESCE(
-            json_agg(
-              json_build_object(
-                'id', seat.id::text,
-                'row', seat.seat_row,
-                'col', seat.seat_col,
-                'type', COALESCE(seat.seat_type, 'NORMAL')
-              )
-              ORDER BY seat.seat_row ASC, seat.seat_col ASC, seat.id ASC
-            ) FILTER (WHERE seat.id IS NOT NULL),
-            '[]'::json
-          ) AS seats
-        FROM reservation r
-        JOIN screening sg ON sg.id = r.screening_id
-        JOIN movie m ON m.id = sg.movie_id
-        JOIN screen sc ON sc.id = sg.screen_id
-        JOIN theater t ON t.id = sc.theater_id
-        LEFT JOIN payment p ON p.reservation_id = r.id AND p.member_id = r.member_id
-        LEFT JOIN reservation_seat rs ON rs.reservation_id = r.id
-        LEFT JOIN seat ON seat.id = rs.seat_id
-        LEFT JOIN LATERAL (
-          SELECT movie_image.url
-          FROM movie_image
-          WHERE movie_image.movie_id = m.id
-            AND movie_image.image_type = 'POSTER'
-          ORDER BY movie_image.sort_order ASC, movie_image.id ASC
-          LIMIT 1
-        ) mi ON true
-        WHERE r.member_id = ?
-        ${cursorWhere}
-        GROUP BY
-          r.id,
-          r.reservation_number,
-          r.status,
-          r.total_price,
-          r.created_at,
-          r.canceled_at,
-          r.cancel_reason,
-          m.id,
-          m.title,
-          m.rating,
-          m.poster_url,
-          mi.url,
-          sg.id,
-          sc.name,
-          sg.start_at,
-          sg.end_at,
-          t.id,
-          t.name,
-          t.address,
-          p.id,
-          p.status,
-          p.amount,
-          p.provider_payment_id
-        ORDER BY r.created_at DESC, r.id DESC
-        LIMIT ?
-      `,
-      params,
-    );
-  }
-
-  private buildCursorWhere(cursor: ReservationCursor | undefined, params: Array<string | number>): string {
-    if (cursor === undefined) {
-      return '';
+    if (reservations.length === 0) {
+      return [];
     }
 
-    params.push(cursor.createdAt, cursor.createdAt, cursor.reservationId);
+    const payments = await this.entityManager.find(PaymentEntity, {
+      member: query.memberId,
+      reservation: { $in: reservations.map((reservation) => reservation.id) },
+    }, { orderBy: { createdAt: 'DESC', id: 'DESC' } });
+    const paymentsByReservationId = new Map<string, PaymentEntity>();
 
-    return `
-      AND (
-        r.created_at < ?::timestamptz
-        OR (r.created_at = ?::timestamptz AND r.id < ?)
-      )
-    `;
+    for (const payment of payments) {
+      const reservationId = payment.reservation?.id;
+
+      if (reservationId !== undefined && !paymentsByReservationId.has(reservationId)) {
+        paymentsByReservationId.set(reservationId, payment);
+      }
+    }
+
+    return reservations.map((reservation) => ({
+      reservation,
+      payment: paymentsByReservationId.get(reservation.id),
+    }));
   }
 
-  private toDto(row: ReservationListRow): ReservationSummaryDto {
+  private buildWhere(
+    query: ListMyReservationsQuery,
+    cursor: ReservationCursor | undefined,
+  ): FilterQuery<ReservationEntity> {
+    const where: FilterQuery<ReservationEntity> = { member: query.memberId };
+
+    if (cursor === undefined) {
+      return where;
+    }
+
+    where.$or = [
+      { createdAt: { $lt: new Date(cursor.createdAt) } },
+      { createdAt: new Date(cursor.createdAt), id: { $lt: String(cursor.reservationId) } },
+    ];
+
+    return where;
+  }
+
+  private toDto(item: ReservationListItem): ReservationSummaryDto {
+    const { reservation, payment } = item;
+    const screening = reservation.screening;
+    const movie = screening.movie;
+    const screen = screening.screen;
+    const theater = screen.theater;
+
     return ReservationSummaryDto.of({
-      id: String(row.reservationId),
-      reservationNumber: row.reservationNumber,
-      status: row.reservationStatus,
-      totalPrice: Number(row.totalPrice),
-      createdAt: this.toIsoString(row.reservationCreatedAt),
-      canceledAt: this.toOptionalIsoString(row.canceledAt),
-      cancelReason: row.cancelReason,
+      id: reservation.id,
+      reservationNumber: reservation.reservationNumber,
+      status: reservation.status as ReservationStatusType,
+      totalPrice: reservation.totalPrice,
+      createdAt: this.toIsoString(reservation.createdAt),
+      canceledAt: this.toOptionalIsoString(reservation.canceledAt),
+      cancelReason: reservation.cancelReason,
       movie: ReservationMovieSummaryDto.of({
-        id: String(row.movieId),
-        title: row.movieTitle,
-        rating: row.movieRating,
-        posterUrl: row.moviePosterUrl,
+        id: movie.id,
+        title: movie.title,
+        rating: movie.rating,
+        posterUrl: this.posterUrl(movie),
       }),
       screening: ReservationScreeningSummaryDto.of({
-        id: String(row.screeningId),
-        screenName: row.screenName,
-        startAt: this.toIsoString(row.screeningStartAt),
-        endAt: this.toIsoString(row.screeningEndAt),
+        id: screening.id,
+        screenName: screen.name,
+        startAt: this.toIsoString(screening.startAt),
+        endAt: this.toIsoString(screening.endAt),
         theater: ReservationTheaterSummaryDto.of({
-          id: String(row.theaterId),
-          name: row.theaterName,
-          address: row.theaterAddress,
+          id: theater.id,
+          name: theater.name,
+          address: theater.address,
         }),
       }),
-      seats: this.parseSeats(row.seats).map((seat) =>
+      seats: reservation.reservationSeats.getItems().map((reservationSeat) => reservationSeat.seat)
+        .sort((left, right) => this.compareSeat(left, right))
+        .map((seat) =>
         ReservationSeatSummaryDto.of({
-          id: String(seat.id),
-          row: seat.row,
-          col: Number(seat.col),
-          type: seat.type ?? 'NORMAL',
+          id: seat.id,
+          row: seat.seatRow,
+          col: seat.seatCol,
+          type: seat.seatType ?? 'NORMAL',
         }),
       ),
-      payment: row.paymentId === undefined
+      payment: payment === undefined
         ? undefined
         : ReservationPaymentSummaryDto.of({
-            id: String(row.paymentId),
-            status: row.paymentStatus as PaymentStatusType,
-            amount: Number(row.paymentAmount),
-            providerPaymentId: row.providerPaymentId,
+            id: payment.id,
+            status: payment.status as PaymentStatusType,
+            amount: payment.amount,
+            providerPaymentId: payment.providerPaymentId,
           }),
     });
   }
 
-  private encodeCursor(row: ReservationListRow | undefined): string | undefined {
-    if (row === undefined) {
+  private encodeCursor(item: ReservationListItem | undefined): string | undefined {
+    if (item === undefined) {
       return undefined;
     }
 
     return Buffer.from(
       JSON.stringify({
-        createdAt: this.toIsoString(row.reservationCreatedAt),
-        reservationId: Number(row.reservationId),
+        createdAt: this.toIsoString(item.reservation.createdAt),
+        reservationId: Number(item.reservation.id),
       } satisfies ReservationCursor),
       'utf8',
     ).toString('base64url');
@@ -260,8 +189,17 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     }
   }
 
-  private parseSeats(rowSeats: ReservationListRow['seats']): ReservationSeatJson[] {
-    return typeof rowSeats === 'string' ? JSON.parse(rowSeats) as ReservationSeatJson[] : rowSeats;
+  private posterUrl(movie: ReservationEntity['screening']['movie']): string | undefined {
+    const poster = movie.images
+      .getItems()
+      .filter((image) => image.imageType === 'POSTER')
+      .sort((left, right) => left.sortOrder - right.sortOrder || Number(left.id) - Number(right.id))[0];
+
+    return poster?.url ?? movie.posterUrl;
+  }
+
+  private compareSeat(left: SeatEntity, right: SeatEntity): number {
+    return left.seatRow.localeCompare(right.seatRow) || left.seatCol - right.seatCol || Number(left.id) - Number(right.id);
   }
 
   private toIsoString(value: string | Date): string {

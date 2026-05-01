@@ -3,12 +3,15 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import type { SeatHoldModel } from '@domain';
 import type { SeatHoldRepositoryPort } from '@application/commands/ports';
-import { MemberEntity, ReservationEntity, ScreeningEntity, SeatEntity, SeatHoldEntity } from '../entities';
+import {
+  MemberEntity,
+  ReservationEntity,
+  ReservationSeatEntity,
+  ScreeningEntity,
+  SeatEntity,
+  SeatHoldEntity,
+} from '../entities';
 import { PersistenceMapper } from '../mappers';
-
-interface SeatIdRow {
-  seatId: string | number;
-}
 
 @Injectable()
 @Logging
@@ -72,38 +75,24 @@ export class MikroOrmSeatHoldRepository implements SeatHoldRepositoryPort {
       return [];
     }
 
-    const placeholders = this.placeholders(params.seatIds);
-    const rows = await this.entityManager.execute<SeatIdRow[]>(
-      `
-        SELECT DISTINCT unavailable.seat_id AS "seatId"
-        FROM (
-          SELECT reservation_seat.seat_id
-          FROM reservation_seat
-          JOIN reservation ON reservation.id = reservation_seat.reservation_id
-          WHERE reservation_seat.screening_id = ?
-            AND reservation_seat.seat_id IN (${placeholders})
-            AND reservation.status IN ('PENDING', 'CONFIRMED')
+    const [reservedSeats, heldSeats] = await Promise.all([
+      this.entityManager.find(ReservationSeatEntity, {
+        screening: params.screeningId,
+        seat: { $in: params.seatIds },
+        reservation: { status: { $in: ['PENDING', 'CONFIRMED'] } },
+      }, { populate: ['seat'] }),
+      this.entityManager.find(SeatHoldEntity, {
+        screening: params.screeningId,
+        seat: { $in: params.seatIds },
+        status: 'HELD',
+        expiresAt: { $gt: params.now },
+      }, { populate: ['seat'] }),
+    ]);
 
-          UNION
-
-          SELECT seat_hold.seat_id
-          FROM seat_hold
-          WHERE seat_hold.screening_id = ?
-            AND seat_hold.seat_id IN (${placeholders})
-            AND seat_hold.status = 'HELD'
-            AND seat_hold.expires_at > ?::timestamptz
-        ) unavailable
-      `,
-      [
-        params.screeningId,
-        ...params.seatIds,
-        params.screeningId,
-        ...params.seatIds,
-        params.now.toISOString(),
-      ],
-    );
-
-    return rows.map((row) => String(row.seatId));
+    return Array.from(new Set([
+      ...reservedSeats.map((reservationSeat) => reservationSeat.seat.id),
+      ...heldSeats.map((seatHold) => seatHold.seat.id),
+    ]));
   }
 
   async findSeatIdsInScreening(params: {
@@ -114,23 +103,20 @@ export class MikroOrmSeatHoldRepository implements SeatHoldRepositoryPort {
       return [];
     }
 
-    const placeholders = this.placeholders(params.seatIds);
-    const rows = await this.entityManager.execute<SeatIdRow[]>(
-      `
-        SELECT seat.id AS "seatId"
-        FROM seat
-        JOIN screening ON screening.screen_id = seat.screen_id
-        WHERE screening.id = ?
-          AND seat.id IN (${placeholders})
-      `,
-      [params.screeningId, ...params.seatIds],
-    );
+    const screening = await this.entityManager.findOne(ScreeningEntity, { id: params.screeningId }, {
+      populate: ['screen'],
+    });
 
-    return rows.map((row) => String(row.seatId));
-  }
+    if (screening === null) {
+      return [];
+    }
 
-  private placeholders(values: string[]): string {
-    return values.map(() => '?').join(', ');
+    const seats = await this.entityManager.find(SeatEntity, {
+      id: { $in: params.seatIds },
+      screen: screening.screen.id,
+    }, { orderBy: { id: 'ASC' } });
+
+    return seats.map((seat) => seat.id);
   }
 
   private applyReferences(entity: SeatHoldEntity): void {

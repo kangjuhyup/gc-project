@@ -1,4 +1,5 @@
 import { Logging } from '@kangjuhyup/rvlog';
+import type { FilterQuery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import type { MemberModel } from '@domain';
@@ -11,17 +12,6 @@ import {
 } from '@application/query/dto';
 import { MemberEntity } from '../entities';
 import { PersistenceMapper } from '../mappers';
-
-interface AdminMemberListRow {
-  id: string | number;
-  userId: string;
-  name: string;
-  phoneNumber: string;
-  status: string;
-  failedLoginCount: string | number;
-  lockedAt?: string | Date;
-  createdAt: string | Date;
-}
 
 @Injectable()
 @Logging
@@ -76,75 +66,46 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
     });
   }
 
-  private async findAdminRows(query: ListAdminMembersQuery): Promise<AdminMemberListRow[]> {
-    const { where, params } = this.buildAdminWhere(query);
-    params.push(query.countPerPage, this.offset(query.currentPage, query.countPerPage));
-
-    return this.entityManager.execute<AdminMemberListRow[]>(
-      `
-        SELECT
-          id::text AS "id",
-          user_id AS "userId",
-          name,
-          phone_number AS "phoneNumber",
-          status,
-          failed_login_count AS "failedLoginCount",
-          locked_at AS "lockedAt",
-          created_at AS "createdAt"
-        FROM member
-        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-        ORDER BY created_at DESC, id DESC
-        LIMIT ?
-        OFFSET ?
-      `,
-      params,
-    );
+  private findAdminRows(query: ListAdminMembersQuery): Promise<MemberEntity[]> {
+    return this.entityManager.find(MemberEntity, this.buildAdminWhere(query), {
+      orderBy: { createdAt: 'DESC', id: 'DESC' },
+      limit: query.countPerPage,
+      offset: this.offset(query.currentPage, query.countPerPage),
+    });
   }
 
-  private async countAdminRows(query: ListAdminMembersQuery): Promise<number> {
-    const { where, params } = this.buildAdminWhere(query);
-    const rows = await this.entityManager.execute<Array<{ count: string | number }>>(
-      `
-        SELECT COUNT(*)::int AS count
-        FROM member
-        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-      `,
-      params,
-    );
-
-    return Number(rows[0]?.count ?? 0);
+  private countAdminRows(query: ListAdminMembersQuery): Promise<number> {
+    return this.entityManager.count(MemberEntity, this.buildAdminWhere(query));
   }
 
-  private buildAdminWhere(query: ListAdminMembersQuery): {
-    where: string[];
-    params: Array<string | number>;
-  } {
-    const params: Array<string | number> = [];
-    const where: string[] = [];
+  private buildAdminWhere(query: ListAdminMembersQuery): FilterQuery<MemberEntity> {
+    const where: FilterQuery<MemberEntity> = {};
     const normalizedKeyword = query.keyword?.trim();
 
     if (normalizedKeyword) {
       const keyword = `%${normalizedKeyword}%`;
-      where.push('(user_id ILIKE ? OR name ILIKE ? OR phone_number ILIKE ?)');
-      params.push(keyword, keyword, keyword);
+      where.$or = [
+        { userId: { $ilike: keyword } },
+        { name: { $ilike: keyword } },
+        { phoneNumber: { $ilike: keyword } },
+      ];
     }
 
     if (query.status !== undefined) {
-      where.push('status = ?');
-      params.push(query.status);
+      where.status = query.status;
     }
 
-    return { where, params };
+    return where;
   }
 
-  private toAdminDto(row: AdminMemberListRow): AdminMemberSummaryDto {
+  private toAdminDto(row: MemberEntity): AdminMemberSummaryDto {
     return AdminMemberSummaryDto.of({
       id: String(row.id),
       userId: row.userId,
       name: row.name,
       phoneNumber: row.phoneNumber,
       status: row.status,
-      failedLoginCount: Number(row.failedLoginCount),
+      failedLoginCount: row.failedLoginCount,
       lockedAt: this.toOptionalIsoString(row.lockedAt),
       createdAt: this.toIsoString(row.createdAt),
     });

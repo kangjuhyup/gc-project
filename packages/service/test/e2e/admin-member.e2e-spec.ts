@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { AdminAuditEntity, MemberEntity } from '../../src/infrastructure/persistence/entities';
 import { ServiceE2eContext } from './support/service-e2e';
 
 async function loginAdmin(e2e: ServiceE2eContext): Promise<string> {
@@ -28,13 +29,7 @@ describe('관리자 회원 관리 e2e', () => {
   it('관리자는 회원 목록을 상태와 검색어로 조회할 수 있다', async () => {
     const member = await e2e.signupAndLogin('admin_member');
     const accessToken = await loginAdmin(e2e);
-    const [storedMember] = await e2e.orm.em.getConnection().execute<Array<{
-      name: string;
-      phoneNumber: string;
-    }>>(
-      'SELECT name, phone_number AS "phoneNumber" FROM member WHERE id = ?',
-      [member.memberId],
-    );
+    const storedMember = await e2e.orm.em.fork().findOneOrFail(MemberEntity, { id: member.memberId });
 
     const list = await e2e.get(
       `/admin/members?keyword=${member.userId}&status=ACTIVE&currentPage=1&countPerPage=5`,
@@ -75,13 +70,7 @@ describe('관리자 회원 관리 e2e', () => {
   it('관리자는 해제 사유 헤더를 남기면 회원 개인정보 원문을 조회하고 audit을 저장한다', async () => {
     const member = await e2e.signupAndLogin('admin_unmask');
     const accessToken = await loginAdmin(e2e);
-    const [storedMember] = await e2e.orm.em.getConnection().execute<Array<{
-      name: string;
-      phoneNumber: string;
-    }>>(
-      'SELECT name, phone_number AS "phoneNumber" FROM member WHERE id = ?',
-      [member.memberId],
-    );
+    const storedMember = await e2e.orm.em.fork().findOneOrFail(MemberEntity, { id: member.memberId });
 
     const list = await e2e.get(
       `/admin/members?keyword=${member.userId}&status=ACTIVE&currentPage=1&countPerPage=5`,
@@ -107,15 +96,7 @@ describe('관리자 회원 관리 e2e', () => {
       ]),
     );
 
-    const audits = await e2e.orm.em.getConnection().execute<Array<{
-      adminId: string;
-      httpMethod: string;
-      path: string;
-      unmaskedFields: string[];
-      targetType: string;
-      targetIds: string[];
-      reason: string;
-    }>>('SELECT admin_id AS "adminId", http_method AS "httpMethod", path, unmasked_fields AS "unmaskedFields", target_type AS "targetType", target_ids AS "targetIds", reason FROM admin_audit');
+    const audits = await e2e.orm.em.fork().find(AdminAuditEntity, {});
     expect(audits).toEqual([
       expect.objectContaining({
         adminId: 'admin',
