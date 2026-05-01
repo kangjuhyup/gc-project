@@ -160,6 +160,21 @@ describe('domain persistence models', () => {
     expect(withdrawn.updatedAt).toBe(now);
   });
 
+  it('잠긴 회원은 로그인할 수 없다', () => {
+    const member = MemberModel.of({
+      userId: 'member_01',
+      passwordHash: 'old-hash',
+      name: 'Member',
+      birthDate: new Date('1990-01-01T00:00:00.000Z'),
+      phoneNumber: '01000000000',
+      address: 'Seoul',
+      status: 'LOCKED',
+      failedLoginCount: 5,
+    });
+
+    expect(() => member.assertCanLogin()).toThrow('MEMBER_LOCKED');
+  });
+
   it('영화와 상영 persistence 속성으로 도메인 모델을 생성한다', () => {
     const releaseDate = new Date('2026-04-28T00:00:00.000Z');
     const startAt = new Date('2026-04-28T09:00:00.000Z');
@@ -307,6 +322,18 @@ describe('domain persistence models', () => {
 
     expect(() => reservation.cancel({ reason: 'again', now: new Date('2026-04-29T01:05:00.000Z') }))
       .toThrow(new DomainError(DomainErrorCode.INVALID_RESERVATION_STATUS));
+  });
+
+  it('다른 회원의 예매는 소유권 검증에서 거부한다', () => {
+    const reservation = ReservationModel.of({
+      reservationNumber: 'R20260429001',
+      memberId: '1',
+      screeningId: '2',
+      status: 'CONFIRMED',
+      totalPrice: 15000,
+    });
+
+    expect(() => reservation.assertOwnedBy('2')).toThrow('RESERVATION_FORBIDDEN');
   });
 
   it('좌석 선점 persistence 속성으로 도메인 모델을 생성한다', () => {
@@ -475,6 +502,35 @@ describe('domain persistence models', () => {
     expect(refundRequired.updatedAt).toBe(now);
   });
 
+  it('결제 멱등성 요청 해시가 다르면 중복 요청을 거부한다', () => {
+    const payment = PaymentModel.request({
+      memberId: '1',
+      seatHoldId: '10',
+      idempotencyKey: 'pay-test-key',
+      requestHash: 'request-hash',
+      provider: 'LOCAL',
+      amount: 15000,
+      now: new Date('2026-04-29T01:00:00.000Z'),
+    });
+
+    expect(() => payment.assertIdempotentRequestHash('different-hash'))
+      .toThrow('PAYMENT_IDEMPOTENCY_KEY_CONFLICT');
+  });
+
+  it('callback provider가 기존 결제 provider와 다르면 거부한다', () => {
+    const payment = PaymentModel.request({
+      memberId: '1',
+      seatHoldId: '10',
+      idempotencyKey: 'pay-test-key',
+      requestHash: 'request-hash',
+      provider: 'LOCAL',
+      amount: 15000,
+      now: new Date('2026-04-29T01:00:00.000Z'),
+    });
+
+    expect(() => payment.assertProvider('KAKAO' as never)).toThrow('PAYMENT_PROVIDER_MISMATCH');
+  });
+
   it('결제 이벤트 로그와 아웃박스 이벤트는 persistence 속성으로 생성한다', () => {
     const occurredAt = new Date('2026-04-29T01:00:00.000Z');
     const eventLog = PaymentEventLogModel.of({
@@ -516,6 +572,30 @@ describe('domain persistence models', () => {
 
     expect(released.id).toBe('hold-1');
     expect(released.status).toBe('RELEASED');
+  });
+
+  it('내가 점유했고 결제 전인 좌석 선점은 결제 요청에 사용할 수 있다', () => {
+    const seatHold = SeatHoldModel.of({
+      screeningId: '1',
+      seatId: '2',
+      memberId: '3',
+      status: 'HELD',
+      expiresAt: new Date('2026-04-28T09:13:00.000Z'),
+    });
+
+    expect(() => seatHold.assertPayableBy('3')).not.toThrow();
+  });
+
+  it('다른 회원의 좌석 선점은 결제 요청에 사용할 수 없다', () => {
+    const seatHold = SeatHoldModel.of({
+      screeningId: '1',
+      seatId: '2',
+      memberId: '3',
+      status: 'HELD',
+      expiresAt: new Date('2026-04-28T09:13:00.000Z'),
+    });
+
+    expect(() => seatHold.assertPayableBy('4')).toThrow('SEAT_HOLD_FORBIDDEN');
   });
 
   it('다른 회원의 좌석 선점은 해제할 수 없다', () => {

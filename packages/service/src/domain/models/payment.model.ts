@@ -53,6 +53,36 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
     });
   }
 
+  assertIdempotentRequestHash(requestHash: string): void {
+    if (this.requestHash !== requestHash) {
+      throw new Error('PAYMENT_IDEMPOTENCY_KEY_CONFLICT');
+    }
+  }
+
+  assertProvider(provider: PaymentProviderType): void {
+    if (this.provider !== provider) {
+      throw new Error('PAYMENT_PROVIDER_MISMATCH');
+    }
+  }
+
+  assertOwnedBy(memberId: string, errorMessage = 'PAYMENT_FORBIDDEN'): void {
+    if (this.memberId !== memberId) {
+      throw new Error(errorMessage);
+    }
+  }
+
+  requireProviderPaymentId(): string {
+    if (this.providerPaymentId === undefined) {
+      throw new Error('PAYMENT_PROVIDER_PAYMENT_ID_REQUIRED');
+    }
+
+    return this.providerPaymentId;
+  }
+
+  isCallbackHandled(): boolean {
+    return this.status === PaymentStatus.APPROVED || this.status === PaymentStatus.FAILED;
+  }
+
   markApproving(params: { providerPaymentId: string; amount: number; now: Date }): PaymentModel {
     if (this.status !== PaymentStatus.PENDING) {
       return this;

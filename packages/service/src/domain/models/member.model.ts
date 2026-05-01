@@ -74,6 +74,16 @@ export class MemberModel extends PersistenceModel<string, MemberPersistenceProps
     }).setPersistence(this.id, this.createdAt, now);
   }
 
+  assertCanLogin(): void {
+    if (this.status === MemberStatus.LOCKED) {
+      throw new Error('MEMBER_LOCKED');
+    }
+
+    if (this.status === MemberStatus.WITHDRAWN) {
+      throw new Error('MEMBER_WITHDRAWN');
+    }
+  }
+
   recordLoginSuccess(now: Date): MemberModel {
     return new MemberModel({
       ...this.etc,

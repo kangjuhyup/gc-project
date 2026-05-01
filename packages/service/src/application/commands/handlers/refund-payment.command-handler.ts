@@ -1,5 +1,6 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { PaymentEventLogModel, PaymentEventType } from '@domain';
+import { assertDefined } from '@application/assertions';
 import { PaymentRefundResultDto, RefundPaymentCommand } from '../dto';
 import { Transactional } from '../decorators';
 import type {
@@ -22,14 +23,9 @@ export class RefundPaymentCommandHandler {
   async execute(command: RefundPaymentCommand): Promise<PaymentRefundResultDto> {
     const now = this.clock.now();
     const payment = await this.paymentRepository.findByIdForUpdate(command.paymentId);
+    assertDefined(payment, () => new Error('PAYMENT_NOT_FOUND'));
 
-    if (payment === undefined) {
-      throw new Error('PAYMENT_NOT_FOUND');
-    }
-
-    if (payment.providerPaymentId === undefined) {
-      throw new Error('PAYMENT_PROVIDER_PAYMENT_ID_REQUIRED');
-    }
+    const providerPaymentId = payment.requireProviderPaymentId();
 
     const refunding = payment.startRefund({ now });
     await this.paymentRepository.save(refunding);
@@ -37,7 +33,7 @@ export class RefundPaymentCommandHandler {
     const refundResult = await this.paymentGateway.refund({
       paymentId: refunding.id,
       provider: refunding.provider,
-      providerPaymentId: payment.providerPaymentId,
+      providerPaymentId,
       amount: refunding.amount,
     });
     const resultPayment = refundResult.refunded

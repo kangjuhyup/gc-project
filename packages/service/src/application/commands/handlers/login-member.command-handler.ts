@@ -1,5 +1,6 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { LoginFailedLogEvent, LoginSucceededLogEvent, MemberStatus } from '@domain';
+import { assertDefined } from '@application/assertions';
 import { LoginMemberCommand, LoginMemberResultDto } from '../dto';
 import { Transactional } from '../decorators';
 import type {
@@ -32,18 +33,8 @@ export class LoginMemberCommandHandler {
   @Transactional()
   async execute(command: LoginMemberCommand): Promise<LoginMemberResultDto> {
     const member = await this.memberRepository.findByUserId(command.userId);
-
-    if (member === undefined) {
-      throw new Error('INVALID_LOGIN_CREDENTIALS');
-    }
-
-    if (member.status === MemberStatus.LOCKED) {
-      throw new Error('MEMBER_LOCKED');
-    }
-
-    if (member.status === MemberStatus.WITHDRAWN) {
-      throw new Error('MEMBER_WITHDRAWN');
-    }
+    assertDefined(member, () => new Error('INVALID_LOGIN_CREDENTIALS'));
+    member.assertCanLogin();
 
     const passwordMatched = await this.passwordHasher.verify({
       password: command.password,

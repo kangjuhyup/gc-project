@@ -19,6 +19,16 @@ export class SeatHoldModel extends PersistenceModel<string, SeatHoldPersistenceP
     return new SeatHoldModel(props);
   }
 
+  assertPayableBy(memberId: string): void {
+    if (this.memberId !== memberId) {
+      throw new Error('SEAT_HOLD_FORBIDDEN');
+    }
+
+    if (this.status !== SeatHoldStatus.HELD || this.reservationId !== undefined) {
+      throw new Error('SEAT_HOLD_PAYMENT_COMPLETED');
+    }
+  }
+
   release(params: { memberId: string }): SeatHoldModel {
     if (this.memberId !== params.memberId) {
       throw new Error('SEAT_HOLD_FORBIDDEN');

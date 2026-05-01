@@ -5,8 +5,8 @@ import {
   PaymentEventType,
   PaymentModel,
   PaymentStatus,
-  SeatHoldStatus,
 } from '@domain';
+import { assertDefined, assertTrue } from '@application/assertions';
 import { PaymentResultDto, RequestPaymentCommand } from '../dto';
 import { Transactional } from '../decorators';
 import type {
@@ -44,32 +44,20 @@ export class RequestPaymentCommandHandler {
     );
 
     if (existingIdempotentPayment !== undefined) {
-      if (existingIdempotentPayment.requestHash !== requestHash) {
-        throw new Error('PAYMENT_IDEMPOTENCY_KEY_CONFLICT');
-      }
+      existingIdempotentPayment.assertIdempotentRequestHash(requestHash);
 
       return this.toResult(existingIdempotentPayment);
     }
 
     const seatHold = await this.seatHoldRepository.findById(command.seatHoldId);
-
-    if (seatHold === undefined) {
-      throw new Error('SEAT_HOLD_NOT_FOUND');
-    }
-
-    if (seatHold.memberId !== command.memberId) {
-      throw new Error('SEAT_HOLD_FORBIDDEN');
-    }
-
-    if (seatHold.status !== SeatHoldStatus.HELD || seatHold.reservationId !== undefined) {
-      throw new Error('SEAT_HOLD_PAYMENT_COMPLETED');
-    }
+    assertDefined(seatHold, () => new Error('SEAT_HOLD_NOT_FOUND'));
+    seatHold.assertPayableBy(command.memberId);
 
     const existingPayment = await this.paymentRepository.findBySeatHoldId(command.seatHoldId);
-
-    if (existingPayment !== undefined && existingPayment.status !== PaymentStatus.FAILED) {
-      throw new Error('PAYMENT_ALREADY_REQUESTED');
-    }
+    assertTrue(
+      existingPayment === undefined || existingPayment.status === PaymentStatus.FAILED,
+      () => new Error('PAYMENT_ALREADY_REQUESTED'),
+    );
 
     const payment = await this.paymentRepository.save(
       PaymentModel.request({

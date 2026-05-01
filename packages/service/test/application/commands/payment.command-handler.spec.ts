@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  DomainError,
+  DomainErrorCode,
   OutboxEventModel,
   PaymentModel,
   ReservationModel,
@@ -462,5 +464,39 @@ describe('CancelReservationCommandHandler', () => {
         }),
       ),
     ).rejects.toThrow('RESERVATION_FORBIDDEN');
+  });
+
+  it('확정 상태가 아닌 예매 취소 요청은 도메인 정책으로 거부한다', async () => {
+    const canceledReservation = ReservationModel.of({
+      reservationNumber: 'R20260429001',
+      memberId: '1',
+      screeningId: '101',
+      status: 'CANCELED',
+      totalPrice: 15000,
+    }).setPersistence('5001', now, now);
+    const handler = new CancelReservationCommandHandler(
+      {
+        findByIdForUpdate: vi.fn(async () => canceledReservation),
+        save: vi.fn(),
+      } as unknown as ReservationRepositoryPort,
+      {
+        findByReservationIdForUpdate: vi.fn(async () => approvedPayment()),
+        save: vi.fn(),
+      } as unknown as PaymentRepositoryPort,
+      { save: vi.fn() } as unknown as ReservationEventRepositoryPort,
+      { save: vi.fn() } as unknown as PaymentEventLogRepositoryPort,
+      { save: vi.fn() } as unknown as OutboxEventRepositoryPort,
+      clock,
+    );
+
+    await expect(
+      handler.execute(
+        CancelReservationCommand.of({
+          memberId: '1',
+          reservationId: '5001',
+          reason: 'user request',
+        }),
+      ),
+    ).rejects.toThrow(new DomainError(DomainErrorCode.INVALID_RESERVATION_STATUS));
   });
 });

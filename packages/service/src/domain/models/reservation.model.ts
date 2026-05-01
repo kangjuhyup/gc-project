@@ -21,6 +21,12 @@ export class ReservationModel extends PersistenceModel<string, ReservationPersis
     return new ReservationModel(props);
   }
 
+  assertOwnedBy(memberId: string): void {
+    if (this.memberId !== memberId) {
+      throw new Error('RESERVATION_FORBIDDEN');
+    }
+  }
+
   cancel(params: { reason?: string; now: Date }): ReservationModel {
     if (this.status !== ReservationStatus.CONFIRMED) {
       throw new DomainError(DomainErrorCode.INVALID_RESERVATION_STATUS);

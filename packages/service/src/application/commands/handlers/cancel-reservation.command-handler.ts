@@ -3,11 +3,10 @@ import {
   OutboxEventModel,
   PaymentEventLogModel,
   PaymentEventType,
-  PaymentStatus,
   ReservationEventModel,
   ReservationEventType,
-  ReservationStatus,
 } from '@domain';
+import { assertDefined } from '@application/assertions';
 import { CancelReservationCommand, ReservationCanceledDto } from '../dto';
 import { Transactional } from '../decorators';
 import type {
@@ -34,36 +33,14 @@ export class CancelReservationCommandHandler {
   async execute(command: CancelReservationCommand): Promise<ReservationCanceledDto> {
     const now = this.clock.now();
     const reservation = await this.reservationRepository.findByIdForUpdate(command.reservationId);
-
-    if (reservation === undefined) {
-      throw new Error('RESERVATION_NOT_FOUND');
-    }
-
-    if (reservation.memberId !== command.memberId) {
-      throw new Error('RESERVATION_FORBIDDEN');
-    }
-
-    if (reservation.status !== ReservationStatus.CONFIRMED) {
-      throw new Error('RESERVATION_CANCEL_NOT_ALLOWED');
-    }
+    assertDefined(reservation, () => new Error('RESERVATION_NOT_FOUND'));
+    reservation.assertOwnedBy(command.memberId);
 
     const payment = await this.paymentRepository.findByReservationIdForUpdate(reservation.id);
+    assertDefined(payment, () => new Error('PAYMENT_NOT_FOUND'));
 
-    if (payment === undefined) {
-      throw new Error('PAYMENT_NOT_FOUND');
-    }
-
-    if (payment.memberId !== command.memberId) {
-      throw new Error('RESERVATION_FORBIDDEN');
-    }
-
-    if (payment.status !== PaymentStatus.APPROVED) {
-      throw new Error('PAYMENT_NOT_APPROVED');
-    }
-
-    if (payment.providerPaymentId === undefined) {
-      throw new Error('PAYMENT_PROVIDER_PAYMENT_ID_REQUIRED');
-    }
+    payment.assertOwnedBy(command.memberId, 'RESERVATION_FORBIDDEN');
+    payment.requireProviderPaymentId();
 
     const reason = command.reason ?? 'RESERVATION_CANCELED';
     const canceledReservation = reservation.cancel({ reason, now });

@@ -4,11 +4,11 @@ import {
   PaymentEventLogModel,
   PaymentEventType,
   PaymentModel,
-  PaymentStatus,
   ReservationEventModel,
   ReservationModel,
   ReservationSeatModel,
 } from '@domain';
+import { assertDefined, assertTrue } from '@application/assertions';
 import { HandlePaymentCallbackCommand, PaymentCallbackResultDto } from '../dto';
 import { Transactional } from '../decorators';
 import type {
@@ -43,25 +43,17 @@ export class HandlePaymentCallbackCommandHandler {
       provider: command.provider,
       token: command.token,
     });
-
-    if (!verified) {
-      throw new Error('PAYMENT_CALLBACK_INVALID');
-    }
+    assertTrue(verified, () => new Error('PAYMENT_CALLBACK_INVALID'));
 
     const now = this.clock.now();
     const payment = await this.paymentRepository.findByIdForUpdate(command.paymentId);
+    assertDefined(payment, () => new Error('PAYMENT_NOT_FOUND'));
 
-    if (payment === undefined) {
-      throw new Error('PAYMENT_NOT_FOUND');
-    }
-
-    if (payment.status === PaymentStatus.APPROVED || payment.status === PaymentStatus.FAILED) {
+    if (payment.isCallbackHandled()) {
       return PaymentCallbackResultDto.of({ paymentId: payment.id, handled: true });
     }
 
-    if (payment.provider !== command.provider) {
-      throw new Error('PAYMENT_PROVIDER_MISMATCH');
-    }
+    payment.assertProvider(command.provider);
 
     if (!command.approved) {
       const failed = payment.fail({
@@ -142,10 +134,7 @@ export class HandlePaymentCallbackCommandHandler {
 
   private async confirmReservation(payment: PaymentModel, now: Date): Promise<void> {
     const seatHold = await this.seatHoldRepository.findById(payment.seatHoldId);
-
-    if (seatHold === undefined) {
-      throw new Error('SEAT_HOLD_NOT_FOUND');
-    }
+    assertDefined(seatHold, () => new Error('SEAT_HOLD_NOT_FOUND'));
 
     const reservation = await this.reservationRepository.save(
       ReservationModel.of({
