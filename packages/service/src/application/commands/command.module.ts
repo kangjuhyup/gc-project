@@ -12,6 +12,7 @@ import {
   LoginMemberCommand,
   LogoutMemberCommand,
   RecordAdminAuditCommand,
+  RefreshMemberTokenCommand,
   ReleaseSeatHoldCommand,
   RefundPaymentCommand,
   RequestPhoneVerificationCommand,
@@ -83,6 +84,7 @@ import {
   LoginMemberCommandHandler,
   LogoutMemberCommandHandler,
   RecordAdminAuditCommandHandler,
+  RefreshMemberTokenCommandHandler,
   ReleaseSeatHoldCommandHandler,
   RefundPaymentCommandHandler,
   RequestPhoneVerificationCommandHandler,
@@ -199,6 +201,37 @@ import {
           },
         ),
       inject: [OPAQUE_TOKEN_GENERATOR, TOKEN_REPOSITORY, CLOCK, ConfigService],
+    },
+    {
+      provide: RefreshMemberTokenCommandHandler,
+      useFactory: (
+        memberRepository: MemberRepositoryPort,
+        opaqueTokenGenerator: OpaqueTokenGeneratorPort,
+        tokenRepository: TokenRepositoryPort,
+        clock: ClockPort,
+        configService: ConfigService,
+      ) =>
+        new RefreshMemberTokenCommandHandler(
+          memberRepository,
+          opaqueTokenGenerator,
+          tokenRepository,
+          clock,
+          {
+            accessTokenTtlSeconds: configService.getOrThrow<number>(
+              ENV_KEY.ACCESS_TOKEN_TTL_SECONDS,
+            ),
+            refreshTokenTtlSeconds: configService.getOrThrow<number>(
+              ENV_KEY.REFRESH_TOKEN_TTL_SECONDS,
+            ),
+          },
+        ),
+      inject: [
+        MEMBER_REPOSITORY,
+        OPAQUE_TOKEN_GENERATOR,
+        TOKEN_REPOSITORY,
+        CLOCK,
+        ConfigService,
+      ],
     },
     {
       provide: IssueTemporaryPasswordCommandHandler,
@@ -426,6 +459,7 @@ import {
         loginMemberCommandHandler: LoginMemberCommandHandler,
         logoutMemberCommandHandler: LogoutMemberCommandHandler,
         recordAdminAuditCommandHandler: RecordAdminAuditCommandHandler,
+        refreshMemberTokenCommandHandler: RefreshMemberTokenCommandHandler,
         issueTemporaryPasswordCommandHandler: IssueTemporaryPasswordCommandHandler,
         changeMemberPasswordCommandHandler: ChangeMemberPasswordCommandHandler,
         withdrawMemberCommandHandler: WithdrawMemberCommandHandler,
@@ -445,6 +479,7 @@ import {
           { command: LoginMemberCommand, handler: loginMemberCommandHandler },
           { command: LogoutMemberCommand, handler: logoutMemberCommandHandler },
           { command: RecordAdminAuditCommand, handler: recordAdminAuditCommandHandler },
+          { command: RefreshMemberTokenCommand, handler: refreshMemberTokenCommandHandler },
           { command: IssueTemporaryPasswordCommand, handler: issueTemporaryPasswordCommandHandler },
           { command: ChangeMemberPasswordCommand, handler: changeMemberPasswordCommandHandler },
           { command: WithdrawMemberCommand, handler: withdrawMemberCommandHandler },
@@ -464,6 +499,7 @@ import {
         LoginMemberCommandHandler,
         LogoutMemberCommandHandler,
         RecordAdminAuditCommandHandler,
+        RefreshMemberTokenCommandHandler,
         IssueTemporaryPasswordCommandHandler,
         ChangeMemberPasswordCommandHandler,
         WithdrawMemberCommandHandler,

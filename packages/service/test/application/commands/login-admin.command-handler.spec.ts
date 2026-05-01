@@ -19,6 +19,8 @@ describe('LoginAdminCommandHandler', () => {
     const tokenRepository = {
       save: vi.fn(),
       findSubjectId: vi.fn(),
+      findRefreshToken: vi.fn(),
+      revokeRefreshToken: vi.fn(),
       revokeActiveBySubjectId: vi.fn(),
     } satisfies TokenRepositoryPort;
     const opaqueTokenGenerator = {
@@ -57,6 +59,8 @@ describe('LoginAdminCommandHandler', () => {
     const tokenRepository = {
       save: vi.fn(),
       findSubjectId: vi.fn(),
+      findRefreshToken: vi.fn(),
+      revokeRefreshToken: vi.fn(),
       revokeActiveBySubjectId: vi.fn(),
     } satisfies TokenRepositoryPort;
     const opaqueTokenGenerator = {

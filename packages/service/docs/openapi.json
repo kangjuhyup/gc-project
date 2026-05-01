@@ -215,6 +215,51 @@
         ]
       }
     },
+    "/members/token/refresh": {
+      "post": {
+        "description": "유효한 refresh token을 검증하고 기존 refresh token을 폐기한 뒤 새 access token과 refresh token을 발급합니다.",
+        "operationId": "MemberController_refreshToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshMemberTokenRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "토큰 재발급 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberTokenRefreshedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "입력값이 유효하지 않은 경우"
+          },
+          "401": {
+            "description": "refresh token이 유효하지 않거나 만료된 경우"
+          },
+          "403": {
+            "description": "잠금 또는 탈퇴 회원인 경우"
+          },
+          "404": {
+            "description": "회원을 찾을 수 없는 경우"
+          }
+        },
+        "summary": "회원 토큰 재발급",
+        "tags": [
+          "Members"
+        ]
+      }
+    },
     "/members/logout": {
       "post": {
         "description": "인증된 회원의 활성 refresh token을 폐기합니다.",
@@ -1257,6 +1302,64 @@
             "type": "string",
             "example": "2026-05-13T00:00:00.000Z",
             "description": "refresh token 만료 시각"
+          }
+        },
+        "required": [
+          "memberId",
+          "userId",
+          "accessToken",
+          "accessTokenExpiresAt",
+          "refreshToken",
+          "refreshTokenExpiresAt"
+        ]
+      },
+      "RefreshMemberTokenRequestDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "b8b6f989-3e5f-4f7b-9c12-41d9f7b0a411",
+            "description": "로그인 시 발급받은 refresh token"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "MemberTokenRefreshedDto": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "example": "1",
+            "description": "토큰을 재발급한 회원 PK"
+          },
+          "userId": {
+            "type": "string",
+            "example": "movie_user",
+            "description": "회원 로그인 ID"
+          },
+          "accessToken": {
+            "type": "string",
+            "example": "member:1:1d6a6de7-bf58-4f11-8f42-a83ff755b0e8",
+            "description": "새 access token"
+          },
+          "accessTokenExpiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-04-29T00:15:00.000Z",
+            "description": "새 access token 만료 시각"
+          },
+          "refreshToken": {
+            "type": "string",
+            "example": "b8b6f989-3e5f-4f7b-9c12-41d9f7b0a411",
+            "description": "새 refresh token"
+          },
+          "refreshTokenExpiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-05-13T00:00:00.000Z",
+            "description": "새 refresh token 만료 시각"
           }
         },
         "required": [

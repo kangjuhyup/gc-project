@@ -66,6 +66,8 @@ const notFoundErrors = new Set([
 
 const unauthorizedErrors = new Set([
   'INVALID_ADMIN_CREDENTIALS',
+  'INVALID_REFRESH_TOKEN',
+  'REFRESH_TOKEN_EXPIRED',
 ]);
 
 @Injectable()

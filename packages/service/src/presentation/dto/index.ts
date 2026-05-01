@@ -18,6 +18,7 @@ export { GetPaymentRequestDto } from './get-payment.request.dto';
 export { HandlePaymentCallbackRequestDto } from './handle-payment-callback.request.dto';
 export { RequestPhoneVerificationRequestDto } from './request-phone-verification.request.dto';
 export { RefundPaymentRequestDto } from './refund-payment.request.dto';
+export { RefreshMemberTokenRequestDto } from './refresh-member-token.request.dto';
 export { ReleaseSeatHoldRequestDto } from './release-seat-hold.request.dto';
 export { RequestPaymentRequestDto } from './request-payment.request.dto';
 export { SearchAddressesRequestDto } from './search-addresses.request.dto';

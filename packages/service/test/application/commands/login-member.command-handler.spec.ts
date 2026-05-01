@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { MemberModel, PhoneVerificationModel } from '@domain';
+import { MemberModel, PhoneVerificationModel, RefreshTokenModel } from '@domain';
 import {
   ChangeMemberPasswordCommand,
   IssueTemporaryPasswordCommand,
   LoginMemberCommand,
   LogoutMemberCommand,
+  RefreshMemberTokenCommand,
   WithdrawMemberCommand,
 } from '@application/commands/dto';
 import {
@@ -12,6 +13,7 @@ import {
   IssueTemporaryPasswordCommandHandler,
   LoginMemberCommandHandler,
   LogoutMemberCommandHandler,
+  RefreshMemberTokenCommandHandler,
   WithdrawMemberCommandHandler,
 } from '@application/commands/handlers';
 import type {
@@ -44,6 +46,8 @@ function tokenRepository(): TokenRepositoryPort {
   return {
     save: vi.fn(),
     findSubjectId: vi.fn(),
+    findRefreshToken: vi.fn(),
+    revokeRefreshToken: vi.fn(),
     revokeActiveBySubjectId: vi.fn(async (params) => params.type === TokenType.REFRESH ? 1 : 1),
   };
 }
@@ -339,6 +343,126 @@ describe('LogoutMemberCommandHandler', () => {
       loggedOut: true,
       revokedRefreshTokenCount: 1,
     });
+  });
+});
+
+describe('RefreshMemberTokenCommandHandler', () => {
+  it('유효한 refresh token이면 기존 토큰을 폐기하고 새 토큰 쌍을 발급한다', async () => {
+    const member = activeMember();
+    const refreshToken = RefreshTokenModel.issue({
+      memberId: 'member-1',
+      token: 'old-refresh-token',
+      expiresAt: new Date('2026-05-12T00:01:00.000Z'),
+    }).setPersistence('refresh-token-1', new Date('2026-04-28T00:01:00.000Z'), new Date('2026-04-28T00:01:00.000Z'));
+    const memberRepository = {
+      findByUserId: vi.fn(),
+      findByPhoneNumber: vi.fn(),
+      existsByUserId: vi.fn(),
+      save: vi.fn(),
+      findById: vi.fn().mockResolvedValue(member),
+    } satisfies MemberRepositoryPort;
+    const tokens = tokenRepository();
+    vi.mocked(tokens.findRefreshToken).mockResolvedValue(refreshToken);
+    const generator = {
+      generate: vi.fn()
+        .mockReturnValueOnce('new-access-token')
+        .mockReturnValueOnce('new-refresh-token'),
+    } satisfies OpaqueTokenGeneratorPort;
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:06:00.000Z')) } satisfies ClockPort;
+    const handler = new RefreshMemberTokenCommandHandler(
+      memberRepository,
+      generator,
+      tokens,
+      clock,
+      loginTokenTtlOptions,
+    );
+
+    const result = await handler.execute(RefreshMemberTokenCommand.of({ refreshToken: 'old-refresh-token' }));
+
+    expect(tokens.findRefreshToken).toHaveBeenCalledWith('old-refresh-token');
+    expect(memberRepository.findById).toHaveBeenCalledWith('member-1');
+    expect(tokens.revokeRefreshToken).toHaveBeenCalledWith(refreshToken, new Date('2026-04-28T00:06:00.000Z'));
+    expect(tokens.save).toHaveBeenCalledWith({
+      type: TokenType.ACCESS,
+      subjectId: 'member-1',
+      token: 'new-access-token',
+      ttlSeconds: 15 * 60,
+      expiresAt: new Date('2026-04-28T00:21:00.000Z'),
+    });
+    expect(tokens.save).toHaveBeenCalledWith({
+      type: TokenType.REFRESH,
+      subjectId: 'member-1',
+      token: 'new-refresh-token',
+      ttlSeconds: 14 * 24 * 60 * 60,
+      expiresAt: new Date('2026-05-12T00:06:00.000Z'),
+    });
+    expect(result).toEqual({
+      memberId: 'member-1',
+      userId: 'member_01',
+      accessToken: 'new-access-token',
+      accessTokenExpiresAt: new Date('2026-04-28T00:21:00.000Z'),
+      refreshToken: 'new-refresh-token',
+      refreshTokenExpiresAt: new Date('2026-05-12T00:06:00.000Z'),
+    });
+  });
+
+  it('refresh token이 없으면 토큰을 재발급하지 않는다', async () => {
+    const memberRepository = {
+      findByUserId: vi.fn(),
+      findByPhoneNumber: vi.fn(),
+      existsByUserId: vi.fn(),
+      save: vi.fn(),
+      findById: vi.fn(),
+    } satisfies MemberRepositoryPort;
+    const tokens = tokenRepository();
+    vi.mocked(tokens.findRefreshToken).mockResolvedValue(undefined);
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:06:00.000Z')) } satisfies ClockPort;
+    const handler = new RefreshMemberTokenCommandHandler(
+      memberRepository,
+      opaqueTokenGenerator(),
+      tokens,
+      clock,
+      loginTokenTtlOptions,
+    );
+
+    await expect(
+      handler.execute(RefreshMemberTokenCommand.of({ refreshToken: 'missing-refresh-token' })),
+    ).rejects.toThrow('INVALID_REFRESH_TOKEN');
+
+    expect(memberRepository.findById).not.toHaveBeenCalled();
+    expect(tokens.save).not.toHaveBeenCalled();
+  });
+
+  it('만료된 refresh token이면 토큰을 재발급하지 않는다', async () => {
+    const refreshToken = RefreshTokenModel.issue({
+      memberId: 'member-1',
+      token: 'expired-refresh-token',
+      expiresAt: new Date('2026-04-28T00:05:59.000Z'),
+    }).setPersistence('refresh-token-1', new Date('2026-04-28T00:01:00.000Z'), new Date('2026-04-28T00:01:00.000Z'));
+    const memberRepository = {
+      findByUserId: vi.fn(),
+      findByPhoneNumber: vi.fn(),
+      existsByUserId: vi.fn(),
+      save: vi.fn(),
+      findById: vi.fn(),
+    } satisfies MemberRepositoryPort;
+    const tokens = tokenRepository();
+    vi.mocked(tokens.findRefreshToken).mockResolvedValue(refreshToken);
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:06:00.000Z')) } satisfies ClockPort;
+    const handler = new RefreshMemberTokenCommandHandler(
+      memberRepository,
+      opaqueTokenGenerator(),
+      tokens,
+      clock,
+      loginTokenTtlOptions,
+    );
+
+    await expect(
+      handler.execute(RefreshMemberTokenCommand.of({ refreshToken: 'expired-refresh-token' })),
+    ).rejects.toThrow('REFRESH_TOKEN_EXPIRED');
+
+    expect(memberRepository.findById).not.toHaveBeenCalled();
+    expect(tokens.save).not.toHaveBeenCalled();
   });
 });
 

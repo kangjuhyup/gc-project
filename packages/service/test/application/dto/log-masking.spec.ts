@@ -5,6 +5,7 @@ import {
   ConfirmPhoneVerificationCommand,
   LoginMemberCommand,
   PhoneVerificationIssuedDto,
+  RefreshMemberTokenCommand,
   RequestPhoneVerificationCommand,
   SignupMemberCommand,
   TemporaryPasswordIssuedDto,
@@ -18,6 +19,7 @@ import {
   ConfirmPhoneVerificationRequestDto,
   ListTheatersRequestDto,
   LoginMemberRequestDto,
+  RefreshMemberTokenRequestDto,
   RequestPhoneVerificationRequestDto,
   SearchAddressesRequestDto,
   SignupMemberRequestDto,
@@ -27,6 +29,9 @@ describe('Log masking metadata', () => {
   it('민감한 application command 필드에 로그 마스킹 메타데이터를 설정한다', () => {
     expect(maskLoggingValue(LoginMemberCommand.of({ userId: 'member_01', password: 'password123!' }))).toMatchObject({
       password: '******',
+    });
+    expect(maskLoggingValue(RefreshMemberTokenCommand.of({ refreshToken: 'refresh-token-0001' }))).toMatchObject({
+      refreshToken: '******',
     });
     expect(maskLoggingValue(
       ChangeMemberPasswordCommand.of({
@@ -80,6 +85,9 @@ describe('Log masking metadata', () => {
   it('민감한 presentation request 필드에 로그 마스킹 메타데이터를 설정한다', () => {
     expect(maskLoggingValue(LoginMemberRequestDto.of({ userId: 'member_01', password: 'password123!' }))).toMatchObject({
       password: '******',
+    });
+    expect(maskLoggingValue(RefreshMemberTokenRequestDto.of({ refreshToken: 'refresh-token-0001' }))).toMatchObject({
+      refreshToken: '******',
     });
     expect(maskLoggingValue(
       ChangeMemberPasswordRequestDto.of({

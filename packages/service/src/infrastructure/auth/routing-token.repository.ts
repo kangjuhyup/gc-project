@@ -59,6 +59,14 @@ export class RoutingTokenRepository implements TokenRepositoryPort {
     return undefined;
   }
 
+  findRefreshToken(token: string): Promise<RefreshTokenModel | undefined> {
+    return this.dbRepository.findByToken(token);
+  }
+
+  async revokeRefreshToken(token: RefreshTokenModel, now: Date): Promise<void> {
+    await this.dbRepository.save(token.revoke(now));
+  }
+
   async revokeActiveBySubjectId(params: RevokeSubjectTokensParams): Promise<number> {
     if (params.type === TokenType.ACCESS) {
       return this.redisRepository.revokeBySubjectId('member', params.subjectId);

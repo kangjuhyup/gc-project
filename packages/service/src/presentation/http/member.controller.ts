@@ -22,10 +22,12 @@ import {
   LogoutMemberCommand,
   MemberLoggedOutDto,
   MemberPasswordChangedDto,
+  MemberTokenRefreshedDto,
   MemberWithdrawnDto,
   PhoneVerificationConfirmedDto,
   PhoneVerificationIssuedDto,
   QueryBus,
+  RefreshMemberTokenCommand,
   RequestPhoneVerificationCommand,
   SignupMemberCommand,
   SignupMemberResultDto,
@@ -42,6 +44,7 @@ import {
   ConfirmPhoneVerificationRequestDto,
   IssueTemporaryPasswordRequestDto,
   LoginMemberRequestDto,
+  RefreshMemberTokenRequestDto,
   RequestPhoneVerificationRequestDto,
   SignupMemberRequestDto,
 } from '../dto';
@@ -140,6 +143,25 @@ export class MemberController {
       LoginMemberCommand.of({
         userId: request.userId,
         password: request.password,
+      }),
+    );
+  }
+
+  @ApiOperation({
+    summary: '회원 토큰 재발급',
+    description: '유효한 refresh token을 검증하고 기존 refresh token을 폐기한 뒤 새 access token과 refresh token을 발급합니다.',
+  })
+  @ApiCreatedResponse({ type: MemberTokenRefreshedDto, description: '토큰 재발급 성공' })
+  @ApiBadRequestResponse({ description: '입력값이 유효하지 않은 경우' })
+  @ApiForbiddenResponse({ description: '잠금 또는 탈퇴 회원인 경우' })
+  @ApiNotFoundResponse({ description: '회원을 찾을 수 없는 경우' })
+  @ApiUnauthorizedResponse({ description: 'refresh token이 유효하지 않거나 만료된 경우' })
+  @Post('/members/token/refresh')
+  refreshToken(@Body() body: RefreshMemberTokenRequestDto) {
+    const request = RefreshMemberTokenRequestDto.of(body);
+    return this.commandBus.execute(
+      RefreshMemberTokenCommand.of({
+        refreshToken: request.refreshToken,
       }),
     );
   }

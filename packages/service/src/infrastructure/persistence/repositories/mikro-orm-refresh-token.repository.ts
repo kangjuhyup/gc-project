@@ -31,6 +31,11 @@ export class MikroOrmRefreshTokenRepository {
     return entity ? PersistenceMapper.refreshTokenToDomain(entity) : undefined;
   }
 
+  async findByToken(token: string): Promise<RefreshTokenModel | undefined> {
+    const entity = await this.entityManager.findOne(RefreshTokenEntity, { token });
+    return entity ? PersistenceMapper.refreshTokenToDomain(entity) : undefined;
+  }
+
   async revokeActiveByMemberId(memberId: string, now: Date): Promise<number> {
     return this.entityManager.nativeUpdate(
       RefreshTokenEntity,

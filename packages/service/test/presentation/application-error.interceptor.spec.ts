@@ -66,6 +66,14 @@ describe('ApplicationErrorInterceptor', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
+  it('refresh token 검증 실패 에러를 unauthorized 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('INVALID_REFRESH_TOKEN')) as never)),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
   it('기존 비밀번호 불일치 에러를 bad request 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 

@@ -179,7 +179,7 @@ export class PersistenceMapper {
       memberId: entity.member.id,
       token: entity.token,
       expiresAt: entity.expiresAt,
-      revokedAt: entity.revokedAt,
+      revokedAt: entity.revokedAt ?? undefined,
     }).setPersistence(entity.id, entity.createdAt, entity.updatedAt);
   }
 
