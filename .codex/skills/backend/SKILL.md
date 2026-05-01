@@ -40,6 +40,20 @@ Ports and adapters:
 - Never call ports directly from controllers. Controllers call handlers only.
 - Keep provider configuration code only under `infrastructure/oidc-provider`.
 
+## Config Rules
+
+Manage service configuration centrally.
+
+- Define environment variables only in `infrastructure/config` using a single `envSpec` style object and derive Joi validation schemas, key constants, and TypeScript types from that spec.
+- Register `ConfigModule.forRoot(...)` once at the app root with `isGlobal: true`. Do not import `ConfigModule` again from feature modules just to inject `ConfigService`.
+- Split process-specific schemas when needed, such as API and worker schemas, while sharing a common env spec.
+- Missing required config or invalid config types must fail during application startup.
+- Use `ENV_KEY.<NAME>` instead of raw string literals when reading config values.
+- After Joi startup validation, read values with `configService.getOrThrow<T>(ENV_KEY.<NAME>)`. Do not add duplicate `requiredStringConfig`, `requiredNumberConfig`, boolean parser, or similar runtime validation helpers.
+- Do not read `process.env` inside handlers, adapters, repositories, or domain/application code. Read config in module provider factories and pass plain typed options into implementations.
+- Implementation classes should depend on the specific option values they need, not on `ConfigService`, unless the implementation is itself config infrastructure.
+- Do not keep fallback defaults inside implementations for required env values. Defaults belong in the Joi env spec only.
+
 ## DTO Rules
 
 All DTOs in every layer must use a private constructor plus `static of()` factory.
@@ -79,6 +93,7 @@ export class CreateUserDto {
 - Follow existing naming, module organization, validation libraries, DTO/schema conventions, and dependency patterns.
 - Enforce dependency direction while editing imports. Domain imports must stay framework-free and persistence-free.
 - Avoid introducing `null`. Convert external `null` values to `undefined` before returning from infrastructure adapters.
+- Keep environment-variable access centralized through the config module and pass typed options into concrete adapters.
 - Keep API behavior backward-compatible unless the user explicitly requests a breaking change.
 - Validate all external input at the boundary and keep internal types narrow.
 - Use transactions where multiple writes must succeed or fail together.
