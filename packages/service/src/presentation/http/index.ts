@@ -1,3 +1,4 @@
+export { AdminController } from './admin.controller';
 export { AddressController } from './address.controller';
 export { HealthController } from './health.controller';
 export { MemberController } from './member.controller';

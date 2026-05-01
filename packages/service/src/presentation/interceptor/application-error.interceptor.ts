@@ -9,6 +9,7 @@ import {
   InternalServerErrorException,
   NestInterceptor,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Observable, catchError, throwError } from 'rxjs';
 import { DomainError } from '@domain';
@@ -62,6 +63,10 @@ const notFoundErrors = new Set([
   'RESERVATION_NOT_FOUND',
 ]);
 
+const unauthorizedErrors = new Set([
+  'INVALID_ADMIN_CREDENTIALS',
+]);
+
 @Injectable()
 export class ApplicationErrorInterceptor implements NestInterceptor {
   intercept(
@@ -81,7 +86,8 @@ export class ApplicationErrorInterceptor implements NestInterceptor {
     | ForbiddenException
     | HttpException
     | InternalServerErrorException
-    | NotFoundException {
+    | NotFoundException
+    | UnauthorizedException {
     if (error instanceof HttpException) {
       return error;
     }
@@ -102,6 +108,10 @@ export class ApplicationErrorInterceptor implements NestInterceptor {
 
     if (notFoundErrors.has(code)) {
       return new NotFoundException(code);
+    }
+
+    if (unauthorizedErrors.has(code)) {
+      return new UnauthorizedException(code);
     }
 
     return new InternalServerErrorException('INTERNAL_SERVER_ERROR');

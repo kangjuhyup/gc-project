@@ -27,14 +27,14 @@ export class WithdrawMemberCommandHandler {
 
     const occurredAt = this.clock.now();
     const saved = await this.memberRepository.save(member.withdraw(occurredAt));
-    await this.tokenRepository.revokeActiveByMemberId({
+    await this.tokenRepository.revokeActiveBySubjectId({
       type: TokenType.ACCESS,
-      memberId: saved.id,
+      subjectId: saved.id,
       now: occurredAt,
     });
-    await this.tokenRepository.revokeActiveByMemberId({
+    await this.tokenRepository.revokeActiveBySubjectId({
       type: TokenType.REFRESH,
-      memberId: saved.id,
+      subjectId: saved.id,
       now: occurredAt,
     });
     await this.logEventPublisher.publish(

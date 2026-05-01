@@ -76,14 +76,14 @@ export class LoginMemberCommandHandler {
     refreshTokenExpiresAt.setUTCSeconds(refreshTokenExpiresAt.getUTCSeconds() + refreshTokenTtl);
     await this.tokenRepository.save({
       type: TokenType.ACCESS,
-      memberId: loggedInMember.id,
+      subjectId: loggedInMember.id,
       token: accessToken,
       ttlSeconds: accessTokenTtl,
       expiresAt: accessTokenExpiresAt,
     });
     await this.tokenRepository.save({
       type: TokenType.REFRESH,
-      memberId: loggedInMember.id,
+      subjectId: loggedInMember.id,
       token: refreshToken,
       ttlSeconds: refreshTokenTtl,
       expiresAt: refreshTokenExpiresAt,

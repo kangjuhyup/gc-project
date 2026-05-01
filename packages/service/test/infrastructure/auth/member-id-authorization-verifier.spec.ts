@@ -5,7 +5,7 @@ import { MemberIdAuthorizationVerifier } from '@infrastructure/auth';
 describe('MemberIdAuthorizationVerifier', () => {
   it('Bearer access token을 Redis에서 조회한 회원 ID로 인증 사용자를 만든다', async () => {
     const tokenRepository = {
-      findMemberId: vi.fn().mockResolvedValue('1'),
+      findSubjectId: vi.fn().mockResolvedValue('1'),
     };
     const memberRepository = {
       findById: vi.fn().mockResolvedValue({
@@ -18,7 +18,7 @@ describe('MemberIdAuthorizationVerifier', () => {
 
     const result = await verifier.verify('Bearer access-token-0001');
 
-    expect(tokenRepository.findMemberId).toHaveBeenCalledWith({
+    expect(tokenRepository.findSubjectId).toHaveBeenCalledWith({
       type: TokenType.ACCESS,
       token: 'access-token-0001',
     });
@@ -29,7 +29,7 @@ describe('MemberIdAuthorizationVerifier', () => {
 
   it('Redis에서 access token을 찾을 수 없으면 Authorization 검증 실패로 처리한다', async () => {
     const tokenRepository = {
-      findMemberId: vi.fn().mockResolvedValue(undefined),
+      findSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const memberRepository = {
       findById: vi.fn(),
@@ -42,7 +42,7 @@ describe('MemberIdAuthorizationVerifier', () => {
 
   it('탈퇴한 회원이면 Authorization 검증 실패로 처리한다', async () => {
     const tokenRepository = {
-      findMemberId: vi.fn().mockResolvedValue('1'),
+      findSubjectId: vi.fn().mockResolvedValue('1'),
     };
     const memberRepository = {
       findById: vi.fn().mockResolvedValue({

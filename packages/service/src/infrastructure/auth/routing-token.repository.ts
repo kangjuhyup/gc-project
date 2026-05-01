@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { RefreshTokenModel } from '@domain';
 import {
   TokenType,
-  type FindTokenMemberParams,
-  type RevokeMemberTokensParams,
+  type FindTokenSubjectParams,
+  type RevokeSubjectTokensParams,
   type SaveTokenParams,
   type TokenRepositoryPort,
 } from '@application/commands/ports';
@@ -20,7 +20,18 @@ export class RoutingTokenRepository implements TokenRepositoryPort {
   async save(params: SaveTokenParams): Promise<void> {
     if (params.type === TokenType.ACCESS) {
       await this.redisRepository.save({
-        memberId: params.memberId,
+        namespace: 'member',
+        subjectId: params.subjectId,
+        accessToken: params.token,
+        ttlSeconds: params.ttlSeconds,
+      });
+      return;
+    }
+
+    if (params.type === TokenType.ADMIN_ACCESS) {
+      await this.redisRepository.save({
+        namespace: 'admin',
+        subjectId: params.subjectId,
         accessToken: params.token,
         ttlSeconds: params.ttlSeconds,
       });
@@ -29,26 +40,34 @@ export class RoutingTokenRepository implements TokenRepositoryPort {
 
     await this.dbRepository.save(
       RefreshTokenModel.issue({
-        memberId: params.memberId,
+        memberId: params.subjectId,
         token: params.token,
         expiresAt: params.expiresAt,
       }),
     );
   }
 
-  async findMemberId(params: FindTokenMemberParams): Promise<string | undefined> {
+  async findSubjectId(params: FindTokenSubjectParams): Promise<string | undefined> {
     if (params.type === TokenType.ACCESS) {
-      return this.redisRepository.findMemberId(params.token);
+      return this.redisRepository.findSubjectId('member', params.token);
+    }
+
+    if (params.type === TokenType.ADMIN_ACCESS) {
+      return this.redisRepository.findSubjectId('admin', params.token);
     }
 
     return undefined;
   }
 
-  async revokeActiveByMemberId(params: RevokeMemberTokensParams): Promise<number> {
+  async revokeActiveBySubjectId(params: RevokeSubjectTokensParams): Promise<number> {
     if (params.type === TokenType.ACCESS) {
-      return this.redisRepository.revokeByMemberId(params.memberId);
+      return this.redisRepository.revokeBySubjectId('member', params.subjectId);
     }
 
-    return this.dbRepository.revokeActiveByMemberId(params.memberId, params.now);
+    if (params.type === TokenType.ADMIN_ACCESS) {
+      return this.redisRepository.revokeBySubjectId('admin', params.subjectId);
+    }
+
+    return this.dbRepository.revokeActiveByMemberId(params.subjectId, params.now);
   }
 }

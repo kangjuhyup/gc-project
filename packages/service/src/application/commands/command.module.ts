@@ -7,6 +7,7 @@ import {
   CreateSeatHoldCommand,
   HandlePaymentCallbackCommand,
   IssueTemporaryPasswordCommand,
+  LoginAdminCommand,
   LoginMemberCommand,
   LogoutMemberCommand,
   ReleaseSeatHoldCommand,
@@ -71,6 +72,7 @@ import {
   CreateSeatHoldCommandHandler,
   HandlePaymentCallbackCommandHandler,
   IssueTemporaryPasswordCommandHandler,
+  LoginAdminCommandHandler,
   LoginMemberCommandHandler,
   LogoutMemberCommandHandler,
   ReleaseSeatHoldCommandHandler,
@@ -167,6 +169,28 @@ import {
         TOKEN_REPOSITORY,
         ConfigService,
       ],
+    },
+    {
+      provide: LoginAdminCommandHandler,
+      useFactory: (
+        opaqueTokenGenerator: OpaqueTokenGeneratorPort,
+        tokenRepository: TokenRepositoryPort,
+        clock: ClockPort,
+        configService: ConfigService,
+      ) =>
+        new LoginAdminCommandHandler(
+          opaqueTokenGenerator,
+          tokenRepository,
+          clock,
+          {
+            adminId: configService.getOrThrow<string>(ENV_KEY.ADMIN_USER_ID),
+            password: configService.getOrThrow<string>(ENV_KEY.ADMIN_PASSWORD),
+            accessTokenTtlSeconds: configService.getOrThrow<number>(
+              ENV_KEY.ADMIN_ACCESS_TOKEN_TTL_SECONDS,
+            ),
+          },
+        ),
+      inject: [OPAQUE_TOKEN_GENERATOR, TOKEN_REPOSITORY, CLOCK, ConfigService],
     },
     {
       provide: IssueTemporaryPasswordCommandHandler,
@@ -378,6 +402,7 @@ import {
         requestPhoneVerificationCommandHandler: RequestPhoneVerificationCommandHandler,
         confirmPhoneVerificationCommandHandler: ConfirmPhoneVerificationCommandHandler,
         signupMemberCommandHandler: SignupMemberCommandHandler,
+        loginAdminCommandHandler: LoginAdminCommandHandler,
         loginMemberCommandHandler: LoginMemberCommandHandler,
         logoutMemberCommandHandler: LogoutMemberCommandHandler,
         issueTemporaryPasswordCommandHandler: IssueTemporaryPasswordCommandHandler,
@@ -394,6 +419,7 @@ import {
           { command: RequestPhoneVerificationCommand, handler: requestPhoneVerificationCommandHandler },
           { command: ConfirmPhoneVerificationCommand, handler: confirmPhoneVerificationCommandHandler },
           { command: SignupMemberCommand, handler: signupMemberCommandHandler },
+          { command: LoginAdminCommand, handler: loginAdminCommandHandler },
           { command: LoginMemberCommand, handler: loginMemberCommandHandler },
           { command: LogoutMemberCommand, handler: logoutMemberCommandHandler },
           { command: IssueTemporaryPasswordCommand, handler: issueTemporaryPasswordCommandHandler },
@@ -410,6 +436,7 @@ import {
         RequestPhoneVerificationCommandHandler,
         ConfirmPhoneVerificationCommandHandler,
         SignupMemberCommandHandler,
+        LoginAdminCommandHandler,
         LoginMemberCommandHandler,
         LogoutMemberCommandHandler,
         IssueTemporaryPasswordCommandHandler,

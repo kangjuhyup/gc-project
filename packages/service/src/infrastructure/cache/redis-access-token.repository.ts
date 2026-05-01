@@ -8,40 +8,45 @@ import { REDIS } from './redis.module';
 export class RedisAccessTokenRepository {
   constructor(@Inject(REDIS) private readonly redis: Redis) {}
 
-  async save(params: { memberId: string; accessToken: string; ttlSeconds: number }): Promise<void> {
+  async save(params: {
+    namespace: string;
+    subjectId: string;
+    accessToken: string;
+    ttlSeconds: number;
+  }): Promise<void> {
     await this.redis
       .multi()
-      .set(this.tokenKey(params.accessToken), params.memberId, 'EX', params.ttlSeconds)
-      .sadd(this.memberKey(params.memberId), params.accessToken)
-      .expire(this.memberKey(params.memberId), params.ttlSeconds)
+      .set(this.tokenKey(params.namespace, params.accessToken), params.subjectId, 'EX', params.ttlSeconds)
+      .sadd(this.subjectKey(params.namespace, params.subjectId), params.accessToken)
+      .expire(this.subjectKey(params.namespace, params.subjectId), params.ttlSeconds)
       .exec();
   }
 
-  async findMemberId(accessToken: string): Promise<string | undefined> {
-    return (await this.redis.get(this.tokenKey(accessToken))) ?? undefined;
+  async findSubjectId(namespace: string, accessToken: string): Promise<string | undefined> {
+    return (await this.redis.get(this.tokenKey(namespace, accessToken))) ?? undefined;
   }
 
-  async revokeByMemberId(memberId: string): Promise<number> {
-    const memberKey = this.memberKey(memberId);
-    const accessTokens = await this.redis.smembers(memberKey);
+  async revokeBySubjectId(namespace: string, subjectId: string): Promise<number> {
+    const subjectKey = this.subjectKey(namespace, subjectId);
+    const accessTokens = await this.redis.smembers(subjectKey);
 
     if (accessTokens.length === 0) {
-      await this.redis.del(memberKey);
+      await this.redis.del(subjectKey);
       return 0;
     }
 
-    const keys = accessTokens.map((accessToken) => this.tokenKey(accessToken));
+    const keys = accessTokens.map((accessToken) => this.tokenKey(namespace, accessToken));
     const revoked = await this.redis.del(...keys);
-    await this.redis.del(memberKey);
+    await this.redis.del(subjectKey);
 
     return revoked;
   }
 
-  private tokenKey(accessToken: string): string {
-    return `access-token:${accessToken}`;
+  private tokenKey(namespace: string, accessToken: string): string {
+    return `${namespace}:access-token:${accessToken}`;
   }
 
-  private memberKey(memberId: string): string {
-    return `member-access-tokens:${memberId}`;
+  private subjectKey(namespace: string, subjectId: string): string {
+    return `${namespace}:access-tokens:${subjectId}`;
   }
 }

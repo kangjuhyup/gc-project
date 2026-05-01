@@ -1,5 +1,13 @@
-export { User, getAuthenticatedUser } from './decorator';
-export { AddressController, HealthController, MemberController, MovieController, SeatController, TheaterController } from './http';
-export { MemberAuthGuard } from './guard';
+export { Admin, User, getAuthenticatedAdmin, getAuthenticatedUser } from './decorator';
+export {
+  AdminController,
+  AddressController,
+  HealthController,
+  MemberController,
+  MovieController,
+  SeatController,
+  TheaterController,
+} from './http';
+export { AdminAuthGuard, MemberAuthGuard } from './guard';
 export { ApplicationErrorInterceptor } from './interceptor';
 export { PresentationModule } from './presentation.module';

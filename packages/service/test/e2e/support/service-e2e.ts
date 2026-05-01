@@ -56,6 +56,9 @@ export class ServiceE2eContext {
     process.env.SEAT_HOLD_TTL_SECONDS = '1';
     process.env.LOCAL_PAYMENT_CALLBACK_URL = 'http://localhost:3000/payments/callback';
     process.env.LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS = '3';
+    process.env.ADMIN_USER_ID = 'admin';
+    process.env.ADMIN_PASSWORD = 'admin-password123!';
+    process.env.ADMIN_ACCESS_TOKEN_TTL_SECONDS = '900';
 
     faker.seed(20260429);
 

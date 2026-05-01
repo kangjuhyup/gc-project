@@ -52,8 +52,8 @@ export type { SeatRepositoryPort } from './seat.repository.port';
 export type { TheaterRepositoryPort } from './theater.repository.port';
 export type { TemporaryPasswordGeneratorPort } from './temporary-password-generator.port';
 export type {
-  FindTokenMemberParams,
-  RevokeMemberTokensParams,
+  FindTokenSubjectParams,
+  RevokeSubjectTokensParams,
   SaveTokenParams,
   TokenRepositoryPort,
   TokenType as TokenTypeType,

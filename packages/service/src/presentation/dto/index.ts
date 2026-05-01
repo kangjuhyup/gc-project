@@ -9,6 +9,7 @@ export { ListMoviesRequestDto } from './list-movies.request.dto';
 export { ListMyReservationsRequestDto } from './list-my-reservations.request.dto';
 export { ListScreeningSeatsRequestDto } from './list-screening-seats.request.dto';
 export { ListTheatersRequestDto } from './list-theaters.request.dto';
+export { LoginAdminRequestDto } from './login-admin.request.dto';
 export { LoginMemberRequestDto } from './login-member.request.dto';
 export { GetPaymentRequestDto } from './get-payment.request.dto';
 export { HandlePaymentCallbackRequestDto } from './handle-payment-callback.request.dto';

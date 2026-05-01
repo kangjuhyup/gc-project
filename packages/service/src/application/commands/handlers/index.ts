@@ -4,6 +4,7 @@ export { ConfirmPhoneVerificationCommandHandler } from './confirm-phone-verifica
 export { CreateSeatHoldCommandHandler } from './create-seat-hold.command-handler';
 export { HandlePaymentCallbackCommandHandler } from './handle-payment-callback.command-handler';
 export { IssueTemporaryPasswordCommandHandler } from './issue-temporary-password.command-handler';
+export { LoginAdminCommandHandler } from './login-admin.command-handler';
 export { LoginMemberCommandHandler } from './login-member.command-handler';
 export { LogoutMemberCommandHandler } from './logout-member.command-handler';
 export { RequestPhoneVerificationCommandHandler } from './request-phone-verification.command-handler';

@@ -18,6 +18,9 @@ const baseConfig = {
   SEAT_HOLD_TTL_SECONDS: '3',
   LOCAL_PAYMENT_CALLBACK_URL: 'http://localhost:3000/payments/callback',
   LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS: '3',
+  ADMIN_USER_ID: 'admin',
+  ADMIN_PASSWORD: 'admin-password123!',
+  ADMIN_ACCESS_TOKEN_TTL_SECONDS: '900',
 };
 
 describe('service config validation', () => {
@@ -84,6 +87,7 @@ describe('service config validation', () => {
 
   it('ENV_KEY 상수는 envSpec 기준으로 config key 오타 없이 사용할 수 있게 한다', () => {
     expect(ENV_KEY.DB_HOST).toBe('DB_HOST');
+    expect(ENV_KEY.ADMIN_ACCESS_TOKEN_TTL_SECONDS).toBe('ADMIN_ACCESS_TOKEN_TTL_SECONDS');
     expect(ENV_KEY.PAYMENT_OUTBOX_WORKER_INTERVAL_MS).toBe(
       'PAYMENT_OUTBOX_WORKER_INTERVAL_MS',
     );

@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { lastValueFrom, throwError } from 'rxjs';
@@ -47,6 +48,14 @@ describe('ApplicationErrorInterceptor', () => {
     await expect(
       lastValueFrom(interceptor.intercept({} as never, next(new Error('INVALID_LOGIN_CREDENTIALS')) as never)),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('관리자 로그인 실패 에러를 unauthorized 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(interceptor.intercept({} as never, next(new Error('INVALID_ADMIN_CREDENTIALS')) as never)),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
   it('기존 비밀번호 불일치 에러를 bad request 예외로 변환한다', async () => {

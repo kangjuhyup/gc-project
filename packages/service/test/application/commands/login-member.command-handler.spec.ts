@@ -43,8 +43,8 @@ function activeMember(failedLoginCount = 0): MemberModel {
 function tokenRepository(): TokenRepositoryPort {
   return {
     save: vi.fn(),
-    findMemberId: vi.fn(),
-    revokeActiveByMemberId: vi.fn(async (params) => params.type === TokenType.REFRESH ? 1 : 1),
+    findSubjectId: vi.fn(),
+    revokeActiveBySubjectId: vi.fn(async (params) => params.type === TokenType.REFRESH ? 1 : 1),
   };
 }
 
@@ -97,14 +97,14 @@ describe('LoginMemberCommandHandler', () => {
     expect(result.refreshTokenExpiresAt).toEqual(new Date('2026-05-12T00:01:00.000Z'));
     expect(tokens.save).toHaveBeenCalledWith({
       type: TokenType.ACCESS,
-      memberId: 'member-1',
+      subjectId: 'member-1',
       token: 'access-token-0001',
       ttlSeconds: 15 * 60,
       expiresAt: new Date('2026-04-28T00:16:00.000Z'),
     });
     expect(tokens.save).toHaveBeenCalledWith({
       type: TokenType.REFRESH,
-      memberId: 'member-1',
+      subjectId: 'member-1',
       token: 'refresh-token-0001',
       ttlSeconds: 14 * 24 * 60 * 60,
       expiresAt: new Date('2026-05-12T00:01:00.000Z'),
@@ -324,14 +324,14 @@ describe('LogoutMemberCommandHandler', () => {
 
     const result = await handler.execute(LogoutMemberCommand.of({ memberId: 'member-1' }));
 
-    expect(tokens.revokeActiveByMemberId).toHaveBeenCalledWith({
+    expect(tokens.revokeActiveBySubjectId).toHaveBeenCalledWith({
       type: TokenType.ACCESS,
-      memberId: 'member-1',
+      subjectId: 'member-1',
       now: new Date('2026-04-28T00:06:00.000Z'),
     });
-    expect(tokens.revokeActiveByMemberId).toHaveBeenCalledWith({
+    expect(tokens.revokeActiveBySubjectId).toHaveBeenCalledWith({
       type: TokenType.REFRESH,
-      memberId: 'member-1',
+      subjectId: 'member-1',
       now: new Date('2026-04-28T00:06:00.000Z'),
     });
     expect(result).toEqual({
@@ -448,14 +448,14 @@ describe('WithdrawMemberCommandHandler', () => {
 
     expect(memberRepository.findById).toHaveBeenCalledWith('member-1');
     expect(memberRepository.save.mock.calls[0][0].status).toBe('WITHDRAWN');
-    expect(tokens.revokeActiveByMemberId).toHaveBeenCalledWith({
+    expect(tokens.revokeActiveBySubjectId).toHaveBeenCalledWith({
       type: TokenType.ACCESS,
-      memberId: 'member-1',
+      subjectId: 'member-1',
       now: new Date('2026-04-28T00:05:00.000Z'),
     });
-    expect(tokens.revokeActiveByMemberId).toHaveBeenCalledWith({
+    expect(tokens.revokeActiveBySubjectId).toHaveBeenCalledWith({
       type: TokenType.REFRESH,
-      memberId: 'member-1',
+      subjectId: 'member-1',
       now: new Date('2026-04-28T00:05:00.000Z'),
     });
     expect(logEventPublisher.publish).toHaveBeenCalledWith(
@@ -491,7 +491,7 @@ describe('WithdrawMemberCommandHandler', () => {
     ).rejects.toThrow('MEMBER_NOT_FOUND');
 
     expect(memberRepository.save).not.toHaveBeenCalled();
-    expect(tokens.revokeActiveByMemberId).not.toHaveBeenCalled();
+    expect(tokens.revokeActiveBySubjectId).not.toHaveBeenCalled();
     expect(logEventPublisher.publish).not.toHaveBeenCalled();
   });
 });

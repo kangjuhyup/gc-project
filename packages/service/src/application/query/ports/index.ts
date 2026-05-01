@@ -1,4 +1,6 @@
+export { ADMIN_AUTHORIZATION_VERIFIER } from './admin-authorization-verifier.port';
 export { ADDRESS_SEARCH } from './address-search.port';
+export type { AdminAuthorizationVerifierPort } from './admin-authorization-verifier.port';
 export type { AddressSearchPort } from './address-search.port';
 export { AUTHORIZATION_VERIFIER } from './authorization-verifier.port';
 export { MEMBER_QUERY } from './member-query.port';

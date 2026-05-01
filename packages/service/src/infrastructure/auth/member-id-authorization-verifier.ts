@@ -16,7 +16,7 @@ export class MemberIdAuthorizationVerifier implements AuthorizationVerifierPort 
   @NoLog
   async verify(authorization: string): Promise<AuthenticatedUserDto> {
     const accessToken = this.extractAccessToken(authorization);
-    const memberId = await this.tokenRepository.findMemberId({
+    const memberId = await this.tokenRepository.findSubjectId({
       type: TokenType.ACCESS,
       token: accessToken,
     });

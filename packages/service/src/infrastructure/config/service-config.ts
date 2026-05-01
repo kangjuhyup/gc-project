@@ -37,6 +37,9 @@ export const commonEnvSpec = {
 
 export const apiEnvSpec = {
   PORT: { joi: Joi.number().integer().positive().required() },
+  ADMIN_USER_ID: { joi: Joi.string().trim().required() },
+  ADMIN_PASSWORD: { joi: Joi.string().required() },
+  ADMIN_ACCESS_TOKEN_TTL_SECONDS: { joi: Joi.number().integer().positive().required() },
 } as const satisfies EnvSpec;
 
 export const workerEnvSpec = {

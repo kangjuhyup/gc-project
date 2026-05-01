@@ -1,3 +1,5 @@
+export { AdminProfileDto } from './admin-profile.dto';
+export { AuthenticatedAdminDto } from './authenticated-admin.dto';
 export { AddressSearchItemDto, AddressSearchResultDto } from './address-search-result.dto';
 export { AuthenticatedUserDto } from './authenticated-user.dto';
 export { CheckUserIdAvailabilityQuery } from './check-user-id-availability.query';

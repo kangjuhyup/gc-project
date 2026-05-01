@@ -17,14 +17,14 @@ export class LogoutMemberCommandHandler {
   @Transactional()
   async execute(command: LogoutMemberCommand): Promise<MemberLoggedOutDto> {
     const now = this.clock.now();
-    await this.tokenRepository.revokeActiveByMemberId({
+    await this.tokenRepository.revokeActiveBySubjectId({
       type: TokenType.ACCESS,
-      memberId: command.memberId,
+      subjectId: command.memberId,
       now,
     });
-    const revokedRefreshTokenCount = await this.tokenRepository.revokeActiveByMemberId({
+    const revokedRefreshTokenCount = await this.tokenRepository.revokeActiveBySubjectId({
       type: TokenType.REFRESH,
-      memberId: command.memberId,
+      subjectId: command.memberId,
       now,
     });
 

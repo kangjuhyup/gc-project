@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ApplicationModule } from '@application';
 import { InfrastructureModule } from '@infrastructure';
-import { MemberAuthGuard } from './guard';
+import { AdminAuthGuard, MemberAuthGuard } from './guard';
 import {
+  AdminController,
   AddressController,
   HealthController,
   MemberController,
@@ -17,6 +18,7 @@ import {
   imports: [ApplicationModule, InfrastructureModule],
   controllers: [
     HealthController,
+    AdminController,
     MemberController,
     AddressController,
     MovieController,
@@ -25,6 +27,6 @@ import {
     TheaterController,
     SeatController,
   ],
-  providers: [MemberAuthGuard],
+  providers: [AdminAuthGuard, MemberAuthGuard],
 })
 export class PresentationModule {}

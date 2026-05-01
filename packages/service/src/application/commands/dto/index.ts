@@ -4,6 +4,8 @@ export { ConfirmPhoneVerificationCommand } from './confirm-phone-verification.co
 export { CreateSeatHoldCommand } from './create-seat-hold.command';
 export { HandlePaymentCallbackCommand } from './handle-payment-callback.command';
 export { IssueTemporaryPasswordCommand } from './issue-temporary-password.command';
+export { LoginAdminCommand } from './login-admin.command';
+export { LoginAdminResultDto } from './login-admin-result.dto';
 export { LoginMemberCommand } from './login-member.command';
 export { LoginMemberResultDto } from './login-member-result.dto';
 export { LogoutMemberCommand } from './logout-member.command';
