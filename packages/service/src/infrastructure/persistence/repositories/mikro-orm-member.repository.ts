@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import type { FilterQuery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
@@ -66,6 +66,7 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
     });
   }
 
+  @NoLog
   private findAdminRows(query: ListAdminMembersQuery): Promise<MemberEntity[]> {
     return this.entityManager.find(MemberEntity, this.buildAdminWhere(query), {
       orderBy: { createdAt: 'DESC', id: 'DESC' },
@@ -74,10 +75,12 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
     });
   }
 
+  @NoLog
   private countAdminRows(query: ListAdminMembersQuery): Promise<number> {
     return this.entityManager.count(MemberEntity, this.buildAdminWhere(query));
   }
 
+  @NoLog
   private buildAdminWhere(query: ListAdminMembersQuery): FilterQuery<MemberEntity> {
     const where: FilterQuery<MemberEntity> = {};
     const normalizedKeyword = query.keyword?.trim();
@@ -98,6 +101,7 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
     return where;
   }
 
+  @NoLog
   private toAdminDto(row: MemberEntity): AdminMemberSummaryDto {
     return AdminMemberSummaryDto.of({
       id: String(row.id),
@@ -111,14 +115,17 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
     });
   }
 
+  @NoLog
   private offset(currentPage: number, countPerPage: number): number {
     return (currentPage - 1) * countPerPage;
   }
 
+  @NoLog
   private toIsoString(value: string | Date): string {
     return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
   }
 
+  @NoLog
   private toOptionalIsoString(value: string | Date | undefined): string | undefined {
     if (value === undefined) {
       return undefined;

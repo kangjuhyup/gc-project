@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import type { SeatHoldModel } from '@domain';
@@ -119,6 +119,7 @@ export class MikroOrmSeatHoldRepository implements SeatHoldRepositoryPort {
     return seats.map((seat) => seat.id);
   }
 
+  @NoLog
   private applyReferences(entity: SeatHoldEntity): void {
     entity.screening = this.entityManager.getReference(ScreeningEntity, entity.screening.id);
     entity.seat = this.entityManager.getReference(SeatEntity, entity.seat.id);

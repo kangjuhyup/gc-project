@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ListScreeningSeatsQuery, ScreeningSeatListResultDto, ScreeningSeatSummaryDto } from '@application/query/dto';
@@ -28,6 +28,7 @@ export class MikroOrmSeatQueryRepository implements SeatQueryPort {
     });
   }
 
+  @NoLog
   private async findRows(screeningId: string): Promise<ScreeningSeatRow[]> {
     const screening = await this.entityManager.findOne(ScreeningEntity, { id: screeningId }, {
       populate: [
@@ -69,6 +70,7 @@ export class MikroOrmSeatQueryRepository implements SeatQueryPort {
       }));
   }
 
+  @NoLog
   private resolveStatus(
     seatId: string,
     reservedSeatIds: Set<string>,
@@ -85,10 +87,12 @@ export class MikroOrmSeatQueryRepository implements SeatQueryPort {
     return SeatAvailabilityStatus.AVAILABLE;
   }
 
+  @NoLog
   private compareSeat(left: SeatEntity, right: SeatEntity): number {
     return left.seatRow.localeCompare(right.seatRow) || left.seatCol - right.seatCol || Number(left.id) - Number(right.id);
   }
 
+  @NoLog
   private toDto(row: ScreeningSeatRow): ScreeningSeatSummaryDto {
     return ScreeningSeatSummaryDto.of({
       id: String(row.seatId),

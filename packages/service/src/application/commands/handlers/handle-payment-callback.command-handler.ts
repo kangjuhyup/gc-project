@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import {
   OutboxEventModel,
   PaymentEventLogModel,
@@ -132,6 +132,7 @@ export class HandlePaymentCallbackCommandHandler {
     return PaymentCallbackResultDto.of({ paymentId: payment.id, handled: true });
   }
 
+  @NoLog
   private async confirmReservation(payment: PaymentModel, now: Date): Promise<void> {
     const seatHold = await this.seatHoldRepository.findById(payment.seatHoldId);
     assertDefined(seatHold, () => new Error('SEAT_HOLD_NOT_FOUND'));
@@ -189,6 +190,7 @@ export class HandlePaymentCallbackCommandHandler {
     );
   }
 
+  @NoLog
   private reservationNumber(paymentId: string): string {
     return `R${paymentId.padStart(19, '0')}`.slice(0, 20);
   }

@@ -68,6 +68,7 @@ export class RedisSeatHoldLock implements SeatHoldLockPort {
     );
   }
 
+  @NoLog
   private key(screeningId: string, seatId: string): string {
     return `seat-hold-lock:${screeningId}:${seatId}`;
   }

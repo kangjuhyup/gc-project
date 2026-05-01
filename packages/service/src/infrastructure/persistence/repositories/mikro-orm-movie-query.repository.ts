@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import type { FilterQuery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
@@ -76,6 +76,7 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     });
   }
 
+  @NoLog
   private findAdminRows(query: ListAdminMoviesQuery): Promise<MovieEntity[]> {
     return this.entityManager.find(MovieEntity, this.buildAdminWhere(query), {
       orderBy: { createdAt: 'DESC', id: 'DESC' },
@@ -84,10 +85,12 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     });
   }
 
+  @NoLog
   private countAdminRows(query: ListAdminMoviesQuery): Promise<number> {
     return this.entityManager.count(MovieEntity, this.buildAdminWhere(query));
   }
 
+  @NoLog
   private buildAdminWhere(query: ListAdminMoviesQuery): FilterQuery<MovieEntity> {
     const where: FilterQuery<MovieEntity> = {};
     const normalizedKeyword = query.keyword?.trim();
@@ -106,6 +109,7 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     return where;
   }
 
+  @NoLog
   private toAdminDto(row: MovieEntity): AdminMovieSummaryDto {
     return AdminMovieSummaryDto.of({
       id: String(row.id),
@@ -121,10 +125,12 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     });
   }
 
+  @NoLog
   private offset(currentPage: number, countPerPage: number): number {
     return (currentPage - 1) * countPerPage;
   }
 
+  @NoLog
   private async findRows(query: ListMoviesQuery, cursor?: MovieCursor): Promise<MovieListRow[]> {
     const screenings = await this.entityManager.find(ScreeningEntity, this.buildScreeningWhere(query), {
       populate: [
@@ -151,6 +157,7 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
       .slice(0, query.limit + 1);
   }
 
+  @NoLog
   private buildScreeningWhere(query: ListMoviesQuery): FilterQuery<ScreeningEntity> {
     const where: FilterQuery<ScreeningEntity> = {
       startAt: { $gte: query.time },
@@ -172,6 +179,7 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     return where;
   }
 
+  @NoLog
   private toRow(screening: ScreeningEntity, time: Date): MovieListRow {
     const movie = screening.movie;
     const screen = screening.screen;
@@ -203,6 +211,7 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     };
   }
 
+  @NoLog
   private posterUrl(movie: MovieEntity): string | undefined {
     const poster = movie.images
       .getItems()
@@ -212,18 +221,21 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     return poster?.url ?? movie.posterUrl;
   }
 
+  @NoLog
   private compareMovieRows(left: MovieListRow, right: MovieListRow): number {
     return Number(left.distanceMs) - Number(right.distanceMs)
       || new Date(left.screeningStartAt).getTime() - new Date(right.screeningStartAt).getTime()
       || Number(left.screeningId) - Number(right.screeningId);
   }
 
+  @NoLog
   private compareCursor(row: MovieListRow, cursor: MovieCursor): number {
     return Number(row.distanceMs) - cursor.distanceMs
       || new Date(row.screeningStartAt).getTime() - new Date(cursor.screeningStartAt).getTime()
       || Number(row.screeningId) - cursor.screeningId;
   }
 
+  @NoLog
   private toDto(row: MovieListRow): MovieSummaryDto {
     return MovieSummaryDto.of({
       id: Number(row.movieId),
@@ -252,6 +264,7 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     });
   }
 
+  @NoLog
   private encodeCursor(row: MovieListRow | undefined): string | undefined {
     if (row === undefined) {
       return undefined;
@@ -267,6 +280,7 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     ).toString('base64url');
   }
 
+  @NoLog
   private decodeCursor(cursor: string | undefined): MovieCursor | undefined {
     if (cursor === undefined) {
       return undefined;
@@ -293,10 +307,12 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     }
   }
 
+  @NoLog
   private toIsoString(value: string | Date): string {
     return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
   }
 
+  @NoLog
   private toDateLabel(value: string | Date | undefined): string {
     if (value === undefined) {
       return '';
@@ -305,6 +321,7 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     return this.toIsoString(value).slice(0, 10);
   }
 
+  @NoLog
   private toOptionalDateLabel(value: string | Date | undefined): string | undefined {
     if (value === undefined) {
       return undefined;

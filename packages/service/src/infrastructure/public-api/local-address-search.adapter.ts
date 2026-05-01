@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { Injectable } from '@nestjs/common';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -48,6 +48,7 @@ export class LocalAddressSearchAdapter implements AddressSearchPort {
     });
   }
 
+  @NoLog
   private matches(address: LocalAddressItem, keyword: string): boolean {
     return [
       address.roadAddress,
@@ -63,6 +64,7 @@ export class LocalAddressSearchAdapter implements AddressSearchPort {
     ].some((value) => value?.toLocaleLowerCase().includes(keyword) ?? false);
   }
 
+  @NoLog
   private toDto(item: LocalAddressItem): AddressSearchItemDto {
     return AddressSearchItemDto.of({
       roadAddress: item.roadAddress,
@@ -81,6 +83,7 @@ export class LocalAddressSearchAdapter implements AddressSearchPort {
     });
   }
 
+  @NoLog
   private loadAddresses(): LocalAddressItem[] {
     const content = readFileSync(join(__dirname, 'local-addresses.json'), 'utf8');
     return JSON.parse(content) as LocalAddressItem[];

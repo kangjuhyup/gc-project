@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ListTheatersQuery, TheaterListResultDto, TheaterSummaryDto } from '@application/query/dto';
@@ -23,6 +23,7 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
     });
   }
 
+  @NoLog
   private async findRows(query: ListTheatersQuery): Promise<TheaterWithDistance[]> {
     const theaters = await this.entityManager.find(TheaterEntity, {}, { orderBy: { id: 'ASC' } });
 
@@ -38,6 +39,7 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
       .sort((left, right) => this.compareDistance(left, right));
   }
 
+  @NoLog
   private calculateDistanceMeters(
     currentLatitude: number | undefined,
     currentLongitude: number | undefined,
@@ -64,6 +66,7 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
     return earthRadiusMeters * 2 * Math.asin(Math.sqrt(haversine));
   }
 
+  @NoLog
   private compareDistance(left: TheaterWithDistance, right: TheaterWithDistance): number {
     if (left.distanceMeters === undefined && right.distanceMeters === undefined) {
       return Number(left.theater.id) - Number(right.theater.id);
@@ -80,10 +83,12 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
     return left.distanceMeters - right.distanceMeters || Number(left.theater.id) - Number(right.theater.id);
   }
 
+  @NoLog
   private toRadians(value: number): number {
     return value * Math.PI / 180;
   }
 
+  @NoLog
   private toDto(row: TheaterWithDistance): TheaterSummaryDto {
     return TheaterSummaryDto.of({
       id: Number(row.theater.id),

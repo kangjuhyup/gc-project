@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { Injectable } from '@nestjs/common';
 import type {
   PaymentGatewayPort,
@@ -50,18 +50,22 @@ export class LocalPaymentGateway implements PaymentGatewayPort {
     return { refunded: true };
   }
 
+  @NoLog
   private providerPaymentId(paymentId: string): string {
     return `local-payment-${paymentId}`;
   }
 
+  @NoLog
   private callbackToken(paymentId: string, providerPaymentId: string): string {
     return `local:${paymentId}:${providerPaymentId}`;
   }
 
+  @NoLog
   private callbackDelayMilliseconds(): number {
     return this.options.callbackDelayMilliseconds;
   }
 
+  @NoLog
   private scheduleCallback(params: {
     paymentId: string;
     providerPaymentId: string;
@@ -85,6 +89,7 @@ export class LocalPaymentGateway implements PaymentGatewayPort {
     }, params.delayMilliseconds).unref();
   }
 
+  @NoLog
   private callbackUrl(): string {
     return this.options.callbackUrl;
   }

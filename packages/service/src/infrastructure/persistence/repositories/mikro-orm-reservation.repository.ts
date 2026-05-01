@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { LockMode } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
@@ -47,6 +47,7 @@ export class MikroOrmReservationRepository implements ReservationRepositoryPort 
     return entity ? PersistenceMapper.reservationToDomain(entity) : undefined;
   }
 
+  @NoLog
   private applyReferences(entity: ReservationEntity): void {
     entity.member = this.entityManager.getReference(MemberEntity, entity.member.id);
     entity.screening = this.entityManager.getReference(ScreeningEntity, entity.screening.id);

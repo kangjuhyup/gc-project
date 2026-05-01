@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import type { PaymentRequestHasherPort, PaymentRequestHashParams } from '@application/commands/ports';
@@ -12,6 +12,7 @@ export class Sha256PaymentRequestHasher implements PaymentRequestHasherPort {
       .digest('hex');
   }
 
+  @NoLog
   private canonicalize(params: PaymentRequestHashParams): string {
     return JSON.stringify({
       amount: params.amount,

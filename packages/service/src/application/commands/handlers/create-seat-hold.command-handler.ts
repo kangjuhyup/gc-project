@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { SeatHoldModel, SeatHoldStatus } from '@domain';
 import { assertDefined, assertNonEmpty, assertTrue } from '@application/assertions';
 import { CreateSeatHoldCommand, SeatHoldCreatedDto } from '../dto';
@@ -76,6 +76,7 @@ export class CreateSeatHoldCommandHandler {
     }
   }
 
+  @NoLog
   private async acquireLock(screeningId: string, seatIds: string[]): Promise<SeatHoldLock> {
     const lock = await this.seatHoldLock.acquire({
       screeningId,
@@ -87,6 +88,7 @@ export class CreateSeatHoldCommandHandler {
     return lock;
   }
 
+  @NoLog
   private uniqueSeatIds(seatIds: string[]): string[] {
     const unique = [...new Set(seatIds)];
     assertNonEmpty(unique, () => new Error('INVALID_SEAT_HOLD_REQUEST'));
@@ -95,11 +97,13 @@ export class CreateSeatHoldCommandHandler {
     return unique;
   }
 
+  @NoLog
   private async ensureSeatsBelongToScreening(screeningId: string, seatIds: string[]): Promise<void> {
     const matchedSeatIds = await this.seatHoldRepository.findSeatIdsInScreening({ screeningId, seatIds });
     assertTrue(matchedSeatIds.length === seatIds.length, () => new Error('SEAT_NOT_FOUND'));
   }
 
+  @NoLog
   private async ensureSeatsAvailable(screeningId: string, seatIds: string[], now: Date): Promise<void> {
     const unavailableSeatIds = await this.seatHoldRepository.findUnavailableSeatIds({
       screeningId,

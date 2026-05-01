@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import type { FilterQuery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
@@ -44,6 +44,7 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     });
   }
 
+  @NoLog
   private async findRows(query: ListMyReservationsQuery, cursor?: ReservationCursor): Promise<ReservationListItem[]> {
     const reservations = await this.entityManager.find(ReservationEntity, this.buildWhere(query, cursor), {
       populate: [
@@ -79,6 +80,7 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     }));
   }
 
+  @NoLog
   private buildWhere(
     query: ListMyReservationsQuery,
     cursor: ReservationCursor | undefined,
@@ -97,6 +99,7 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     return where;
   }
 
+  @NoLog
   private toDto(item: ReservationListItem): ReservationSummaryDto {
     const { reservation, payment } = item;
     const screening = reservation.screening;
@@ -150,6 +153,7 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     });
   }
 
+  @NoLog
   private encodeCursor(item: ReservationListItem | undefined): string | undefined {
     if (item === undefined) {
       return undefined;
@@ -164,6 +168,7 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     ).toString('base64url');
   }
 
+  @NoLog
   private decodeCursor(cursor: string | undefined): ReservationCursor | undefined {
     if (cursor === undefined) {
       return undefined;
@@ -189,6 +194,7 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     }
   }
 
+  @NoLog
   private posterUrl(movie: ReservationEntity['screening']['movie']): string | undefined {
     const poster = movie.images
       .getItems()
@@ -198,14 +204,17 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     return poster?.url ?? movie.posterUrl;
   }
 
+  @NoLog
   private compareSeat(left: SeatEntity, right: SeatEntity): number {
     return left.seatRow.localeCompare(right.seatRow) || left.seatCol - right.seatCol || Number(left.id) - Number(right.id);
   }
 
+  @NoLog
   private toIsoString(value: string | Date): string {
     return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
   }
 
+  @NoLog
   private toOptionalIsoString(value: string | Date | undefined): string | undefined {
     return value === undefined ? undefined : this.toIsoString(value);
   }

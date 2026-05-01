@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
 import type { SeatHoldModel } from '@domain';
@@ -31,6 +31,7 @@ export class RedisSeatHoldCache implements SeatHoldCachePort {
     await this.redis.del(this.key(screeningId, seatId));
   }
 
+  @NoLog
   private key(screeningId: string, seatId: string): string {
     return `seat-hold:${screeningId}:${seatId}`;
   }

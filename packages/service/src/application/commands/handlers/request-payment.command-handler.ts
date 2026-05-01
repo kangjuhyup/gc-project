@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import {
   OutboxEventModel,
   PaymentEventLogModel,
@@ -106,6 +106,7 @@ export class RequestPaymentCommandHandler {
     return this.toResult(payment);
   }
 
+  @NoLog
   private toResult(payment: PaymentModel): PaymentResultDto {
     return PaymentResultDto.of({
       paymentId: payment.id,

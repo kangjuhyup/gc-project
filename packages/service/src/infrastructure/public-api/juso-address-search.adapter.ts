@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { Injectable } from '@nestjs/common';
 import {
   AddressSearchItemDto,
@@ -63,6 +63,7 @@ export class JusoAddressSearchAdapter implements AddressSearchPort {
     });
   }
 
+  @NoLog
   private buildUrl(query: SearchAddressesQuery): URL {
     const url = new URL('https://business.juso.go.kr/addrlink/addrLinkApi.do');
     url.searchParams.set('confmKey', this.apiKey);
@@ -73,6 +74,7 @@ export class JusoAddressSearchAdapter implements AddressSearchPort {
     return url;
   }
 
+  @NoLog
   private toDto(item: JusoAddressItem): AddressSearchItemDto {
     return AddressSearchItemDto.of({
       roadAddress: item.roadAddr ?? '',

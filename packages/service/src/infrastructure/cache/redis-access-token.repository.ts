@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
 import { REDIS } from './redis.module';
@@ -42,10 +42,12 @@ export class RedisAccessTokenRepository {
     return revoked;
   }
 
+  @NoLog
   private tokenKey(namespace: string, accessToken: string): string {
     return `${namespace}:access-token:${accessToken}`;
   }
 
+  @NoLog
   private subjectKey(namespace: string, subjectId: string): string {
     return `${namespace}:access-tokens:${subjectId}`;
   }

@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { LockMode } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
@@ -74,6 +74,7 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
     return entity ? this.toDto(PersistenceMapper.paymentToDomain(entity)) : undefined;
   }
 
+  @NoLog
   private toDto(payment: PaymentModel): PaymentResultDto {
     return PaymentResultDto.of({
       paymentId: payment.id,
@@ -87,6 +88,7 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
     });
   }
 
+  @NoLog
   private applyReferences(entity: PaymentEntity): void {
     entity.member = this.entityManager.getReference(MemberEntity, entity.member.id);
     entity.seatHold = this.entityManager.getReference(SeatHoldEntity, entity.seatHold.id);

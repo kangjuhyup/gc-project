@@ -1,4 +1,4 @@
-import { Logging } from '@kangjuhyup/rvlog';
+import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { assertDefined, assertTrue } from '@application/assertions';
 import { MemberTokenRefreshedDto, RefreshMemberTokenCommand } from '../dto';
 import { Transactional } from '../decorators';
@@ -69,6 +69,7 @@ export class RefreshMemberTokenCommandHandler {
     });
   }
 
+  @NoLog
   private expiresAt(now: Date, ttlSeconds: number): Date {
     const expiresAt = new Date(now);
     expiresAt.setUTCSeconds(expiresAt.getUTCSeconds() + ttlSeconds);
