@@ -6,8 +6,10 @@ import type { MovieQueryPort } from '@application/query/ports';
 describe('ListAdminMoviesQueryHandler', () => {
   it('관리자 영화 목록 조회를 movie query port에 위임한다', async () => {
     const resultDto = AdminMovieListResultDto.of({
+      totalCount: 0,
+      currentPage: 1,
+      countPerPage: 10,
       items: [],
-      hasNext: false,
     });
     const movieQuery = {
       list: vi.fn(),
@@ -15,9 +17,9 @@ describe('ListAdminMoviesQueryHandler', () => {
     } satisfies MovieQueryPort;
     const handler = new ListAdminMoviesQueryHandler(movieQuery);
     const query = ListAdminMoviesQuery.of({
-      limit: 10,
+      currentPage: 2,
+      countPerPage: 10,
       keyword: '관리자',
-      cursor: 'next-cursor',
     });
 
     const result = await handler.execute(query);

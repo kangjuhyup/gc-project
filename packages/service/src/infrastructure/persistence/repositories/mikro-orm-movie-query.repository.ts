@@ -54,11 +54,6 @@ interface AdminMovieListRow {
   createdAt: string | Date;
 }
 
-interface AdminMovieCursor {
-  createdAt: string;
-  id: number;
-}
-
 @Injectable()
 @Logging
 export class MikroOrmMovieQueryRepository implements MovieQueryPort {
@@ -79,34 +74,22 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
   }
 
   async listAdminMovies(query: ListAdminMoviesQuery): Promise<AdminMovieListResultDto> {
-    const cursor = this.decodeAdminCursor(query.cursor);
-    const rows = await this.findAdminRows(query, cursor);
-    const hasNext = rows.length > query.limit;
-    const items = rows.slice(0, query.limit);
+    const [rows, totalCount] = await Promise.all([
+      this.findAdminRows(query),
+      this.countAdminRows(query),
+    ]);
 
     return AdminMovieListResultDto.of({
-      items: items.map((row) => this.toAdminDto(row)),
-      hasNext,
-      nextCursor: hasNext ? this.encodeAdminCursor(items[items.length - 1]) : undefined,
+      totalCount,
+      currentPage: query.currentPage,
+      countPerPage: query.countPerPage,
+      items: rows.map((row) => this.toAdminDto(row)),
     });
   }
 
-  private async findAdminRows(
-    query: ListAdminMoviesQuery,
-    cursor?: AdminMovieCursor,
-  ): Promise<AdminMovieListRow[]> {
-    const params: Array<string | number> = [];
-    const where: string[] = [];
-    const normalizedKeyword = query.keyword?.trim();
-
-    if (normalizedKeyword) {
-      const keyword = `%${normalizedKeyword}%`;
-      where.push('(title ILIKE ? OR director ILIKE ? OR genre ILIKE ? OR rating ILIKE ? OR description ILIKE ?)');
-      params.push(keyword, keyword, keyword, keyword, keyword);
-    }
-
-    const cursorWhere = this.buildAdminCursorWhere(cursor, params);
-    params.push(query.limit + 1);
+  private async findAdminRows(query: ListAdminMoviesQuery): Promise<AdminMovieListRow[]> {
+    const { where, params } = this.buildAdminWhere(query);
+    params.push(query.countPerPage, this.offset(query.currentPage, query.countPerPage));
 
     return this.entityManager.execute<AdminMovieListRow[]>(
       `
@@ -123,30 +106,43 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
           created_at AS "createdAt"
         FROM movie
         ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-        ${cursorWhere}
         ORDER BY created_at DESC, id DESC
         LIMIT ?
+        OFFSET ?
       `,
       params,
     );
   }
 
-  private buildAdminCursorWhere(
-    cursor: AdminMovieCursor | undefined,
-    params: Array<string | number>,
-  ): string {
-    if (cursor === undefined) {
-      return '';
+  private async countAdminRows(query: ListAdminMoviesQuery): Promise<number> {
+    const { where, params } = this.buildAdminWhere(query);
+    const rows = await this.entityManager.execute<Array<{ count: string | number }>>(
+      `
+        SELECT COUNT(*)::int AS count
+        FROM movie
+        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      `,
+      params,
+    );
+
+    return Number(rows[0]?.count ?? 0);
+  }
+
+  private buildAdminWhere(query: ListAdminMoviesQuery): {
+    where: string[];
+    params: Array<string | number>;
+  } {
+    const params: Array<string | number> = [];
+    const where: string[] = [];
+    const normalizedKeyword = query.keyword?.trim();
+
+    if (normalizedKeyword) {
+      const keyword = `%${normalizedKeyword}%`;
+      where.push('(title ILIKE ? OR director ILIKE ? OR genre ILIKE ? OR rating ILIKE ? OR description ILIKE ?)');
+      params.push(keyword, keyword, keyword, keyword, keyword);
     }
 
-    params.push(cursor.createdAt, cursor.createdAt, cursor.id);
-
-    return `
-      ${params.length > 3 ? 'AND' : 'WHERE'} (
-        created_at < ?::timestamptz
-        OR (created_at = ?::timestamptz AND id < ?)
-      )
-    `;
+    return { where, params };
   }
 
   private toAdminDto(row: AdminMovieListRow): AdminMovieSummaryDto {
@@ -164,39 +160,8 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     });
   }
 
-  private encodeAdminCursor(row: AdminMovieListRow | undefined): string | undefined {
-    if (row === undefined) {
-      return undefined;
-    }
-
-    return Buffer.from(
-      JSON.stringify({
-        createdAt: this.toIsoString(row.createdAt),
-        id: Number(row.id),
-      } satisfies AdminMovieCursor),
-      'utf8',
-    ).toString('base64url');
-  }
-
-  private decodeAdminCursor(cursor: string | undefined): AdminMovieCursor | undefined {
-    if (cursor === undefined) {
-      return undefined;
-    }
-
-    try {
-      const decoded = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Partial<AdminMovieCursor>;
-
-      if (typeof decoded.createdAt !== 'string' || typeof decoded.id !== 'number') {
-        throw new Error('INVALID_MOVIE_CURSOR');
-      }
-
-      return {
-        createdAt: decoded.createdAt,
-        id: decoded.id,
-      };
-    } catch {
-      throw new Error('INVALID_MOVIE_CURSOR');
-    }
+  private offset(currentPage: number, countPerPage: number): number {
+    return (currentPage - 1) * countPerPage;
   }
 
   private async findRows(query: ListMoviesQuery, cursor?: MovieCursor): Promise<MovieListRow[]> {

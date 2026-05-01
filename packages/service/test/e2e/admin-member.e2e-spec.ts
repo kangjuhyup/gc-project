@@ -30,12 +30,14 @@ describe('관리자 회원 관리 e2e', () => {
     const accessToken = await loginAdmin(e2e);
 
     const list = await e2e.get(
-      `/admin/members?keyword=${member.userId}&status=ACTIVE&limit=5`,
+      `/admin/members?keyword=${member.userId}&status=ACTIVE&currentPage=1&countPerPage=5`,
       { Authorization: `Bearer ${accessToken}` },
     );
 
     expect(list.status).toBe(200);
-    expect(list.body.hasNext).toBe(false);
+    expect(list.body.currentPage).toBe(1);
+    expect(list.body.countPerPage).toBe(5);
+    expect(list.body.totalCount).toBe(1);
     expect(list.body.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

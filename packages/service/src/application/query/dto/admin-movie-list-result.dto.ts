@@ -72,29 +72,35 @@ export class AdminMovieSummaryDto {
 }
 
 export class AdminMovieListResultDto {
+  @ApiProperty({ example: 10, description: '전체 검색 결과 수' })
+  readonly totalCount: number;
+
+  @ApiProperty({ example: 1, description: '현재 페이지 번호' })
+  readonly currentPage: number;
+
+  @ApiProperty({ example: 20, description: '페이지당 결과 수' })
+  readonly countPerPage: number;
+
   @ApiProperty({ type: [AdminMovieSummaryDto], description: '관리자 영화 목록' })
   readonly items: AdminMovieSummaryDto[];
 
-  @ApiProperty({ example: true, description: '다음 페이지 존재 여부' })
-  readonly hasNext: boolean;
-
-  @ApiPropertyOptional({ example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA1LTAxVDAwOjAwOjAwLjAwMFoifQ', description: '다음 페이지 조회 커서' })
-  readonly nextCursor?: string;
-
   private constructor(params: {
+    totalCount: number;
+    currentPage: number;
+    countPerPage: number;
     items: AdminMovieSummaryDto[];
-    hasNext: boolean;
-    nextCursor?: string;
   }) {
+    this.totalCount = params.totalCount;
+    this.currentPage = params.currentPage;
+    this.countPerPage = params.countPerPage;
     this.items = params.items;
-    this.hasNext = params.hasNext;
-    this.nextCursor = params.nextCursor;
   }
 
   static of(params: {
+    totalCount: number;
+    currentPage: number;
+    countPerPage: number;
     items: AdminMovieSummaryDto[];
-    hasNext: boolean;
-    nextCursor?: string;
   }): AdminMovieListResultDto {
     return new AdminMovieListResultDto(params);
   }

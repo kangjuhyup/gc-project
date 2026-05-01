@@ -1,19 +1,19 @@
 export class ListAdminMoviesQuery {
   private constructor(
-    readonly limit: number,
+    readonly currentPage: number,
+    readonly countPerPage: number,
     readonly keyword?: string,
-    readonly cursor?: string,
   ) {}
 
   static of(params: {
-    limit?: number;
+    currentPage?: number;
+    countPerPage?: number;
     keyword?: string;
-    cursor?: string;
   }): ListAdminMoviesQuery {
     return new ListAdminMoviesQuery(
-      params.limit ?? 20,
+      params.currentPage ?? 1,
+      params.countPerPage ?? 20,
       params.keyword,
-      params.cursor,
     );
   }
 }

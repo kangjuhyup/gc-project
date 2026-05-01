@@ -80,12 +80,14 @@ describe('관리자 영화 관리 e2e', () => {
     expect(created.status).toBe(201);
 
     const list = await e2e.get(
-      '/admin/movies?keyword=%EB%AA%A9%EB%A1%9D&limit=5',
+      '/admin/movies?keyword=%EB%AA%A9%EB%A1%9D&currentPage=1&countPerPage=5',
       auth,
     );
 
     expect(list.status).toBe(200);
-    expect(list.body.hasNext).toBe(false);
+    expect(list.body.currentPage).toBe(1);
+    expect(list.body.countPerPage).toBe(5);
+    expect(list.body.totalCount).toBeGreaterThanOrEqual(1);
     expect(list.body.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

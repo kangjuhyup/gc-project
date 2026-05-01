@@ -23,11 +23,6 @@ interface AdminMemberListRow {
   createdAt: string | Date;
 }
 
-interface AdminMemberCursor {
-  createdAt: string;
-  id: number;
-}
-
 @Injectable()
 @Logging
 export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQueryPort {
@@ -68,22 +63,62 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
   }
 
   async listAdminMembers(query: ListAdminMembersQuery): Promise<AdminMemberListResultDto> {
-    const cursor = this.decodeCursor(query.cursor);
-    const rows = await this.findAdminRows(query, cursor);
-    const hasNext = rows.length > query.limit;
-    const items = rows.slice(0, query.limit);
+    const [rows, totalCount] = await Promise.all([
+      this.findAdminRows(query),
+      this.countAdminRows(query),
+    ]);
 
     return AdminMemberListResultDto.of({
-      items: items.map((row) => this.toAdminDto(row)),
-      hasNext,
-      nextCursor: hasNext ? this.encodeCursor(items[items.length - 1]) : undefined,
+      totalCount,
+      currentPage: query.currentPage,
+      countPerPage: query.countPerPage,
+      items: rows.map((row) => this.toAdminDto(row)),
     });
   }
 
-  private async findAdminRows(
-    query: ListAdminMembersQuery,
-    cursor?: AdminMemberCursor,
-  ): Promise<AdminMemberListRow[]> {
+  private async findAdminRows(query: ListAdminMembersQuery): Promise<AdminMemberListRow[]> {
+    const { where, params } = this.buildAdminWhere(query);
+    params.push(query.countPerPage, this.offset(query.currentPage, query.countPerPage));
+
+    return this.entityManager.execute<AdminMemberListRow[]>(
+      `
+        SELECT
+          id::text AS "id",
+          user_id AS "userId",
+          name,
+          phone_number AS "phoneNumber",
+          status,
+          failed_login_count AS "failedLoginCount",
+          locked_at AS "lockedAt",
+          created_at AS "createdAt"
+        FROM member
+        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+        OFFSET ?
+      `,
+      params,
+    );
+  }
+
+  private async countAdminRows(query: ListAdminMembersQuery): Promise<number> {
+    const { where, params } = this.buildAdminWhere(query);
+    const rows = await this.entityManager.execute<Array<{ count: string | number }>>(
+      `
+        SELECT COUNT(*)::int AS count
+        FROM member
+        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      `,
+      params,
+    );
+
+    return Number(rows[0]?.count ?? 0);
+  }
+
+  private buildAdminWhere(query: ListAdminMembersQuery): {
+    where: string[];
+    params: Array<string | number>;
+  } {
     const params: Array<string | number> = [];
     const where: string[] = [];
     const normalizedKeyword = query.keyword?.trim();
@@ -99,47 +134,7 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
       params.push(query.status);
     }
 
-    const cursorWhere = this.buildCursorWhere(cursor, where.length > 0, params);
-    params.push(query.limit + 1);
-
-    return this.entityManager.execute<AdminMemberListRow[]>(
-      `
-        SELECT
-          id::text AS "id",
-          user_id AS "userId",
-          name,
-          phone_number AS "phoneNumber",
-          status,
-          failed_login_count AS "failedLoginCount",
-          locked_at AS "lockedAt",
-          created_at AS "createdAt"
-        FROM member
-        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-        ${cursorWhere}
-        ORDER BY created_at DESC, id DESC
-        LIMIT ?
-      `,
-      params,
-    );
-  }
-
-  private buildCursorWhere(
-    cursor: AdminMemberCursor | undefined,
-    hasWhere: boolean,
-    params: Array<string | number>,
-  ): string {
-    if (cursor === undefined) {
-      return '';
-    }
-
-    params.push(cursor.createdAt, cursor.createdAt, cursor.id);
-
-    return `
-      ${hasWhere ? 'AND' : 'WHERE'} (
-        created_at < ?::timestamptz
-        OR (created_at = ?::timestamptz AND id < ?)
-      )
-    `;
+    return { where, params };
   }
 
   private toAdminDto(row: AdminMemberListRow): AdminMemberSummaryDto {
@@ -155,39 +150,8 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
     });
   }
 
-  private encodeCursor(row: AdminMemberListRow | undefined): string | undefined {
-    if (row === undefined) {
-      return undefined;
-    }
-
-    return Buffer.from(
-      JSON.stringify({
-        createdAt: this.toIsoString(row.createdAt),
-        id: Number(row.id),
-      } satisfies AdminMemberCursor),
-      'utf8',
-    ).toString('base64url');
-  }
-
-  private decodeCursor(cursor: string | undefined): AdminMemberCursor | undefined {
-    if (cursor === undefined) {
-      return undefined;
-    }
-
-    try {
-      const decoded = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Partial<AdminMemberCursor>;
-
-      if (typeof decoded.createdAt !== 'string' || typeof decoded.id !== 'number') {
-        throw new Error('INVALID_MEMBER_CURSOR');
-      }
-
-      return {
-        createdAt: decoded.createdAt,
-        id: decoded.id,
-      };
-    } catch {
-      throw new Error('INVALID_MEMBER_CURSOR');
-    }
+  private offset(currentPage: number, countPerPage: number): number {
+    return (currentPage - 1) * countPerPage;
   }
 
   private toIsoString(value: string | Date): string {

@@ -69,22 +69,26 @@ describe('AdminController', () => {
     const commandBus = { execute: vi.fn() };
     const queryBus = {
       execute: vi.fn().mockResolvedValue({
+        totalCount: 0,
+        currentPage: 1,
+        countPerPage: 10,
         items: [],
-        hasNext: false,
       }),
     };
     const controller = new AdminController(commandBus as never, queryBus as never);
 
     const result = await controller.listMovies({
-      limit: 10,
+      currentPage: 2,
+      countPerPage: 10,
       keyword: ' 관리자 ',
-      cursor: 'next-cursor',
     } as never);
 
     expect(queryBus.execute).toHaveBeenCalledOnce();
     expect(result).toEqual({
+      totalCount: 0,
+      currentPage: 1,
+      countPerPage: 10,
       items: [],
-      hasNext: false,
     });
   });
 
@@ -92,23 +96,27 @@ describe('AdminController', () => {
     const commandBus = { execute: vi.fn() };
     const queryBus = {
       execute: vi.fn().mockResolvedValue({
+        totalCount: 0,
+        currentPage: 1,
+        countPerPage: 10,
         items: [],
-        hasNext: false,
       }),
     };
     const controller = new AdminController(commandBus as never, queryBus as never);
 
     const result = await controller.listMembers({
-      limit: 10,
+      currentPage: 2,
+      countPerPage: 10,
       keyword: ' member ',
       status: 'ACTIVE',
-      cursor: 'next-cursor',
     } as never);
 
     expect(queryBus.execute).toHaveBeenCalledOnce();
     expect(result).toEqual({
+      totalCount: 0,
+      currentPage: 1,
+      countPerPage: 10,
       items: [],
-      hasNext: false,
     });
   });
 });

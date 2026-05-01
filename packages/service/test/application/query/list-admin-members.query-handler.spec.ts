@@ -6,8 +6,10 @@ import type { MemberQueryPort } from '@application/query/ports';
 describe('ListAdminMembersQueryHandler', () => {
   it('관리자 회원 목록 조회를 member query port에 위임한다', async () => {
     const resultDto = AdminMemberListResultDto.of({
+      totalCount: 0,
+      currentPage: 1,
+      countPerPage: 10,
       items: [],
-      hasNext: false,
     });
     const memberQuery = {
       existsByUserId: vi.fn(),
@@ -15,10 +17,10 @@ describe('ListAdminMembersQueryHandler', () => {
     } satisfies MemberQueryPort;
     const handler = new ListAdminMembersQueryHandler(memberQuery);
     const query = ListAdminMembersQuery.of({
-      limit: 10,
+      currentPage: 2,
+      countPerPage: 10,
       keyword: 'member',
       status: 'ACTIVE',
-      cursor: 'next-cursor',
     });
 
     const result = await handler.execute(query);

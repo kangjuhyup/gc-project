@@ -99,7 +99,7 @@ export class AdminController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: '관리자 영화 목록 조회',
-    description: '관리자가 등록된 영화 기본 정보를 커서 기반으로 조회합니다. 상영 일정이 없는 영화도 포함합니다.',
+    description: '관리자가 등록된 영화 기본 정보를 페이지 기반으로 조회합니다. 상영 일정이 없는 영화도 포함합니다.',
   })
   @ApiOkResponse({ type: AdminMovieListResultDto, description: '관리자 영화 목록' })
   @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
@@ -110,9 +110,9 @@ export class AdminController {
 
     return this.queryBus.execute(
       ListAdminMoviesQuery.of({
-        limit: request.limit,
+        currentPage: request.currentPage,
+        countPerPage: request.countPerPage,
         keyword: request.keyword?.trim() || undefined,
-        cursor: request.cursor,
       }),
     );
   }
@@ -120,7 +120,7 @@ export class AdminController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: '관리자 회원 목록 조회',
-    description: '관리자가 회원 상태와 기본 정보를 커서 기반으로 조회합니다.',
+    description: '관리자가 회원 상태와 기본 정보를 페이지 기반으로 조회합니다.',
   })
   @ApiOkResponse({ type: AdminMemberListResultDto, description: '관리자 회원 목록' })
   @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
@@ -131,10 +131,10 @@ export class AdminController {
 
     return this.queryBus.execute(
       ListAdminMembersQuery.of({
-        limit: request.limit,
+        currentPage: request.currentPage,
+        countPerPage: request.countPerPage,
         keyword: request.keyword?.trim() || undefined,
         status: request.status as MemberStatusType | undefined,
-        cursor: request.cursor,
       }),
     );
   }

@@ -3,13 +3,20 @@ import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class ListAdminMoviesRequestDto {
-  @ApiPropertyOptional({ example: 20, minimum: 1, maximum: 100, default: 20, description: '커서 페이지 크기' })
+  @ApiPropertyOptional({ example: 1, minimum: 1, default: 1, description: '현재 페이지 번호' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  readonly currentPage?: number;
+
+  @ApiPropertyOptional({ example: 20, minimum: 1, maximum: 100, default: 20, description: '페이지당 결과 수' })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
-  readonly limit?: number;
+  readonly countPerPage?: number;
 
   @ApiPropertyOptional({ example: '파묘', maxLength: 80, description: '영화 제목/감독/장르/등급/설명 검색어' })
   @IsOptional()
@@ -17,24 +24,18 @@ export class ListAdminMoviesRequestDto {
   @MaxLength(80)
   readonly keyword?: string;
 
-  @ApiPropertyOptional({ example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA1LTAxVDAwOjAwOjAwLjAwMFoifQ', maxLength: 500, description: '이전 응답의 nextCursor' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  readonly cursor?: string;
-
   private constructor(params: {
-    limit?: number;
+    currentPage?: number;
+    countPerPage?: number;
     keyword?: string;
-    cursor?: string;
   }) {
     Object.assign(this, params);
   }
 
   static of(params: {
-    limit?: number;
+    currentPage?: number;
+    countPerPage?: number;
     keyword?: string;
-    cursor?: string;
   }): ListAdminMoviesRequestDto {
     return new ListAdminMoviesRequestDto(params);
   }

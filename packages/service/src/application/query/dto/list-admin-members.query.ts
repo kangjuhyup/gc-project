@@ -2,23 +2,23 @@ import type { MemberStatusType } from '@domain';
 
 export class ListAdminMembersQuery {
   private constructor(
-    readonly limit: number,
+    readonly currentPage: number,
+    readonly countPerPage: number,
     readonly keyword?: string,
     readonly status?: MemberStatusType,
-    readonly cursor?: string,
   ) {}
 
   static of(params: {
-    limit?: number;
+    currentPage?: number;
+    countPerPage?: number;
     keyword?: string;
     status?: MemberStatusType;
-    cursor?: string;
   }): ListAdminMembersQuery {
     return new ListAdminMembersQuery(
-      params.limit ?? 20,
+      params.currentPage ?? 1,
+      params.countPerPage ?? 20,
       params.keyword,
       params.status,
-      params.cursor,
     );
   }
 }
