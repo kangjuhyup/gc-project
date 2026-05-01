@@ -1,4 +1,5 @@
 export { ApplicationModule } from './application.module';
+export { assertDefined, assertNonEmpty, assertTrue } from './assertions';
 export {
   ChangeMemberPasswordCommand,
   CancelReservationCommand,
