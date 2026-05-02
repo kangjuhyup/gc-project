@@ -31,6 +31,8 @@ erDiagram
   reservation ||--o{ payment : linked
 
   seat_hold ||--o{ payment : requested_by
+  seat_hold ||--o{ payment_seat_hold : grouped_by
+  payment ||--o{ payment_seat_hold : includes
   payment ||--o{ payment_event_log : records
 ```
 
@@ -41,7 +43,7 @@ erDiagram
 | 회원/인증 | `member`, `member_refresh_token`, `phone_verification` | 회원 계정, refresh token, 휴대폰 인증 상태. |
 | 영화/상영 | `movie`, `movie_image`, `theater`, `screen`, `seat`, `screening` | 영화와 극장, 상영관, 좌석, 상영 일정을 표현. |
 | 좌석/예매 | `seat_hold`, `reservation`, `reservation_seat`, `reservation_event` | 좌석 임시 점유, 예매 확정, 예매 좌석, 예매 상태 이벤트. |
-| 결제 | `payment`, `payment_event_log` | 결제 요청/승인/환불 상태와 결제 이벤트 로그. |
+| 결제 | `payment`, `payment_seat_hold`, `payment_event_log` | 결제 요청/승인/환불 상태, 결제별 좌석 점유 매핑, 결제 이벤트 로그. |
 | 비동기 처리 | `outbox_event` | 결제/환불 후속 작업을 위한 outbox 이벤트. |
 
 ## 회원/인증
@@ -52,8 +54,10 @@ erDiagram
 
 주요 제약:
 
-- `uq_member_user_id`: 로그인 ID 중복 방지.
-- `uq_member_phone_number`: 휴대폰 번호 중복 방지.
+- `uq_member_active_user_id`: 탈퇴하지 않은 회원의 로그인 ID 중복 방지.
+- `uq_member_active_phone_number`: 탈퇴하지 않은 회원의 휴대폰 번호 중복 방지.
+
+탈퇴 회원은 `status = 'WITHDRAWN'`으로 남겨 감사/예매 이력을 보존합니다. 따라서 `user_id`, `phone_number`는 전체 unique constraint가 아니라 `status <> 'WITHDRAWN'` 조건의 PostgreSQL partial unique index로 관리합니다.
 
 주요 컬럼:
 
@@ -177,6 +181,18 @@ erDiagram
 - `idx_payment_member_created`: 회원별 결제 이력 조회.
 - `idx_payment_seat_hold`: 좌석 점유 기준 결제 조회.
 
+`payment.seat_hold_id`는 기존 단일 좌석 결제 호환과 대표 점유 참조로 유지합니다. 여러 좌석을 한 번에 결제하는 경우 실제 결제-점유 관계는 `payment_seat_hold`에서 관리합니다.
+
+### `payment_seat_hold`
+
+결제 1건과 좌석 점유 여러 건을 연결하는 매핑 테이블입니다.
+
+주요 제약과 인덱스:
+
+- `uq_payment_seat_hold_payment_hold`: 같은 결제 안에서 같은 점유가 중복 연결되는 것을 방지합니다.
+- `idx_payment_seat_hold_payment`: 결제 기준 점유 목록 조회.
+- `idx_payment_seat_hold_seat_hold`: 점유 기준 결제 역조회.
+
 ### `payment_event_log`
 
 결제 상태 변경 이벤트를 저장합니다.
@@ -247,13 +263,15 @@ sequenceDiagram
 - 예매 확정의 최종 중복 방어선은 `reservation_seat(screening_id, seat_id)` unique 제약입니다.
 - 결제 요청 중복 방어선은 `payment(member_id, idempotency_key)` unique 제약입니다.
 - PG 결제 ID 중복 방어선은 `payment(provider, provider_payment_id)` unique 제약입니다.
+- 결제-좌석 점유 매핑 중복 방어선은 `payment_seat_hold(payment_id, seat_hold_id)` unique 제약입니다.
+- 회원 ID/휴대폰 재사용 정책은 `member(user_id)`, `member(phone_number)`의 active-only partial unique index로 보장합니다.
 
 ## Migration과 seed
 
 | 파일 | 역할 |
 |---|---|
-| `Migration202604300001CreateTables.ts` | 핵심 테이블, FK, unique 제약, 인덱스 생성. |
-| `Migration202604300002SeedTempMovieData.ts` | 로컬 개발용 극장, 상영관, 좌석, 영화, 이미지, 상영 일정 seed. |
+| `Migration202604300001CreateTables.ts` | 핵심 테이블, FK, unique 제약, 인덱스, 상영 시간 중복 방지 트리거 생성. |
+| `Migration202604300002SeedData.ts` | 로컬 개발용 영화관, 상영관, 좌석, 영화, 이미지, 상영 일정 seed. |
 
 운영 데이터와 임시 seed 데이터의 생명주기는 분리해야 합니다. 임시 seed는 개발/검증 편의를 위한 데이터로 보고, 운영 seed가 필요해지면 별도 migration 정책을 둡니다.
 
@@ -276,17 +294,31 @@ sequenceDiagram
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | id | BIGSERIAL | PK | 회원 ID |
-| user_id | VARCHAR(30) | UNIQUE, NOT NULL | 로그인 ID |
+| user_id | VARCHAR(30) | NOT NULL | 로그인 ID |
 | password_hash | VARCHAR(255) | NOT NULL | 암호화된 비밀번호 |
 | name | VARCHAR(50) | NOT NULL | 이름 |
 | birth_date | DATE | NOT NULL | 생년월일 |
-| phone_number | VARCHAR(20) | UNIQUE, NOT NULL | 휴대폰 번호 |
+| phone_number | VARCHAR(255) | NOT NULL | 휴대폰 번호. 암호화 저장 대상 |
 | address | VARCHAR(255) | NOT NULL | 주소 |
-| status | VARCHAR(20) | NOT NULL | ACTIVE, LOCKED 등 |
+| status | VARCHAR(20) | NOT NULL | ACTIVE, LOCKED, WITHDRAWN 등 |
 | failed_login_count | INT | NOT NULL DEFAULT 0 | 로그인 실패 횟수 |
 | locked_at | TIMESTAMPTZ | | 잠금 일시 |
 | created_at | TIMESTAMPTZ | NOT NULL DEFAULT now() | 가입일시 |
 | updated_at | TIMESTAMPTZ | NOT NULL DEFAULT now() | 수정일시 |
+
+**Unique 구조:**
+
+```sql
+CREATE UNIQUE INDEX uq_member_active_user_id
+  ON member (user_id)
+  WHERE status <> 'WITHDRAWN';
+
+CREATE UNIQUE INDEX uq_member_active_phone_number
+  ON member (phone_number)
+  WHERE status <> 'WITHDRAWN';
+```
+
+탈퇴 회원은 이력 보존을 위해 row를 유지하므로, 전체 row 기준 unique constraint는 사용하지 않습니다. 활성 회원끼리만 `user_id`, `phone_number`가 중복되지 않게 제한하고, 탈퇴한 회원의 로그인 ID/휴대폰 번호는 재사용할 수 있습니다.
 
 ### 3.2 movie (영화)
 
@@ -466,7 +498,7 @@ CREATE INDEX idx_reservation_event
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | id | BIGSERIAL | PK | 인증 요청 ID |
-| phone_number | VARCHAR(20) | NOT NULL | 휴대전화번호 |
+| phone_number | VARCHAR(255) | NOT NULL | 휴대전화번호. 암호화 저장 대상 |
 | code | VARCHAR(6) | NOT NULL | 인증 코드 |
 | status | VARCHAR(20) | NOT NULL | PENDING, VERIFIED, EXPIRED |
 | expires_at | TIMESTAMPTZ | NOT NULL | 만료 일시 |
@@ -521,7 +553,33 @@ ALTER TABLE payment
   UNIQUE (provider, provider_payment_id);
 ```
 
-### 3.14 payment_event_log (결제 이벤트 로그)
+`payment.seat_hold_id`는 대표 점유를 가리키는 legacy 호환 컬럼입니다. 결제 1건에 좌석 여러 개가 포함되는 현재 흐름에서는 `payment_seat_hold`가 결제와 점유 목록의 기준 매핑입니다.
+
+### 3.14 payment_seat_hold (결제-좌석 점유 매핑)
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | BIGSERIAL | PK | 결제-점유 매핑 ID |
+| payment_id | BIGINT | FK → payment.id, NOT NULL | 결제 ID |
+| seat_hold_id | BIGINT | FK → seat_hold.id, NOT NULL | 좌석 점유 ID |
+
+**인덱스 / 제약:**
+
+```sql
+CREATE INDEX idx_payment_seat_hold_payment
+  ON payment_seat_hold (payment_id);
+
+CREATE INDEX idx_payment_seat_hold_seat_hold
+  ON payment_seat_hold (seat_hold_id);
+
+ALTER TABLE payment_seat_hold
+  ADD CONSTRAINT uq_payment_seat_hold_payment_hold
+  UNIQUE (payment_id, seat_hold_id);
+```
+
+이 unique 제약은 같은 결제에 같은 좌석 점유가 중복 연결되는 것을 막습니다. 결제 1건이 여러 좌석 점유를 포함할 수 있으므로, `payment_id` 단독 unique 제약은 두지 않습니다.
+
+### 3.15 payment_event_log (결제 이벤트 로그)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
@@ -543,7 +601,7 @@ CREATE INDEX idx_payment_event_log_payment_created
   ON payment_event_log (payment_id, created_at);
 ```
 
-### 3.15 outbox_event (아웃박스 이벤트)
+### 3.16 outbox_event (아웃박스 이벤트)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |---|---|---|---|
@@ -687,6 +745,7 @@ CREATE TABLE seat_hold_2026_04 PARTITION OF seat_hold
 | reservation_event | 예매 상태 변경 이력 |
 | phone_verification | 휴대전화 인증 이력 |
 | payment | 결제 요청, provider 거래 ID, 멱등성 키, 요청 해시, 현재 상태 |
+| payment_seat_hold | 결제 1건에 포함된 좌석 점유 목록 |
 | payment_event_log | 결제 상태 변경 감사 로그 |
 | outbox_event | 결제 요청, 환불 요청, 예약 확정 등 비동기 후속 작업 |
 

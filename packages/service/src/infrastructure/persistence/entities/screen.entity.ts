@@ -1,9 +1,10 @@
-import { Collection, Entity, ManyToOne, OneToMany, PrimaryKey, Property, Rel } from '@mikro-orm/core';
+import { Collection, Entity, ManyToOne, OneToMany, PrimaryKey, Property, Rel, Unique } from '@mikro-orm/core';
 import { ScreeningEntity } from './screening.entity';
 import { SeatEntity } from './seat.entity';
 import { TheaterEntity } from './theater.entity';
 
 @Entity({ tableName: 'screen' })
+@Unique({ name: 'uq_screen_theater_name', properties: ['theater', 'name'] })
 export class ScreenEntity {
   @PrimaryKey({ type: 'bigint' })
   id!: string;
