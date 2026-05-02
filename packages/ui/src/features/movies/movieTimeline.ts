@@ -88,10 +88,23 @@ export function filterMoviesForKeyword(movies: MovieSummary[], keyword: string) 
   );
 }
 
+export function filterMoviesForTheater(movies: MovieSummary[], theaterId?: number) {
+  if (theaterId === undefined) {
+    return movies;
+  }
+
+  return movies
+    .map((movie) => ({
+      ...movie,
+      screenings: movie.screenings?.filter((screening) => screening.theater.id === theaterId) ?? [],
+    }))
+    .filter((movie) => movie.screenings?.length);
+}
+
 export function groupMoviesByTimeline(movies: MovieSummary[]) {
   const timelineMovies = movies
     .map((movie) => {
-      const nextScreening = getNextScreening(movie.screenings);
+      const nextScreening = getNextScreening(movie.screenings ?? []);
 
       if (!nextScreening) {
         return null;
@@ -151,6 +164,7 @@ function createScreening(
     endAt: endDate.toISOString(),
     remainingSeats,
     totalSeats: 80,
+    price: 14000,
     theater: {
       id: 1,
       name: 'GC 시네마 강남',

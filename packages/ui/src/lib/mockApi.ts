@@ -380,8 +380,97 @@ export async function resolveMockApi({
     const keyword = url.searchParams.get('keyword') ?? '';
 
     return toMockResponse({
-      items: filterMoviesForKeyword(demoMovies, keyword),
+      items: filterMoviesForKeyword(demoMovies, keyword).map(({ screenings: _screenings, ...movie }) => movie),
       hasNext: false,
+    });
+  }
+
+  const movieScheduleMatch = pathname.match(/^\/movies\/(\d+)\/schedules$/);
+
+  if (method === 'GET' && movieScheduleMatch) {
+    const movieId = Number(movieScheduleMatch[1]);
+    const date = url.searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
+    const movie = demoMovies.find((currentMovie) => currentMovie.id === movieId);
+
+    if (!movie) {
+      return null;
+    }
+
+    const theaters = new Map<number, {
+      theater: { id: number; name: string; address: string };
+      screenings: NonNullable<typeof movie.screenings>;
+    }>();
+
+    (movie.screenings ?? [])
+      .filter((screening) => screening.startAt.slice(0, 10) === date)
+      .forEach((screening) => {
+        const group = theaters.get(screening.theater.id) ?? {
+          theater: screening.theater,
+          screenings: [],
+        };
+
+        group.screenings.push(screening);
+        theaters.set(screening.theater.id, group);
+      });
+
+    return toMockResponse({
+      movie: {
+        id: movie.id,
+        title: movie.title,
+        genre: movie.genre,
+        rating: movie.rating,
+        runningTime: movie.runningTime,
+        posterUrl: movie.posterUrl,
+      },
+      date,
+      theaters: [...theaters.values()],
+    });
+  }
+
+  if (method === 'GET' && pathname === '/theaters') {
+    const theaters = new Map<number, { id: number; name: string; address: string }>();
+
+    demoMovies
+      .flatMap((movie) => movie.screenings ?? [])
+      .forEach((screening) => {
+        theaters.set(screening.theater.id, screening.theater);
+      });
+
+    return toMockResponse({
+      items: [...theaters.values()],
+    });
+  }
+
+  const theaterScheduleMatch = pathname.match(/^\/theaters\/(\d+)\/schedules$/);
+
+  if (method === 'GET' && theaterScheduleMatch) {
+    const theaterId = Number(theaterScheduleMatch[1]);
+    const date = url.searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
+    const theater = demoMovies
+      .flatMap((movie) => movie.screenings ?? [])
+      .find((screening) => screening.theater.id === theaterId)?.theater;
+
+    if (!theater) {
+      return null;
+    }
+
+    return toMockResponse({
+      theater,
+      date,
+      movies: demoMovies
+        .map((movie) => ({
+          id: movie.id,
+          title: movie.title,
+          genre: movie.genre,
+          rating: movie.rating,
+          runningTime: movie.runningTime,
+          posterUrl: movie.posterUrl,
+          screenings: (movie.screenings ?? []).filter(
+            (screening) =>
+              screening.theater.id === theaterId && screening.startAt.slice(0, 10) === date,
+          ),
+        }))
+        .filter((movie) => movie.screenings.length > 0),
     });
   }
 
@@ -390,9 +479,9 @@ export async function resolveMockApi({
   if (method === 'GET' && screeningSeatsMatch) {
     const screeningId = Number(screeningSeatsMatch[1]);
     const movie = demoMovies.find((currentMovie) =>
-      currentMovie.screenings.some((screening) => screening.id === screeningId),
+      (currentMovie.screenings ?? []).some((screening) => screening.id === screeningId),
     );
-    const screening = movie?.screenings.find((currentScreening) => currentScreening.id === screeningId);
+    const screening = movie?.screenings?.find((currentScreening) => currentScreening.id === screeningId);
 
     if (!movie || !screening) {
       return null;
@@ -521,7 +610,7 @@ function getMockSeatStatus(screeningId: number, seatNumber: number): SeatSummary
 
 function findMockScreening(screeningId: number) {
   for (const movie of demoMovies) {
-    const screening = movie.screenings.find((currentScreening) => currentScreening.id === screeningId);
+    const screening = movie.screenings?.find((currentScreening) => currentScreening.id === screeningId);
 
     if (screening) {
       return {

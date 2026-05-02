@@ -7,6 +7,7 @@ export interface MovieScreening {
   endAt: string;
   remainingSeats: number;
   totalSeats: number;
+  price: number;
   theater: {
     id: number;
     name: string;
@@ -23,7 +24,7 @@ export interface MovieSummary {
   releaseDate: string;
   posterUrl: string;
   description: string;
-  screenings: MovieScreening[];
+  screenings?: MovieScreening[];
 }
 
 export interface MovieListResponse {
@@ -35,17 +36,38 @@ export interface MovieListResponse {
 type MovieListApiResponse = MovieListResponse | MovieSummary[];
 
 export interface FetchMoviesParams {
+  cursor?: string;
   keyword: string;
-  time: string;
+  limit?: number;
 }
 
-export async function fetchMovies(params: FetchMoviesParams) {
-  const searchParams = new URLSearchParams();
-  searchParams.set('limit', '20');
-  searchParams.set('time', params.time);
+export type ScheduleScreening = Omit<MovieScreening, 'theater'>;
 
-  if (params.keyword.trim()) {
-    searchParams.set('keyword', params.keyword.trim());
+export interface MovieScheduleTheater {
+  theater: {
+    id: number;
+    name: string;
+    address: string;
+  };
+  screenings: ScheduleScreening[];
+}
+
+export interface MovieScheduleResult {
+  movie: Omit<MovieSummary, 'releaseDate' | 'description' | 'screenings'>;
+  date: string;
+  theaters: MovieScheduleTheater[];
+}
+
+export async function fetchMovies({ cursor, keyword, limit = 20 }: FetchMoviesParams) {
+  const searchParams = new URLSearchParams();
+  searchParams.set('limit', String(limit));
+
+  if (keyword.trim()) {
+    searchParams.set('keyword', keyword.trim());
+  }
+
+  if (cursor) {
+    searchParams.set('cursor', cursor);
   }
 
   const queryString = searchParams.toString();
@@ -53,5 +75,13 @@ export async function fetchMovies(params: FetchMoviesParams) {
     `/movies${queryString ? `?${queryString}` : ''}`,
   );
 
-  return Array.isArray(response) ? { items: response } : response;
+  return Array.isArray(response) ? { items: response, hasNext: false } : response;
+}
+
+export function fetchMovieSchedules(movieId: number, date: string) {
+  const params = new URLSearchParams({ date });
+
+  return apiClient<MovieScheduleResult>(
+    `/movies/${encodeURIComponent(String(movieId))}/schedules?${params}`,
+  );
 }

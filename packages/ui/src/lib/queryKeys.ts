@@ -1,8 +1,16 @@
 export const queryKeys = {
   movies: {
     all: ['movies'] as const,
-    list: (keyword = '', time = '') => [...queryKeys.movies.all, 'list', keyword, time] as const,
+    list: (keyword = '') => [...queryKeys.movies.all, 'list', keyword] as const,
     detail: (movieId: number) => [...queryKeys.movies.all, 'detail', movieId] as const,
+    schedules: (movieId: number, date: string) =>
+      [...queryKeys.movies.all, 'schedules', movieId, date] as const,
+  },
+  theaters: {
+    all: ['theaters'] as const,
+    list: () => [...queryKeys.theaters.all, 'list'] as const,
+    schedules: (theaterId: number, date: string) =>
+      [...queryKeys.theaters.all, 'schedules', theaterId, date] as const,
   },
   reservations: {
     all: ['reservations'] as const,

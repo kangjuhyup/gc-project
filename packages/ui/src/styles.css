@@ -653,6 +653,40 @@ h2 {
   color: #087f8c;
 }
 
+.movie-theater-select,
+.movie-date-select {
+  display: grid;
+  flex: 0 1 260px;
+  gap: 6px;
+  color: #52616b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.movie-theater-select select,
+.movie-date-select input {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid #cbd7d5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2933;
+  font: inherit;
+  outline: 0;
+  padding: 0 12px;
+}
+
+.movie-theater-select select:focus,
+.movie-date-select input:focus {
+  border-color: #087f8c;
+  box-shadow: 0 0 0 3px rgba(8, 127, 140, 0.13);
+}
+
+.movie-theater-select select:disabled {
+  background: #f4f7f6;
+  color: #88949b;
+}
+
 .movie-count {
   flex: 0 0 auto;
   border-radius: 8px;
@@ -691,6 +725,11 @@ h2 {
   border: 1px solid #d6dedb;
   border-radius: 8px;
   background: #ffffff;
+}
+
+.movie-card[data-selected="true"] {
+  border-color: #087f8c;
+  box-shadow: 0 0 0 3px rgba(8, 127, 140, 0.13);
 }
 
 .movie-card img {
@@ -767,6 +806,72 @@ h2 {
 .movie-card .button {
   justify-self: end;
   gap: 8px;
+}
+
+.schedule-panel {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #d6dedb;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 18px;
+}
+
+.schedule-panel h3,
+.schedule-group h4 {
+  margin: 0;
+  color: #1f2933;
+}
+
+.schedule-empty {
+  margin: 0;
+  color: #52616b;
+  font-weight: 700;
+}
+
+.schedule-group-list {
+  display: grid;
+  gap: 12px;
+}
+
+.schedule-group {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid #edf2f1;
+  padding-top: 12px;
+}
+
+.schedule-group header {
+  display: grid;
+  gap: 4px;
+}
+
+.schedule-group p {
+  margin: 0;
+  color: #52616b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.screening-button-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.screening-button-grid .button {
+  min-height: 54px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+}
+
+.screening-button-grid small {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.78;
 }
 
 .empty-state {
@@ -1573,6 +1678,11 @@ h2 {
   .movie-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .movie-theater-select,
+  .movie-date-select {
+    width: 100%;
   }
 
   .movie-card {

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { filterMoviesForKeyword, groupMoviesByTimeline } from '@/features/movies/movieTimeline';
+import {
+  filterMoviesForKeyword,
+  filterMoviesForTheater,
+  groupMoviesByTimeline,
+} from '@/features/movies/movieTimeline';
 import { type MovieSummary } from '@/features/movies/movieApi';
 
 const movies: MovieSummary[] = [
@@ -20,6 +24,7 @@ const movies: MovieSummary[] = [
         endAt: '2026-04-29T23:26:00+09:00',
         remainingSeats: 10,
         totalSeats: 80,
+        price: 14000,
         theater: {
           id: 1,
           name: 'GC 시네마 강남',
@@ -45,6 +50,7 @@ const movies: MovieSummary[] = [
         endAt: '2026-04-28T12:44:00+09:00',
         remainingSeats: 20,
         totalSeats: 80,
+        price: 14000,
         theater: {
           id: 1,
           name: 'GC 시네마 강남',
@@ -68,5 +74,45 @@ describe('movie timeline', () => {
     expect(groups[0]?.dateKey).toBe('2026-04-28');
     expect(groups[0]?.movies[0]?.title).toBe('파묘');
     expect(groups[1]?.dateKey).toBe('2026-04-29');
+  });
+
+  it('선택한 영화관의 상영만 남기고 영화 목록을 필터링한다', () => {
+    const filtered = filterMoviesForTheater([
+      {
+        ...movies[0],
+        screenings: [
+          movies[0].screenings[0],
+          {
+            ...movies[0].screenings[0],
+            id: 12,
+            theater: {
+              id: 2,
+              name: 'GC 시네마 홍대',
+              address: '서울특별시 마포구 양화로 160',
+            },
+          },
+        ],
+      },
+      {
+        ...movies[1],
+        screenings: [{
+          ...movies[1].screenings[0],
+          theater: {
+            id: 2,
+            name: 'GC 시네마 홍대',
+            address: '서울특별시 마포구 양화로 160',
+          },
+        }],
+      },
+    ], 1);
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].id).toBe(1);
+    expect(filtered[0].screenings).toEqual([
+      expect.objectContaining({
+        id: 11,
+        theater: expect.objectContaining({ id: 1 }),
+      }),
+    ]);
   });
 });
