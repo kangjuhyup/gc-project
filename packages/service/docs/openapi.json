@@ -393,6 +393,9 @@
           },
           "404": {
             "description": "회원을 찾을 수 없는 경우"
+          },
+          "409": {
+            "description": "관람 완료되지 않은 예매가 남아있는 경우"
           }
         },
         "security": [
@@ -472,19 +475,9 @@
     },
     "/movies": {
       "get": {
-        "description": "기준 시각과 가장 가까운 상영을 가진 영화 순으로 목록을 조회합니다. time은 정시 단위로 내림 보정되며, cursor가 있으면 다음 페이지를 조회합니다.",
+        "description": "상영 시간표를 포함하지 않는 영화 마스터 목록을 커서 기반으로 조회합니다.",
         "operationId": "MovieController_list",
         "parameters": [
-          {
-            "name": "time",
-            "required": false,
-            "in": "query",
-            "description": "영화 목록 정렬 기준 시각. 서버에서 정시 단위로 내림 보정 후 가까운 상영 순으로 정렬",
-            "schema": {
-              "example": "2026-04-28T10:30:00+09:00",
-              "type": "string"
-            }
-          },
           {
             "name": "limit",
             "required": false,
@@ -537,6 +530,53 @@
           }
         },
         "summary": "영화 목록 조회",
+        "tags": [
+          "Movies"
+        ]
+      }
+    },
+    "/movies/{movieId}/schedules": {
+      "get": {
+        "description": "특정 영화가 지정한 날짜에 어떤 영화관/상영관에서 몇 시에 상영하는지 영화관별로 묶어 조회합니다. date를 생략하면 KST 기준 오늘 날짜를 사용합니다.",
+        "operationId": "MovieController_listSchedule",
+        "parameters": [
+          {
+            "name": "movieId",
+            "required": true,
+            "in": "path",
+            "description": "상영 시간표를 조회할 영화 ID",
+            "schema": {
+              "example": "1",
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "조회 일자. 생략 시 KST 기준 오늘",
+            "schema": {
+              "example": "2026-05-01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "영화별 일자 상영 시간표",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieScheduleResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "movieId 또는 date query 파라미터가 유효하지 않은 경우"
+          }
+        },
+        "summary": "영화별 상영 시간표 조회",
         "tags": [
           "Movies"
         ]
@@ -1062,6 +1102,53 @@
           }
         },
         "summary": "영화관 목록 조회",
+        "tags": [
+          "Theaters"
+        ]
+      }
+    },
+    "/theaters/{theaterId}/schedules": {
+      "get": {
+        "description": "특정 영화관에서 지정한 날짜에 상영하는 영화와 상영 시간을 영화별로 묶어 조회합니다. date를 생략하면 KST 기준 오늘 날짜를 사용합니다.",
+        "operationId": "TheaterController_listSchedule",
+        "parameters": [
+          {
+            "name": "theaterId",
+            "required": true,
+            "in": "path",
+            "description": "상영 시간표를 조회할 영화관 ID",
+            "schema": {
+              "example": "1",
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "조회 일자. 생략 시 KST 기준 오늘",
+            "schema": {
+              "example": "2026-05-01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "영화관별 일자 상영 시간표",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TheaterScheduleResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "theaterId 또는 date query 파라미터가 유효하지 않은 경우"
+          }
+        },
+        "summary": "영화관별 상영 시간표 조회",
         "tags": [
           "Theaters"
         ]
@@ -1668,83 +1755,6 @@
           "items"
         ]
       },
-      "MovieTheaterSummaryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "example": 1,
-            "description": "극장 ID"
-          },
-          "name": {
-            "type": "string",
-            "example": "GC 시네마 강남",
-            "description": "극장명"
-          },
-          "address": {
-            "type": "string",
-            "example": "서울특별시 강남구 테헤란로 427",
-            "description": "극장 주소"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "address"
-        ]
-      },
-      "MovieScreeningSummaryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "example": 101,
-            "description": "상영 일정 ID"
-          },
-          "screenName": {
-            "type": "string",
-            "example": "1관",
-            "description": "상영관명"
-          },
-          "startAt": {
-            "type": "string",
-            "example": "2026-04-28T01:30:00.000Z",
-            "description": "상영 시작 시각"
-          },
-          "endAt": {
-            "type": "string",
-            "example": "2026-04-28T03:44:00.000Z",
-            "description": "상영 종료 시각"
-          },
-          "remainingSeats": {
-            "type": "number",
-            "example": 36,
-            "description": "예약 가능한 잔여 좌석 수"
-          },
-          "totalSeats": {
-            "type": "number",
-            "example": 80,
-            "description": "상영관 전체 좌석 수"
-          },
-          "theater": {
-            "description": "상영 극장 정보",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MovieTheaterSummaryDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "screenName",
-          "startAt",
-          "endAt",
-          "remainingSeats",
-          "totalSeats",
-          "theater"
-        ]
-      },
       "MovieSummaryDto": {
         "type": "object",
         "properties": {
@@ -1787,13 +1797,6 @@
             "type": "string",
             "example": "기묘한 의뢰를 받은 사람들이 오래된 비밀을 마주하는 오컬트 미스터리.",
             "description": "영화 설명"
-          },
-          "screenings": {
-            "description": "기준 시간과 가장 가까운 상영 목록",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MovieScreeningSummaryDto"
-            }
           }
         },
         "required": [
@@ -1804,8 +1807,7 @@
           "runningTime",
           "releaseDate",
           "posterUrl",
-          "description",
-          "screenings"
+          "description"
         ]
       },
       "MovieListResultDto": {
@@ -1832,6 +1834,177 @@
         "required": [
           "items",
           "hasNext"
+        ]
+      },
+      "MovieScheduleMovieDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1,
+            "description": "영화 ID"
+          },
+          "title": {
+            "type": "string",
+            "example": "파묘",
+            "description": "영화 제목"
+          },
+          "genre": {
+            "type": "string",
+            "example": "미스터리",
+            "description": "장르"
+          },
+          "rating": {
+            "type": "string",
+            "example": "15",
+            "description": "관람 등급"
+          },
+          "runningTime": {
+            "type": "number",
+            "example": 134,
+            "description": "상영 시간(분)"
+          },
+          "posterUrl": {
+            "type": "string",
+            "example": "https://images.example.com/poster.jpg",
+            "description": "대표 포스터 URL"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "genre",
+          "rating",
+          "runningTime",
+          "posterUrl"
+        ]
+      },
+      "MovieTheaterSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1,
+            "description": "극장 ID"
+          },
+          "name": {
+            "type": "string",
+            "example": "GC 시네마 강남",
+            "description": "극장명"
+          },
+          "address": {
+            "type": "string",
+            "example": "서울특별시 강남구 테헤란로 427",
+            "description": "극장 주소"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "address"
+        ]
+      },
+      "MovieScheduleScreeningDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 101,
+            "description": "상영 일정 ID"
+          },
+          "screenName": {
+            "type": "string",
+            "example": "1관",
+            "description": "상영관명"
+          },
+          "startAt": {
+            "type": "string",
+            "example": "2026-05-01T01:00:00.000Z",
+            "description": "상영 시작 시각"
+          },
+          "endAt": {
+            "type": "string",
+            "example": "2026-05-01T03:14:00.000Z",
+            "description": "상영 종료 시각"
+          },
+          "remainingSeats": {
+            "type": "number",
+            "example": 36,
+            "description": "예약 가능한 잔여 좌석 수"
+          },
+          "totalSeats": {
+            "type": "number",
+            "example": 80,
+            "description": "상영관 전체 좌석 수"
+          },
+          "price": {
+            "type": "number",
+            "example": 14000,
+            "description": "상영 가격"
+          }
+        },
+        "required": [
+          "id",
+          "screenName",
+          "startAt",
+          "endAt",
+          "remainingSeats",
+          "totalSeats",
+          "price"
+        ]
+      },
+      "MovieScheduleTheaterDto": {
+        "type": "object",
+        "properties": {
+          "theater": {
+            "description": "상영 영화관",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MovieTheaterSummaryDto"
+              }
+            ]
+          },
+          "screenings": {
+            "description": "해당 영화관의 상영 시간표",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovieScheduleScreeningDto"
+            }
+          }
+        },
+        "required": [
+          "theater",
+          "screenings"
+        ]
+      },
+      "MovieScheduleResultDto": {
+        "type": "object",
+        "properties": {
+          "movie": {
+            "description": "상영 시간표를 조회한 영화",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MovieScheduleMovieDto"
+              }
+            ]
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-05-01",
+            "description": "조회 일자"
+          },
+          "theaters": {
+            "description": "영화관별 상영 시간표",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovieScheduleTheaterDto"
+            }
+          }
+        },
+        "required": [
+          "movie",
+          "date",
+          "theaters"
         ]
       },
       "RequestPaymentRequestDto": {
@@ -2679,6 +2852,136 @@
         },
         "required": [
           "items"
+        ]
+      },
+      "TheaterScheduleScreeningDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 101,
+            "description": "상영 일정 ID"
+          },
+          "screenName": {
+            "type": "string",
+            "example": "1관",
+            "description": "상영관명"
+          },
+          "startAt": {
+            "type": "string",
+            "example": "2026-05-01T01:00:00.000Z",
+            "description": "상영 시작 시각"
+          },
+          "endAt": {
+            "type": "string",
+            "example": "2026-05-01T03:14:00.000Z",
+            "description": "상영 종료 시각"
+          },
+          "remainingSeats": {
+            "type": "number",
+            "example": 36,
+            "description": "예약 가능한 잔여 좌석 수"
+          },
+          "totalSeats": {
+            "type": "number",
+            "example": 80,
+            "description": "상영관 전체 좌석 수"
+          },
+          "price": {
+            "type": "number",
+            "example": 14000,
+            "description": "상영 가격"
+          }
+        },
+        "required": [
+          "id",
+          "screenName",
+          "startAt",
+          "endAt",
+          "remainingSeats",
+          "totalSeats",
+          "price"
+        ]
+      },
+      "TheaterScheduleMovieDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1,
+            "description": "영화 ID"
+          },
+          "title": {
+            "type": "string",
+            "example": "파묘",
+            "description": "영화 제목"
+          },
+          "genre": {
+            "type": "string",
+            "example": "미스터리",
+            "description": "장르"
+          },
+          "rating": {
+            "type": "string",
+            "example": "15",
+            "description": "관람 등급"
+          },
+          "runningTime": {
+            "type": "number",
+            "example": 134,
+            "description": "상영 시간(분)"
+          },
+          "posterUrl": {
+            "type": "string",
+            "example": "https://images.example.com/poster.jpg",
+            "description": "대표 포스터 URL"
+          },
+          "screenings": {
+            "description": "해당 영화관의 일자별 상영 시간표",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TheaterScheduleScreeningDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "genre",
+          "rating",
+          "runningTime",
+          "posterUrl",
+          "screenings"
+        ]
+      },
+      "TheaterScheduleResultDto": {
+        "type": "object",
+        "properties": {
+          "theater": {
+            "description": "상영 시간표를 조회한 영화관",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MovieTheaterSummaryDto"
+              }
+            ]
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-05-01",
+            "description": "조회 일자"
+          },
+          "movies": {
+            "description": "영화별 상영 시간표",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TheaterScheduleMovieDto"
+            }
+          }
+        },
+        "required": [
+          "theater",
+          "date",
+          "movies"
         ]
       }
     }

@@ -6,41 +6,22 @@ import {
   AdminMovieListResultDto,
   AdminMovieSummaryDto,
   ListAdminMoviesQuery,
+  ListMovieScheduleQuery,
   ListMoviesQuery,
   MovieListResultDto,
-  MovieScreeningSummaryDto,
+  MovieScheduleMovieDto,
+  MovieScheduleResultDto,
+  MovieScheduleScreeningDto,
+  MovieScheduleTheaterDto,
   MovieSummaryDto,
   MovieTheaterSummaryDto,
 } from '@application/query/dto';
 import type { MovieQueryPort } from '@application/query/ports';
 import { MovieEntity, ScreeningEntity } from '../entities';
 
-interface MovieListRow {
-  movieId: string | number;
-  title: string;
-  genre?: string;
-  rating?: string;
-  runningTime: string | number;
-  releaseDate?: string | Date;
-  posterUrl?: string;
-  description?: string;
-  screeningId: string | number;
-  theaterId: string | number;
-  theaterName: string;
-  theaterAddress: string;
-  screenId: string | number;
-  screenName: string;
-  screeningStartAt: string | Date;
-  screeningEndAt: string | Date;
-  remainingSeats: string | number;
-  totalSeats: string | number;
-  distanceMs: string | number;
-}
-
 interface MovieCursor {
-  distanceMs: number;
-  screeningStartAt: string;
-  screeningId: number;
+  title: string;
+  movieId: number;
 }
 
 @Injectable()
@@ -59,6 +40,29 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
       items: items.map((row) => this.toDto(row)),
       hasNext,
       nextCursor,
+    });
+  }
+
+  async listSchedule(query: ListMovieScheduleQuery): Promise<MovieScheduleResultDto> {
+    const movie = await this.entityManager.findOne(MovieEntity, { id: query.movieId }, { populate: ['images'] });
+
+    if (movie === null) {
+      throw new Error('MOVIE_NOT_FOUND');
+    }
+
+    const screenings = await this.findScheduleRows(query);
+
+    return MovieScheduleResultDto.of({
+      movie: MovieScheduleMovieDto.of({
+        id: Number(movie.id),
+        title: movie.title,
+        genre: movie.genre ?? '',
+        rating: movie.rating ?? '',
+        runningTime: movie.runningTime,
+        posterUrl: this.posterUrl(movie) ?? '',
+      }),
+      date: query.date,
+      theaters: this.toScheduleTheaterDtos(screenings),
     });
   }
 
@@ -131,90 +135,40 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
   }
 
   @NoLog
-  private async findRows(query: ListMoviesQuery, cursor?: MovieCursor): Promise<MovieListRow[]> {
-    const screenings = await this.entityManager.find(ScreeningEntity, this.buildScreeningWhere(query), {
-      populate: [
-        'movie.images',
-        'screen.theater',
-        'reservationSeats.reservation',
-      ],
-      orderBy: { startAt: 'ASC', id: 'ASC' },
+  private async findRows(query: ListMoviesQuery, cursor?: MovieCursor): Promise<MovieEntity[]> {
+    const rows = await this.entityManager.find(MovieEntity, this.buildMovieWhere(query), {
+      populate: ['images'],
+      orderBy: { title: 'ASC', id: 'ASC' },
     });
-    const nearestRowsByMovieId = new Map<string, MovieListRow>();
 
-    for (const screening of screenings) {
-      const row = this.toRow(screening, query.time);
-      const current = nearestRowsByMovieId.get(row.movieId.toString());
-
-      if (current === undefined || this.compareMovieRows(row, current) < 0) {
-        nearestRowsByMovieId.set(row.movieId.toString(), row);
-      }
-    }
-
-    return Array.from(nearestRowsByMovieId.values())
-      .sort((left, right) => this.compareMovieRows(left, right))
+    return rows
       .filter((row) => cursor === undefined || this.compareCursor(row, cursor) > 0)
       .slice(0, query.limit + 1);
   }
 
   @NoLog
-  private buildScreeningWhere(query: ListMoviesQuery): FilterQuery<ScreeningEntity> {
-    const where: FilterQuery<ScreeningEntity> = {
-      startAt: { $gte: query.time },
-    };
+  private buildMovieWhere(query: ListMoviesQuery): FilterQuery<MovieEntity> {
+    const where: FilterQuery<MovieEntity> = {};
     const normalizedKeyword = query.keyword?.trim();
 
     if (normalizedKeyword) {
       const keyword = `%${normalizedKeyword}%`;
-      where.movie = {
-        $or: [
-          { title: { $ilike: keyword } },
-          { genre: { $ilike: keyword } },
-          { rating: { $ilike: keyword } },
-          { description: { $ilike: keyword } },
-        ],
-      };
+      where.$or = [
+        { title: { $ilike: keyword } },
+        { director: { $ilike: keyword } },
+        { genre: { $ilike: keyword } },
+        { rating: { $ilike: keyword } },
+        { description: { $ilike: keyword } },
+      ];
     }
 
     return where;
   }
 
   @NoLog
-  private toRow(screening: ScreeningEntity, time: Date): MovieListRow {
-    const movie = screening.movie;
-    const screen = screening.screen;
-    const theater = screen.theater;
-    const reservedSeatCount = screening.reservationSeats
-      .getItems()
-      .filter((reservationSeat) => reservationSeat.reservation.status === 'CONFIRMED').length;
-
-    return {
-      movieId: movie.id,
-      title: movie.title,
-      genre: movie.genre,
-      rating: movie.rating,
-      runningTime: movie.runningTime,
-      releaseDate: movie.releaseDate,
-      posterUrl: this.posterUrl(movie),
-      description: movie.description,
-      screeningId: screening.id,
-      theaterId: theater.id,
-      theaterName: theater.name,
-      theaterAddress: theater.address,
-      screenId: screen.id,
-      screenName: screen.name,
-      screeningStartAt: screening.startAt,
-      screeningEndAt: screening.endAt,
-      remainingSeats: Math.max(screen.totalSeats - reservedSeatCount, 0),
-      totalSeats: screen.totalSeats,
-      distanceMs: Math.abs(screening.startAt.getTime() - time.getTime()),
-    };
-  }
-
-  @NoLog
   private posterUrl(movie: MovieEntity): string | undefined {
     const poster = movie.images
-      .getItems()
+      ?.getItems()
       .filter((image) => image.imageType === 'POSTER')
       .sort((left, right) => left.sortOrder - right.sortOrder || Number(left.id) - Number(right.id))[0];
 
@@ -222,59 +176,35 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
   }
 
   @NoLog
-  private compareMovieRows(left: MovieListRow, right: MovieListRow): number {
-    return Number(left.distanceMs) - Number(right.distanceMs)
-      || new Date(left.screeningStartAt).getTime() - new Date(right.screeningStartAt).getTime()
-      || Number(left.screeningId) - Number(right.screeningId);
+  private compareCursor(row: MovieEntity, cursor: MovieCursor): number {
+    return row.title.localeCompare(cursor.title)
+      || Number(row.id) - cursor.movieId;
   }
 
   @NoLog
-  private compareCursor(row: MovieListRow, cursor: MovieCursor): number {
-    return Number(row.distanceMs) - cursor.distanceMs
-      || new Date(row.screeningStartAt).getTime() - new Date(cursor.screeningStartAt).getTime()
-      || Number(row.screeningId) - cursor.screeningId;
-  }
-
-  @NoLog
-  private toDto(row: MovieListRow): MovieSummaryDto {
+  private toDto(row: MovieEntity): MovieSummaryDto {
     return MovieSummaryDto.of({
-      id: Number(row.movieId),
+      id: Number(row.id),
       title: row.title,
       genre: row.genre ?? '',
       rating: row.rating ?? '',
-      runningTime: Number(row.runningTime),
+      runningTime: row.runningTime,
       releaseDate: this.toDateLabel(row.releaseDate),
-      posterUrl: row.posterUrl ?? '',
+      posterUrl: this.posterUrl(row) ?? '',
       description: row.description ?? '',
-      screenings: [
-        MovieScreeningSummaryDto.of({
-          id: Number(row.screeningId),
-          screenName: row.screenName,
-          startAt: this.toIsoString(row.screeningStartAt),
-          endAt: this.toIsoString(row.screeningEndAt),
-          remainingSeats: Number(row.remainingSeats),
-          totalSeats: Number(row.totalSeats),
-          theater: MovieTheaterSummaryDto.of({
-            id: Number(row.theaterId),
-            name: row.theaterName,
-            address: row.theaterAddress,
-          }),
-        }),
-      ],
     });
   }
 
   @NoLog
-  private encodeCursor(row: MovieListRow | undefined): string | undefined {
+  private encodeCursor(row: MovieEntity | undefined): string | undefined {
     if (row === undefined) {
       return undefined;
     }
 
     return Buffer.from(
       JSON.stringify({
-        distanceMs: Number(row.distanceMs),
-        screeningStartAt: this.toIsoString(row.screeningStartAt),
-        screeningId: Number(row.screeningId),
+        title: row.title,
+        movieId: Number(row.id),
       } satisfies MovieCursor),
       'utf8',
     ).toString('base64url');
@@ -290,17 +220,15 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
       const decoded = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Partial<MovieCursor>;
 
       if (
-        typeof decoded.distanceMs !== 'number' ||
-        typeof decoded.screeningStartAt !== 'string' ||
-        typeof decoded.screeningId !== 'number'
+        typeof decoded.title !== 'string' ||
+        typeof decoded.movieId !== 'number'
       ) {
         throw new Error('INVALID_MOVIE_CURSOR');
       }
 
       return {
-        distanceMs: decoded.distanceMs,
-        screeningStartAt: decoded.screeningStartAt,
-        screeningId: decoded.screeningId,
+        title: decoded.title,
+        movieId: decoded.movieId,
       };
     } catch {
       throw new Error('INVALID_MOVIE_CURSOR');
@@ -328,5 +256,87 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     }
 
     return this.toIsoString(value).slice(0, 10);
+  }
+
+  @NoLog
+  private findScheduleRows(query: ListMovieScheduleQuery): Promise<ScreeningEntity[]> {
+    return this.entityManager.find(ScreeningEntity, {
+      movie: query.movieId,
+      startAt: {
+        $gte: query.startAt,
+        $lt: query.endAt,
+      },
+    }, {
+      populate: [
+        'screen.theater',
+        'reservationSeats.reservation',
+      ],
+      orderBy: {
+        screen: {
+          theater: { name: 'ASC' },
+          name: 'ASC',
+        },
+        startAt: 'ASC',
+        id: 'ASC',
+      },
+    });
+  }
+
+  @NoLog
+  private toScheduleTheaterDtos(screenings: ScreeningEntity[]): MovieScheduleTheaterDto[] {
+    const screeningsByTheaterId = new Map<string, ScreeningEntity[]>();
+
+    for (const screening of screenings) {
+      const theaterId = String(screening.screen.theater.id);
+      const rows = screeningsByTheaterId.get(theaterId) ?? [];
+      rows.push(screening);
+      screeningsByTheaterId.set(theaterId, rows);
+    }
+
+    return Array.from(screeningsByTheaterId.values())
+      .sort((left, right) => this.compareTheaterScheduleGroups(left, right))
+      .map((rows) => this.toScheduleTheaterDto(rows));
+  }
+
+  @NoLog
+  private compareTheaterScheduleGroups(left: ScreeningEntity[], right: ScreeningEntity[]): number {
+    const leftFirst = left[0];
+    const rightFirst = right[0];
+
+    return leftFirst.screen.theater.name.localeCompare(rightFirst.screen.theater.name)
+      || Number(leftFirst.screen.theater.id) - Number(rightFirst.screen.theater.id);
+  }
+
+  @NoLog
+  private toScheduleTheaterDto(screenings: ScreeningEntity[]): MovieScheduleTheaterDto {
+    const theater = screenings[0].screen.theater;
+
+    return MovieScheduleTheaterDto.of({
+      theater: MovieTheaterSummaryDto.of({
+        id: Number(theater.id),
+        name: theater.name,
+        address: theater.address,
+      }),
+      screenings: screenings
+        .sort((left, right) => left.startAt.getTime() - right.startAt.getTime() || Number(left.id) - Number(right.id))
+        .map((screening) => this.toScheduleScreeningDto(screening)),
+    });
+  }
+
+  @NoLog
+  private toScheduleScreeningDto(screening: ScreeningEntity): MovieScheduleScreeningDto {
+    const reservedSeatCount = screening.reservationSeats
+      .getItems()
+      .filter((reservationSeat) => reservationSeat.reservation.status === 'CONFIRMED').length;
+
+    return MovieScheduleScreeningDto.of({
+      id: Number(screening.id),
+      screenName: screening.screen.name,
+      startAt: screening.startAt.toISOString(),
+      endAt: screening.endAt.toISOString(),
+      remainingSeats: Math.max(screening.screen.totalSeats - reservedSeatCount, 0),
+      totalSeats: screening.screen.totalSeats,
+      price: screening.price,
+    });
   }
 }

@@ -1,16 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class ListMoviesRequestDto {
-  @ApiPropertyOptional({
-    example: '2026-04-28T10:30:00+09:00',
-    description: '영화 목록 정렬 기준 시각. 서버에서 정시 단위로 내림 보정 후 가까운 상영 순으로 정렬',
-  })
-  @IsOptional()
-  @IsDateString()
-  readonly time?: string;
-
   @ApiPropertyOptional({ example: 20, minimum: 1, maximum: 50, default: 20, description: '커서 페이지 크기' })
   @IsOptional()
   @Type(() => Number)
@@ -32,7 +24,6 @@ export class ListMoviesRequestDto {
   readonly cursor?: string;
 
   private constructor(params: {
-    time?: string;
     limit?: number;
     keyword?: string;
     cursor?: string;
@@ -41,7 +32,6 @@ export class ListMoviesRequestDto {
   }
 
   static of(params: {
-    time?: string;
     limit?: number;
     keyword?: string;
     cursor?: string;

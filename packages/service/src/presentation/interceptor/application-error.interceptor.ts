@@ -60,9 +60,11 @@ const forbiddenErrors = new Set([
 
 const notFoundErrors = new Set([
   'MEMBER_NOT_FOUND',
+  'MOVIE_NOT_FOUND',
   'SEAT_HOLD_NOT_FOUND',
   'PAYMENT_NOT_FOUND',
   'RESERVATION_NOT_FOUND',
+  'THEATER_NOT_FOUND',
 ]);
 
 const unauthorizedErrors = new Set([

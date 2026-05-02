@@ -9,8 +9,16 @@ export { IssueTemporaryPasswordRequestDto } from './issue-temporary-password.req
 export { ListMoviesRequestDto } from './list-movies.request.dto';
 export { ListAdminMembersRequestDto } from './list-admin-members.request.dto';
 export { ListAdminMoviesRequestDto } from './list-admin-movies.request.dto';
+export {
+  ListMovieScheduleParamRequestDto,
+  ListMovieScheduleRequestDto,
+} from './list-movie-schedule.request.dto';
 export { ListMyReservationsRequestDto } from './list-my-reservations.request.dto';
 export { ListScreeningSeatsRequestDto } from './list-screening-seats.request.dto';
+export {
+  ListTheaterScheduleParamRequestDto,
+  ListTheaterScheduleRequestDto,
+} from './list-theater-schedule.request.dto';
 export { ListTheatersRequestDto } from './list-theaters.request.dto';
 export { LoginAdminRequestDto } from './login-admin.request.dto';
 export { LoginMemberRequestDto } from './login-member.request.dto';

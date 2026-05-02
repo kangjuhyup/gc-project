@@ -1,7 +1,11 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ListMoviesQuery, MovieListResultDto, QueryBus } from '@application';
-import { ListMoviesRequestDto } from '../dto';
+import { ListMovieScheduleQuery, ListMoviesQuery, MovieListResultDto, MovieScheduleResultDto, QueryBus } from '@application';
+import {
+  ListMovieScheduleParamRequestDto,
+  ListMovieScheduleRequestDto,
+  ListMoviesRequestDto,
+} from '../dto';
 
 @ApiTags('Movies')
 @Controller('/movies')
@@ -10,8 +14,7 @@ export class MovieController {
 
   @ApiOperation({
     summary: '영화 목록 조회',
-    description:
-      '기준 시각과 가장 가까운 상영을 가진 영화 순으로 목록을 조회합니다. time은 정시 단위로 내림 보정되며, cursor가 있으면 다음 페이지를 조회합니다.',
+    description: '상영 시간표를 포함하지 않는 영화 마스터 목록을 커서 기반으로 조회합니다.',
   })
   @ApiOkResponse({ type: MovieListResultDto, description: '커서 기반 영화 목록' })
   @ApiBadRequestResponse({ description: 'time, limit, cursor 등 query 파라미터가 유효하지 않은 경우' })
@@ -21,10 +24,32 @@ export class MovieController {
 
     return this.queryBus.execute(
       ListMoviesQuery.of({
-        time: request.time === undefined ? undefined : new Date(request.time),
         limit: request.limit,
         keyword: request.keyword?.trim() || undefined,
         cursor: request.cursor,
+      }),
+    );
+  }
+
+  @ApiOperation({
+    summary: '영화별 상영 시간표 조회',
+    description:
+      '특정 영화가 지정한 날짜에 어떤 영화관/상영관에서 몇 시에 상영하는지 영화관별로 묶어 조회합니다. date를 생략하면 KST 기준 오늘 날짜를 사용합니다.',
+  })
+  @ApiOkResponse({ type: MovieScheduleResultDto, description: '영화별 일자 상영 시간표' })
+  @ApiBadRequestResponse({ description: 'movieId 또는 date query 파라미터가 유효하지 않은 경우' })
+  @Get('/:movieId/schedules')
+  listSchedule(
+    @Param() params: ListMovieScheduleParamRequestDto,
+    @Query() query: ListMovieScheduleRequestDto,
+  ) {
+    const requestParams = ListMovieScheduleParamRequestDto.of(params);
+    const requestQuery = ListMovieScheduleRequestDto.of(query);
+
+    return this.queryBus.execute(
+      ListMovieScheduleQuery.of({
+        movieId: requestParams.movieId,
+        date: requestQuery.date,
       }),
     );
   }
