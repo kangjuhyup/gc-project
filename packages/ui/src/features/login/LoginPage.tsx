@@ -28,7 +28,6 @@ export function LoginPage({ signupLink }: LoginPageProps) {
           id="memberId"
           label="아이디"
           onChange={handleChange('memberId')}
-          placeholder="movie_user"
           value={values.memberId}
         />
 
@@ -90,7 +89,7 @@ interface LoginFieldProps {
   id: keyof LoginFormValues;
   label: string;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  placeholder: string;
+  placeholder?: string;
   type?: string;
   value: string;
 }
