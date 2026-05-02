@@ -1,10 +1,9 @@
-import { Collection, Entity, OneToMany, PrimaryKey, Property, Unique } from '@mikro-orm/core';
+import { Collection, Entity, OneToMany, PrimaryKey, Property } from '@mikro-orm/core';
+import { EncryptedProperty } from '../encryption';
 import { ReservationEntity } from './reservation.entity';
 import { SeatHoldEntity } from './seat-hold.entity';
 
 @Entity({ tableName: 'member' })
-@Unique({ name: 'uq_member_user_id', properties: ['userId'] })
-@Unique({ name: 'uq_member_phone_number', properties: ['phoneNumber'] })
 export class MemberEntity {
   @PrimaryKey({ type: 'bigint' })
   id!: string;
@@ -21,7 +20,8 @@ export class MemberEntity {
   @Property({ columnType: 'date' })
   birthDate!: Date;
 
-  @Property({ length: 20 })
+  @EncryptedProperty()
+  @Property({ length: 255 })
   phoneNumber!: string;
 
   @Property({ length: 255 })

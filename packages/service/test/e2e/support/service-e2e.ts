@@ -71,6 +71,7 @@ export class ServiceE2eContext {
     process.env.ADDRESS_SEARCH_ADAPTER = 'local';
     process.env.ACCESS_TOKEN_TTL_SECONDS = '900';
     process.env.REFRESH_TOKEN_TTL_SECONDS = '1209600';
+    process.env.PHONE_NUMBER_ENCRYPTION_KEY = 'test-phone-number-encryption-key';
     process.env.SEAT_HOLD_TTL_SECONDS = '1';
     process.env.LOCAL_PAYMENT_CALLBACK_URL = 'http://localhost:3000/payments/callback';
     process.env.LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS = '3';

@@ -22,7 +22,7 @@ function command(): SignupMemberCommand {
 }
 
 describe('SignupMemberCommandHandler', () => {
-  it('중복된 회원 아이디로 가입하면 거부한다', async () => {
+  it('활성 회원 아이디와 중복된 아이디로 가입하면 거부한다', async () => {
     const memberRepository = {
       existsByUserId: vi.fn().mockResolvedValue(true),
       findByPhoneNumber: vi.fn(),

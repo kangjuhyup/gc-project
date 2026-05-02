@@ -30,6 +30,7 @@ export const commonEnvSpec = {
   },
   ACCESS_TOKEN_TTL_SECONDS: { joi: Joi.number().integer().positive().required() },
   REFRESH_TOKEN_TTL_SECONDS: { joi: Joi.number().integer().positive().required() },
+  PHONE_NUMBER_ENCRYPTION_KEY: { joi: Joi.string().min(16).required() },
   SEAT_HOLD_TTL_SECONDS: { joi: Joi.number().integer().positive().required() },
   LOCAL_PAYMENT_CALLBACK_URL: { joi: Joi.string().trim().required() },
   LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS: { joi: Joi.number().min(0).required() },

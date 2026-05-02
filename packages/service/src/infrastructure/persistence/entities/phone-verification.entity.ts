@@ -1,4 +1,5 @@
 import { Entity, Index, PrimaryKey, Property } from '@mikro-orm/core';
+import { EncryptedProperty } from '../encryption';
 
 @Entity({ tableName: 'phone_verification' })
 @Index({ name: 'idx_phone_verification_phone_status', properties: ['phoneNumber', 'status'] })
@@ -6,7 +7,8 @@ export class PhoneVerificationEntity {
   @PrimaryKey({ type: 'bigint' })
   id!: string;
 
-  @Property({ length: 20 })
+  @EncryptedProperty()
+  @Property({ length: 255 })
   phoneNumber!: string;
 
   @Property({ length: 6 })

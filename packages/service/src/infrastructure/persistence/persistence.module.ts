@@ -32,6 +32,7 @@ import {
   TRANSACTION_MANAGER,
 } from '@application/commands/ports';
 import { persistenceEntities } from './entities';
+import { EntityEncryptionService } from './encryption';
 import {
   MikroOrmAdminAuditRepository,
   MikroOrmMemberRepository,
@@ -55,7 +56,9 @@ import { Migration202604300001CreateTables } from './migrations/Migration2026043
 import { Migration202604300002SeedTempMovieData } from './migrations/Migration202604300002SeedTempMovieData';
 import { Migration202605010001CreateAdminAudit } from './migrations/Migration202605010001CreateAdminAudit';
 import { Migration202605010002CreatePaymentSeatHold } from './migrations/Migration202605010002CreatePaymentSeatHold';
+import { Migration202605020002AllowWithdrawnUserIdReuse } from './migrations/Migration202605020002AllowWithdrawnUserIdReuse';
 import { ENV_KEY } from '../config';
+import { CryptoModule } from '../crypto';
 
 class ThresholdMikroOrmLogger implements Logger {
   constructor(private readonly threshold: 'WARN' | 'ERROR') {}
@@ -83,6 +86,7 @@ class ThresholdMikroOrmLogger implements Logger {
 
 @Module({
   imports: [
+    CryptoModule,
     MikroOrmModule.forRootAsync({
       driver: PostgreSqlDriver,
       inject: [ConfigService],
@@ -109,6 +113,7 @@ class ThresholdMikroOrmLogger implements Logger {
               { name: 'Migration202604300002SeedTempMovieData', class: Migration202604300002SeedTempMovieData },
               { name: 'Migration202605010001CreateAdminAudit', class: Migration202605010001CreateAdminAudit },
               { name: 'Migration202605010002CreatePaymentSeatHold', class: Migration202605010002CreatePaymentSeatHold },
+              { name: 'Migration202605020002AllowWithdrawnUserIdReuse', class: Migration202605020002AllowWithdrawnUserIdReuse },
             ],
           },
         };
@@ -116,6 +121,7 @@ class ThresholdMikroOrmLogger implements Logger {
     }),
   ],
   providers: [
+    EntityEncryptionService,
     MikroOrmAdminAuditRepository,
     MikroOrmMemberRepository,
     MikroOrmMovieRepository,
