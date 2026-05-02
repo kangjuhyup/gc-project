@@ -226,6 +226,7 @@ export class MemberController {
     description: '인증된 회원 본인을 탈퇴 처리합니다. 탈퇴한 회원은 이후 로그인과 인증 API 사용이 거부됩니다.',
   })
   @ApiOkResponse({ type: MemberWithdrawnDto, description: '회원탈퇴 완료' })
+  @ApiConflictResponse({ description: '관람 완료되지 않은 예매가 남아있는 경우' })
   @ApiForbiddenResponse({ description: '이미 탈퇴한 회원인 경우' })
   @ApiNotFoundResponse({ description: '회원을 찾을 수 없는 경우' })
   @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })

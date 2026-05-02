@@ -277,17 +277,19 @@ import {
       provide: WithdrawMemberCommandHandler,
       useFactory: (
         memberRepository: MemberRepositoryPort,
+        reservationRepository: ReservationRepositoryPort,
         tokenRepository: TokenRepositoryPort,
         clock: ClockPort,
         logEventPublisher: LogEventPublisherPort,
       ) =>
         new WithdrawMemberCommandHandler(
           memberRepository,
+          reservationRepository,
           tokenRepository,
           clock,
           logEventPublisher,
         ),
-      inject: [MEMBER_REPOSITORY, TOKEN_REPOSITORY, CLOCK, LOG_EVENT_PUBLISHER],
+      inject: [MEMBER_REPOSITORY, RESERVATION_REPOSITORY, TOKEN_REPOSITORY, CLOCK, LOG_EVENT_PUBLISHER],
     },
     {
       provide: LogoutMemberCommandHandler,

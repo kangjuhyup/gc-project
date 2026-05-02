@@ -6,4 +6,5 @@ export const RESERVATION_REPOSITORY = Symbol('RESERVATION_REPOSITORY');
 export interface ReservationRepositoryPort extends RepositoryPort<ReservationModel> {
   findByReservationNumber(reservationNumber: string): Promise<ReservationModel | undefined>;
   findByIdForUpdate(id: string): Promise<ReservationModel | undefined>;
+  hasIncompleteReservationByMemberId(params: { memberId: string; now: Date }): Promise<boolean>;
 }

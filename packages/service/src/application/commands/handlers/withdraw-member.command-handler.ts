@@ -7,6 +7,7 @@ import type {
   ClockPort,
   LogEventPublisherPort,
   MemberRepositoryPort,
+  ReservationRepositoryPort,
   TokenRepositoryPort,
 } from '../ports';
 import { TokenType } from '../ports';
@@ -15,6 +16,7 @@ import { TokenType } from '../ports';
 export class WithdrawMemberCommandHandler {
   constructor(
     private readonly memberRepository: MemberRepositoryPort,
+    private readonly reservationRepository: ReservationRepositoryPort,
     private readonly tokenRepository: TokenRepositoryPort,
     private readonly clock: ClockPort,
     private readonly logEventPublisher: LogEventPublisherPort,
@@ -26,6 +28,15 @@ export class WithdrawMemberCommandHandler {
     assertDefined(member, () => new Error('MEMBER_NOT_FOUND'));
 
     const occurredAt = this.clock.now();
+    const hasIncompleteReservation = await this.reservationRepository.hasIncompleteReservationByMemberId({
+      memberId: member.id,
+      now: occurredAt,
+    });
+
+    if (hasIncompleteReservation) {
+      throw new Error('MEMBER_HAS_INCOMPLETE_RESERVATION');
+    }
+
     const saved = await this.memberRepository.save(member.withdraw(occurredAt));
     await this.tokenRepository.revokeActiveBySubjectId({
       type: TokenType.ACCESS,

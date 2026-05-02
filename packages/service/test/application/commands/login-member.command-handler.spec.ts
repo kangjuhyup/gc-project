@@ -23,6 +23,7 @@ import type {
   OpaqueTokenGeneratorPort,
   PasswordHasherPort,
   PhoneVerificationRepositoryPort,
+  ReservationRepositoryPort,
   TemporaryPasswordGeneratorPort,
   TokenRepositoryPort,
 } from '@application/commands/ports';
@@ -49,6 +50,16 @@ function tokenRepository(): TokenRepositoryPort {
     findRefreshToken: vi.fn(),
     revokeRefreshToken: vi.fn(),
     revokeActiveBySubjectId: vi.fn(async (params) => params.type === TokenType.REFRESH ? 1 : 1),
+  };
+}
+
+function reservationRepository(hasIncompleteReservation = false): ReservationRepositoryPort {
+  return {
+    save: vi.fn(),
+    findById: vi.fn(),
+    findByReservationNumber: vi.fn(),
+    findByIdForUpdate: vi.fn(),
+    hasIncompleteReservationByMemberId: vi.fn(async () => hasIncompleteReservation),
   };
 }
 
@@ -561,8 +572,10 @@ describe('WithdrawMemberCommandHandler', () => {
     const clock = { now: vi.fn(() => new Date('2026-04-28T00:05:00.000Z')) } satisfies ClockPort;
     const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
     const tokens = tokenRepository();
+    const reservations = reservationRepository();
     const handler = new WithdrawMemberCommandHandler(
       memberRepository,
+      reservations,
       tokens,
       clock,
       logEventPublisher,
@@ -571,6 +584,10 @@ describe('WithdrawMemberCommandHandler', () => {
     const result = await handler.execute(WithdrawMemberCommand.of({ memberId: 'member-1' }));
 
     expect(memberRepository.findById).toHaveBeenCalledWith('member-1');
+    expect(reservations.hasIncompleteReservationByMemberId).toHaveBeenCalledWith({
+      memberId: 'member-1',
+      now: new Date('2026-04-28T00:05:00.000Z'),
+    });
     expect(memberRepository.save.mock.calls[0][0].status).toBe('WITHDRAWN');
     expect(tokens.revokeActiveBySubjectId).toHaveBeenCalledWith({
       type: TokenType.ACCESS,
@@ -603,8 +620,10 @@ describe('WithdrawMemberCommandHandler', () => {
     const clock = { now: vi.fn(() => new Date('2026-04-28T00:05:00.000Z')) } satisfies ClockPort;
     const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
     const tokens = tokenRepository();
+    const reservations = reservationRepository();
     const handler = new WithdrawMemberCommandHandler(
       memberRepository,
+      reservations,
       tokens,
       clock,
       logEventPublisher,
@@ -614,6 +633,40 @@ describe('WithdrawMemberCommandHandler', () => {
       handler.execute(WithdrawMemberCommand.of({ memberId: 'missing-member' })),
     ).rejects.toThrow('MEMBER_NOT_FOUND');
 
+    expect(memberRepository.save).not.toHaveBeenCalled();
+    expect(reservations.hasIncompleteReservationByMemberId).not.toHaveBeenCalled();
+    expect(tokens.revokeActiveBySubjectId).not.toHaveBeenCalled();
+    expect(logEventPublisher.publish).not.toHaveBeenCalled();
+  });
+
+  it('관람 완료되지 않은 예매가 있으면 회원탈퇴를 거부한다', async () => {
+    const memberRepository = {
+      findById: vi.fn().mockResolvedValue(activeMember()),
+      findByUserId: vi.fn(),
+      findByPhoneNumber: vi.fn(),
+      existsByUserId: vi.fn(),
+      save: vi.fn(),
+    } satisfies MemberRepositoryPort;
+    const clock = { now: vi.fn(() => new Date('2026-04-28T00:05:00.000Z')) } satisfies ClockPort;
+    const logEventPublisher = { publish: vi.fn() } satisfies LogEventPublisherPort;
+    const tokens = tokenRepository();
+    const reservations = reservationRepository(true);
+    const handler = new WithdrawMemberCommandHandler(
+      memberRepository,
+      reservations,
+      tokens,
+      clock,
+      logEventPublisher,
+    );
+
+    await expect(
+      handler.execute(WithdrawMemberCommand.of({ memberId: 'member-1' })),
+    ).rejects.toThrow('MEMBER_HAS_INCOMPLETE_RESERVATION');
+
+    expect(reservations.hasIncompleteReservationByMemberId).toHaveBeenCalledWith({
+      memberId: 'member-1',
+      now: new Date('2026-04-28T00:05:00.000Z'),
+    });
     expect(memberRepository.save).not.toHaveBeenCalled();
     expect(tokens.revokeActiveBySubjectId).not.toHaveBeenCalled();
     expect(logEventPublisher.publish).not.toHaveBeenCalled();

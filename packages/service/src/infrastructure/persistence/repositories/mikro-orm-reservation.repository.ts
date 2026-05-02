@@ -47,6 +47,18 @@ export class MikroOrmReservationRepository implements ReservationRepositoryPort 
     return entity ? PersistenceMapper.reservationToDomain(entity) : undefined;
   }
 
+  async hasIncompleteReservationByMemberId(params: { memberId: string; now: Date }): Promise<boolean> {
+    const entity = await this.entityManager.findOne(ReservationEntity, {
+      member: params.memberId,
+      status: { $in: ['PENDING', 'CONFIRMED'] },
+      screening: {
+        endAt: { $gt: params.now },
+      },
+    });
+
+    return entity !== null;
+  }
+
   @NoLog
   private applyReferences(entity: ReservationEntity): void {
     entity.member = this.entityManager.getReference(MemberEntity, entity.member.id);

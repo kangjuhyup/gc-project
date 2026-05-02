@@ -34,6 +34,16 @@ describe('ApplicationErrorInterceptor', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
+  it('관람 완료되지 않은 예매가 남은 회원탈퇴 에러를 conflict 예외로 변환한다', async () => {
+    const interceptor = new ApplicationErrorInterceptor();
+
+    await expect(
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('MEMBER_HAS_INCOMPLETE_RESERVATION')) as never),
+      ),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
   it('휴대전화 인증 에러를 bad request 예외로 변환한다', async () => {
     const interceptor = new ApplicationErrorInterceptor();
 
