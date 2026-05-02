@@ -8,6 +8,7 @@ export function ProfilePage() {
   const {
     closeWithdrawConfirm,
     handleWithdraw,
+    hasIncompleteReservationError,
     isWithdrawConfirmOpen,
     member,
     openWithdrawConfirm,
@@ -91,10 +92,19 @@ export function ProfilePage() {
             </div>
             {withdrawMutation.isError ? (
               <p className="status-message" data-state="error" role="alert">
-                회원탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.
+                {hasIncompleteReservationError
+                  ? '예매 내역이 있어 회원탈퇴를 진행할 수 없습니다. 예매내역에서 먼저 예매를 취소해 주세요.'
+                  : '회원탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.'}
               </p>
             ) : null}
             <div className="withdraw-confirm-actions">
+              {hasIncompleteReservationError ? (
+                <Button asChild disabled={withdrawMutation.isPending} variant="secondary">
+                  <Link to="/reservations" viewTransition>
+                    예매내역으로 이동
+                  </Link>
+                </Button>
+              ) : null}
               <Button
                 disabled={withdrawMutation.isPending}
                 onClick={closeWithdrawConfirm}
@@ -110,7 +120,7 @@ export function ProfilePage() {
                 type="button"
                 variant="secondary"
               >
-                탈퇴하기
+                {withdrawMutation.isPending ? '처리 중' : '탈퇴하기'}
               </Button>
             </div>
           </div>

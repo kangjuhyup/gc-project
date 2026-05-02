@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { ApiError } from '@/lib/apiClient';
 import { queryKeys } from '@/lib/queryKeys';
 import { withdrawMember } from './profileApi';
 
@@ -37,10 +38,13 @@ export function useProfilePage() {
   const handleWithdraw = () => {
     withdrawMutation.mutate();
   };
+  const hasIncompleteReservationError =
+    withdrawMutation.error instanceof ApiError && withdrawMutation.error.status === 409;
 
   return {
     closeWithdrawConfirm,
     handleWithdraw,
+    hasIncompleteReservationError,
     isWithdrawConfirmOpen,
     member,
     openWithdrawConfirm,
