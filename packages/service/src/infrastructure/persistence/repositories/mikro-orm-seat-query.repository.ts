@@ -1,7 +1,11 @@
 import { Logging, NoLog } from '@kangjuhyup/rvlog';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { ListScreeningSeatsQuery, ScreeningSeatListResultDto, ScreeningSeatSummaryDto } from '@application/query/dto';
+import {
+  ListScreeningSeatsQuery,
+  ScreeningSeatListResultDto,
+  ScreeningSeatSummaryDto,
+} from '@application/query/dto';
 import type { SeatQueryPort } from '@application/query/ports';
 import { SeatAvailabilityStatus, type SeatAvailabilityStatusType } from '@domain';
 import { ScreeningEntity, SeatEntity } from '../entities';
@@ -30,14 +34,18 @@ export class MikroOrmSeatQueryRepository implements SeatQueryPort {
 
   @NoLog
   private async findRows(screeningId: string): Promise<ScreeningSeatRow[]> {
-    const screening = await this.entityManager.findOne(ScreeningEntity, { id: screeningId }, {
-      populate: [
-        'screen.seats',
-        'reservationSeats.seat',
-        'reservationSeats.reservation',
-        'seatHolds.seat',
-      ],
-    });
+    const screening = await this.entityManager.findOne(
+      ScreeningEntity,
+      { id: screeningId },
+      {
+        populate: [
+          'screen.seats',
+          'reservationSeats.seat',
+          'reservationSeats.reservation',
+          'seatHolds.seat',
+        ],
+      },
+    );
 
     if (screening === null) {
       return [];
@@ -46,7 +54,9 @@ export class MikroOrmSeatQueryRepository implements SeatQueryPort {
     const reservedSeatIds = new Set(
       screening.reservationSeats
         .getItems()
-        .filter((reservationSeat) => ['PENDING', 'CONFIRMED'].includes(reservationSeat.reservation.status))
+        .filter((reservationSeat) =>
+          ['PENDING', 'CONFIRMED'].includes(reservationSeat.reservation.status),
+        )
         .map((reservationSeat) => reservationSeat.seat.id),
     );
     const now = new Date();
@@ -89,7 +99,11 @@ export class MikroOrmSeatQueryRepository implements SeatQueryPort {
 
   @NoLog
   private compareSeat(left: SeatEntity, right: SeatEntity): number {
-    return left.seatRow.localeCompare(right.seatRow) || left.seatCol - right.seatCol || Number(left.id) - Number(right.id);
+    return (
+      left.seatRow.localeCompare(right.seatRow) ||
+      left.seatCol - right.seatCol ||
+      Number(left.id) - Number(right.id)
+    );
   }
 
   @NoLog

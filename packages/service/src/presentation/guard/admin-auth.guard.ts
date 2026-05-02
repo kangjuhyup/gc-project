@@ -31,7 +31,11 @@ export class AdminAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<HttpRequestWithAuthenticatedAdmin>();
     const authorization = request.headers.authorization;
 
-    if (authorization === undefined || Array.isArray(authorization) || authorization.trim().length === 0) {
+    if (
+      authorization === undefined ||
+      Array.isArray(authorization) ||
+      authorization.trim().length === 0
+    ) {
       throw new UnauthorizedException('AUTHORIZATION_REQUIRED');
     }
 

@@ -22,7 +22,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('USER_ID_ALREADY_EXISTS')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('USER_ID_ALREADY_EXISTS')) as never),
+      ),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
@@ -30,7 +32,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('SEAT_ALREADY_HELD')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('SEAT_ALREADY_HELD')) as never),
+      ),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
@@ -39,7 +43,10 @@ describe('ApplicationErrorInterceptor', () => {
 
     await expect(
       lastValueFrom(
-        interceptor.intercept({} as never, next(new Error('MEMBER_HAS_INCOMPLETE_RESERVATION')) as never),
+        interceptor.intercept(
+          {} as never,
+          next(new Error('MEMBER_HAS_INCOMPLETE_RESERVATION')) as never,
+        ),
       ),
     ).rejects.toBeInstanceOf(ConflictException);
   });
@@ -48,7 +55,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('PHONE_VERIFICATION_REQUIRED')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('PHONE_VERIFICATION_REQUIRED')) as never),
+      ),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -56,7 +65,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('INVALID_LOGIN_CREDENTIALS')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('INVALID_LOGIN_CREDENTIALS')) as never),
+      ),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -64,7 +75,12 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('ADMIN_UNMASK_REASON_REQUIRED')) as never)),
+      lastValueFrom(
+        interceptor.intercept(
+          {} as never,
+          next(new Error('ADMIN_UNMASK_REASON_REQUIRED')) as never,
+        ),
+      ),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -72,7 +88,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('INVALID_ADMIN_CREDENTIALS')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('INVALID_ADMIN_CREDENTIALS')) as never),
+      ),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
@@ -80,7 +98,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('INVALID_REFRESH_TOKEN')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('INVALID_REFRESH_TOKEN')) as never),
+      ),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
@@ -88,7 +108,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('CURRENT_PASSWORD_MISMATCH')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('CURRENT_PASSWORD_MISMATCH')) as never),
+      ),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -104,7 +126,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('SEAT_HOLD_FORBIDDEN')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('SEAT_HOLD_FORBIDDEN')) as never),
+      ),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
@@ -112,7 +136,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('RESERVATION_FORBIDDEN')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('RESERVATION_FORBIDDEN')) as never),
+      ),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
@@ -120,7 +146,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('MEMBER_NOT_FOUND')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('MEMBER_NOT_FOUND')) as never),
+      ),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
@@ -128,7 +156,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('SEAT_HOLD_NOT_FOUND')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('SEAT_HOLD_NOT_FOUND')) as never),
+      ),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
@@ -136,7 +166,9 @@ describe('ApplicationErrorInterceptor', () => {
     const interceptor = new ApplicationErrorInterceptor();
 
     await expect(
-      lastValueFrom(interceptor.intercept({} as never, next(new Error('RESERVATION_NOT_FOUND')) as never)),
+      lastValueFrom(
+        interceptor.intercept({} as never, next(new Error('RESERVATION_NOT_FOUND')) as never),
+      ),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
@@ -145,7 +177,10 @@ describe('ApplicationErrorInterceptor', () => {
 
     await expect(
       lastValueFrom(
-        interceptor.intercept({} as never, next(new DomainError(DomainErrorCode.INVALID_USER_ID)) as never),
+        interceptor.intercept(
+          {} as never,
+          next(new DomainError(DomainErrorCode.INVALID_USER_ID)) as never,
+        ),
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
   });

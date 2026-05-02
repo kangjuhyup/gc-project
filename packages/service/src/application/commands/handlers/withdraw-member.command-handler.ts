@@ -28,10 +28,11 @@ export class WithdrawMemberCommandHandler {
     assertDefined(member, () => new Error('MEMBER_NOT_FOUND'));
 
     const occurredAt = this.clock.now();
-    const hasIncompleteReservation = await this.reservationRepository.hasIncompleteReservationByMemberId({
-      memberId: member.id,
-      now: occurredAt,
-    });
+    const hasIncompleteReservation =
+      await this.reservationRepository.hasIncompleteReservationByMemberId({
+        memberId: member.id,
+        now: occurredAt,
+      });
 
     if (hasIncompleteReservation) {
       throw new Error('MEMBER_HAS_INCOMPLETE_RESERVATION');

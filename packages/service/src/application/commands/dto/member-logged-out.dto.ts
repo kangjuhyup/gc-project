@@ -10,11 +10,7 @@ export class MemberLoggedOutDto {
   @ApiProperty({ example: 1, description: '폐기된 refresh token 수' })
   readonly revokedRefreshTokenCount: number;
 
-  private constructor(
-    memberId: string,
-    loggedOut: boolean,
-    revokedRefreshTokenCount: number,
-  ) {
+  private constructor(memberId: string, loggedOut: boolean, revokedRefreshTokenCount: number) {
     this.memberId = memberId;
     this.loggedOut = loggedOut;
     this.revokedRefreshTokenCount = revokedRefreshTokenCount;
@@ -25,6 +21,10 @@ export class MemberLoggedOutDto {
     loggedOut: boolean;
     revokedRefreshTokenCount: number;
   }): MemberLoggedOutDto {
-    return new MemberLoggedOutDto(params.memberId, params.loggedOut, params.revokedRefreshTokenCount);
+    return new MemberLoggedOutDto(
+      params.memberId,
+      params.loggedOut,
+      params.revokedRefreshTokenCount,
+    );
   }
 }

@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaymentStatus, type PaymentStatusType, ReservationStatus, type ReservationStatusType } from '@domain';
+import {
+  PaymentStatus,
+  type PaymentStatusType,
+  ReservationStatus,
+  type ReservationStatusType,
+} from '@domain';
 
 export class ReservationSeatSummaryDto {
   @ApiProperty({ example: '1001', description: '예매 좌석 ID' })
@@ -21,7 +26,12 @@ export class ReservationSeatSummaryDto {
     this.type = params.type;
   }
 
-  static of(params: { id: string; row: string; col: number; type: string }): ReservationSeatSummaryDto {
+  static of(params: {
+    id: string;
+    row: string;
+    col: number;
+    type: string;
+  }): ReservationSeatSummaryDto {
     return new ReservationSeatSummaryDto(params);
   }
 }
@@ -36,7 +46,10 @@ export class ReservationMovieSummaryDto {
   @ApiPropertyOptional({ example: '15', description: '관람 등급' })
   readonly rating?: string;
 
-  @ApiPropertyOptional({ example: 'https://images.example.com/poster.jpg', description: '대표 포스터 URL' })
+  @ApiPropertyOptional({
+    example: 'https://images.example.com/poster.jpg',
+    description: '대표 포스터 URL',
+  })
   readonly posterUrl?: string;
 
   private constructor(params: { id: string; title: string; rating?: string; posterUrl?: string }) {
@@ -46,7 +59,12 @@ export class ReservationMovieSummaryDto {
     this.posterUrl = params.posterUrl;
   }
 
-  static of(params: { id: string; title: string; rating?: string; posterUrl?: string }): ReservationMovieSummaryDto {
+  static of(params: {
+    id: string;
+    title: string;
+    rating?: string;
+    posterUrl?: string;
+  }): ReservationMovieSummaryDto {
     return new ReservationMovieSummaryDto(params);
   }
 }
@@ -117,7 +135,11 @@ export class ReservationPaymentSummaryDto {
   @ApiProperty({ example: '7001', description: '결제 ID' })
   readonly id: string;
 
-  @ApiProperty({ enum: Object.values(PaymentStatus), example: PaymentStatus.APPROVED, description: '결제 상태' })
+  @ApiProperty({
+    enum: Object.values(PaymentStatus),
+    example: PaymentStatus.APPROVED,
+    description: '결제 상태',
+  })
   readonly status: PaymentStatusType;
 
   @ApiProperty({ example: 15000, description: '결제 금액' })
@@ -155,7 +177,11 @@ export class ReservationSummaryDto {
   @ApiProperty({ example: 'R00000000000005001', description: '예매 번호' })
   readonly reservationNumber: string;
 
-  @ApiProperty({ enum: Object.values(ReservationStatus), example: ReservationStatus.CONFIRMED, description: '예매 상태' })
+  @ApiProperty({
+    enum: Object.values(ReservationStatus),
+    example: ReservationStatus.CONFIRMED,
+    description: '예매 상태',
+  })
   readonly status: ReservationStatusType;
 
   @ApiProperty({ example: 15000, description: '총 결제 금액' })
@@ -232,7 +258,11 @@ export class ReservationDetailDto {
   @ApiProperty({ example: 'R00000000000005001', description: '예매 번호' })
   readonly reservationNumber: string;
 
-  @ApiProperty({ enum: Object.values(ReservationStatus), example: ReservationStatus.CONFIRMED, description: '예매 상태' })
+  @ApiProperty({
+    enum: Object.values(ReservationStatus),
+    example: ReservationStatus.CONFIRMED,
+    description: '예매 상태',
+  })
   readonly status: ReservationStatusType;
 
   @ApiProperty({ example: 15000, description: '총 결제 금액' })
@@ -315,7 +345,10 @@ export class ReservationListResultDto {
   @ApiProperty({ example: true, description: '다음 페이지 존재 여부' })
   readonly hasNext: boolean;
 
-  @ApiPropertyOptional({ example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA0LTMwVDEwOjIwOjAwLjAwMFoiLCJyZXNlcnZhdGlvbklkIjo1MDAxfQ', description: '다음 페이지 조회 커서' })
+  @ApiPropertyOptional({
+    example: 'eyJjcmVhdGVkQXQiOiIyMDI2LTA0LTMwVDEwOjIwOjAwLjAwMFoiLCJyZXNlcnZhdGlvbklkIjo1MDAxfQ',
+    description: '다음 페이지 조회 커서',
+  })
   readonly nextCursor?: string;
 
   private constructor(params: {

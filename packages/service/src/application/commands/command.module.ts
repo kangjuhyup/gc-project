@@ -188,18 +188,13 @@ import {
         clock: ClockPort,
         configService: ConfigService,
       ) =>
-        new LoginAdminCommandHandler(
-          opaqueTokenGenerator,
-          tokenRepository,
-          clock,
-          {
-            adminId: configService.getOrThrow<string>(ENV_KEY.ADMIN_USER_ID),
-            password: configService.getOrThrow<string>(ENV_KEY.ADMIN_PASSWORD),
-            accessTokenTtlSeconds: configService.getOrThrow<number>(
-              ENV_KEY.ADMIN_ACCESS_TOKEN_TTL_SECONDS,
-            ),
-          },
-        ),
+        new LoginAdminCommandHandler(opaqueTokenGenerator, tokenRepository, clock, {
+          adminId: configService.getOrThrow<string>(ENV_KEY.ADMIN_USER_ID),
+          password: configService.getOrThrow<string>(ENV_KEY.ADMIN_PASSWORD),
+          accessTokenTtlSeconds: configService.getOrThrow<number>(
+            ENV_KEY.ADMIN_ACCESS_TOKEN_TTL_SECONDS,
+          ),
+        }),
       inject: [OPAQUE_TOKEN_GENERATOR, TOKEN_REPOSITORY, CLOCK, ConfigService],
     },
     {
@@ -225,13 +220,7 @@ import {
             ),
           },
         ),
-      inject: [
-        MEMBER_REPOSITORY,
-        OPAQUE_TOKEN_GENERATOR,
-        TOKEN_REPOSITORY,
-        CLOCK,
-        ConfigService,
-      ],
+      inject: [MEMBER_REPOSITORY, OPAQUE_TOKEN_GENERATOR, TOKEN_REPOSITORY, CLOCK, ConfigService],
     },
     {
       provide: IssueTemporaryPasswordCommandHandler,
@@ -289,14 +278,18 @@ import {
           clock,
           logEventPublisher,
         ),
-      inject: [MEMBER_REPOSITORY, RESERVATION_REPOSITORY, TOKEN_REPOSITORY, CLOCK, LOG_EVENT_PUBLISHER],
+      inject: [
+        MEMBER_REPOSITORY,
+        RESERVATION_REPOSITORY,
+        TOKEN_REPOSITORY,
+        CLOCK,
+        LOG_EVENT_PUBLISHER,
+      ],
     },
     {
       provide: LogoutMemberCommandHandler,
-      useFactory: (
-        tokenRepository: TokenRepositoryPort,
-        clock: ClockPort,
-      ) => new LogoutMemberCommandHandler(tokenRepository, clock),
+      useFactory: (tokenRepository: TokenRepositoryPort, clock: ClockPort) =>
+        new LogoutMemberCommandHandler(tokenRepository, clock),
       inject: [TOKEN_REPOSITORY, CLOCK],
     },
     {
@@ -320,29 +313,15 @@ import {
         clock: ClockPort,
         configService: ConfigService,
       ) =>
-        new CreateSeatHoldCommandHandler(
-          seatHoldRepository,
-          seatHoldCache,
-          seatHoldLock,
-          clock,
-          {
-            ttlSeconds: configService.getOrThrow<number>(ENV_KEY.SEAT_HOLD_TTL_SECONDS),
-          },
-        ),
-      inject: [
-        SEAT_HOLD_REPOSITORY,
-        SEAT_HOLD_CACHE,
-        SEAT_HOLD_LOCK,
-        CLOCK,
-        ConfigService,
-      ],
+        new CreateSeatHoldCommandHandler(seatHoldRepository, seatHoldCache, seatHoldLock, clock, {
+          ttlSeconds: configService.getOrThrow<number>(ENV_KEY.SEAT_HOLD_TTL_SECONDS),
+        }),
+      inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE, SEAT_HOLD_LOCK, CLOCK, ConfigService],
     },
     {
       provide: ReleaseSeatHoldCommandHandler,
-      useFactory: (
-        seatHoldRepository: SeatHoldRepositoryPort,
-        seatHoldCache: SeatHoldCachePort,
-      ) => new ReleaseSeatHoldCommandHandler(seatHoldRepository, seatHoldCache),
+      useFactory: (seatHoldRepository: SeatHoldRepositoryPort, seatHoldCache: SeatHoldCachePort) =>
+        new ReleaseSeatHoldCommandHandler(seatHoldRepository, seatHoldCache),
       inject: [SEAT_HOLD_REPOSITORY, SEAT_HOLD_CACHE],
     },
     {
@@ -474,8 +453,14 @@ import {
         cancelReservationCommandHandler: CancelReservationCommandHandler,
       ) =>
         CommandBus.of([
-          { command: RequestPhoneVerificationCommand, handler: requestPhoneVerificationCommandHandler },
-          { command: ConfirmPhoneVerificationCommand, handler: confirmPhoneVerificationCommandHandler },
+          {
+            command: RequestPhoneVerificationCommand,
+            handler: requestPhoneVerificationCommandHandler,
+          },
+          {
+            command: ConfirmPhoneVerificationCommand,
+            handler: confirmPhoneVerificationCommandHandler,
+          },
           { command: SignupMemberCommand, handler: signupMemberCommandHandler },
           { command: LoginAdminCommand, handler: loginAdminCommandHandler },
           { command: LoginMemberCommand, handler: loginMemberCommandHandler },

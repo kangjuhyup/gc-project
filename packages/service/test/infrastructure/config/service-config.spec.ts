@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  ENV_KEY,
-  validateApiConfig,
-  validateWorkerConfig,
-} from '@infrastructure/config';
+import { ENV_KEY, validateApiConfig, validateWorkerConfig } from '@infrastructure/config';
 
 const baseConfig = {
   DB_HOST: 'localhost',
@@ -129,8 +125,6 @@ describe('service config validation', () => {
     expect(ENV_KEY.DB_HOST).toBe('DB_HOST');
     expect(ENV_KEY.ADMIN_ACCESS_TOKEN_TTL_SECONDS).toBe('ADMIN_ACCESS_TOKEN_TTL_SECONDS');
     expect(ENV_KEY.RATE_LIMIT_LIMIT).toBe('RATE_LIMIT_LIMIT');
-    expect(ENV_KEY.PAYMENT_OUTBOX_WORKER_INTERVAL_MS).toBe(
-      'PAYMENT_OUTBOX_WORKER_INTERVAL_MS',
-    );
+    expect(ENV_KEY.PAYMENT_OUTBOX_WORKER_INTERVAL_MS).toBe('PAYMENT_OUTBOX_WORKER_INTERVAL_MS');
   });
 });

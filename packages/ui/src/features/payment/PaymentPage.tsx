@@ -111,7 +111,9 @@ export function PaymentPage() {
                 <strong>{paymentConfirmationState?.label ?? '결제 요청이 생성되었습니다.'}</strong>
                 <span>
                   결제 ID {paymentMutation.data[0]?.paymentId}
-                  {paymentMutation.data.length > 1 ? ` 외 ${paymentMutation.data.length - 1}건` : ''}
+                  {paymentMutation.data.length > 1
+                    ? ` 외 ${paymentMutation.data.length - 1}건`
+                    : ''}
                 </span>
                 {paymentConfirmationState?.description ? (
                   <span>{paymentConfirmationState.description}</span>

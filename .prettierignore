@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+.codex
+*.md
+*.yml
+*.yaml
+pnpm-lock.yaml
+*.tsbuildinfo
+packages/service/docs/openapi.json

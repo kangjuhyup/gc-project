@@ -7,10 +7,7 @@ export class MemberPasswordChangedDto {
   @ApiProperty({ example: true, description: '비밀번호 변경 완료 여부' })
   readonly changed: boolean;
 
-  private constructor(
-    userId: string,
-    changed: boolean,
-  ) {
+  private constructor(userId: string, changed: boolean) {
     this.userId = userId;
     this.changed = changed;
   }

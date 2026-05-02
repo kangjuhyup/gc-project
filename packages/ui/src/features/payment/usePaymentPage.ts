@@ -41,19 +41,19 @@ export function usePaymentPage() {
   });
   const paymentConfirmationDetails = useMemo(
     () =>
-      requestedPayments.map(
-        (payment, index) => paymentConfirmationQueries[index]?.data ?? payment,
-      ),
+      requestedPayments.map((payment, index) => paymentConfirmationQueries[index]?.data ?? payment),
     [paymentConfirmationQueries, requestedPayments],
   );
   const paymentConfirmationState = useMemo(
-    () => summarizePaymentConfirmation(
-      paymentConfirmationDetails,
-      paymentConfirmationQueries.some((query) => query.isFetching),
-    ),
+    () =>
+      summarizePaymentConfirmation(
+        paymentConfirmationDetails,
+        paymentConfirmationQueries.some((query) => query.isFetching),
+      ),
     [paymentConfirmationDetails, paymentConfirmationQueries],
   );
-  const isPaymentApproved = paymentConfirmationDetails.length > 0 &&
+  const isPaymentApproved =
+    paymentConfirmationDetails.length > 0 &&
     paymentConfirmationDetails.every((payment) => payment.status === 'APPROVED');
   const seatSelectionPath = `/movies/${movieId ?? '1'}/screenings/${screeningId ?? ''}/seats`;
 

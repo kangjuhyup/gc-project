@@ -74,7 +74,8 @@ export class AdminController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: '관리자 영화 등록',
-    description: '관리자가 영화 기본 정보를 등록합니다. 상영 일정은 별도 관리자 API에서 연결합니다.',
+    description:
+      '관리자가 영화 기본 정보를 등록합니다. 상영 일정은 별도 관리자 API에서 연결합니다.',
   })
   @ApiCreatedResponse({ type: MovieCreatedDto, description: '영화 등록 완료' })
   @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
@@ -100,7 +101,8 @@ export class AdminController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: '관리자 영화 목록 조회',
-    description: '관리자가 등록된 영화 기본 정보를 페이지 기반으로 조회합니다. 상영 일정이 없는 영화도 포함합니다.',
+    description:
+      '관리자가 등록된 영화 기본 정보를 페이지 기반으로 조회합니다. 상영 일정이 없는 영화도 포함합니다.',
   })
   @ApiOkResponse({ type: AdminMovieListResultDto, description: '관리자 영화 목록' })
   @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })

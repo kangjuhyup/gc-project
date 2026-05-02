@@ -23,7 +23,10 @@ describe('MikroOrmPhoneVerificationRepository', () => {
     const entityManager = {
       insert: vi.fn().mockResolvedValue('1'),
     };
-    const repository = new MikroOrmPhoneVerificationRepository(entityManager as never, encryption());
+    const repository = new MikroOrmPhoneVerificationRepository(
+      entityManager as never,
+      encryption(),
+    );
     const verification = PhoneVerificationModel.issue({
       phoneNumber: '01000000000',
       code: '123456',
@@ -43,7 +46,10 @@ describe('MikroOrmPhoneVerificationRepository', () => {
     const entityManager = {
       findOne: vi.fn().mockResolvedValue(null),
     };
-    const repository = new MikroOrmPhoneVerificationRepository(entityManager as never, encryption());
+    const repository = new MikroOrmPhoneVerificationRepository(
+      entityManager as never,
+      encryption(),
+    );
 
     const found = await repository.findVerifiedByPhoneNumber('01000000000');
 

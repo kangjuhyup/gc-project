@@ -75,13 +75,8 @@ const unauthorizedErrors = new Set([
 
 @Injectable()
 export class ApplicationErrorInterceptor implements NestInterceptor {
-  intercept(
-    _context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<unknown> {
-    return next
-      .handle()
-      .pipe(catchError((error: Error) => throwError(() => this.map(error))));
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    return next.handle().pipe(catchError((error: Error) => throwError(() => this.map(error))));
   }
 
   private map(

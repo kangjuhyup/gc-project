@@ -22,9 +22,7 @@ import { LocalAddressSearchAdapter } from './local-address-search.adapter';
           return localAddressSearchAdapter;
         }
 
-        return new JusoAddressSearchAdapter(
-          configService.getOrThrow<string>(ENV_KEY.JUSO_API_KEY),
-        );
+        return new JusoAddressSearchAdapter(configService.getOrThrow<string>(ENV_KEY.JUSO_API_KEY));
       },
       inject: [ConfigService, LocalAddressSearchAdapter],
     },

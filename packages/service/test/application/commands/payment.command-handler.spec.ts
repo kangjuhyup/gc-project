@@ -43,17 +43,20 @@ const paymentRequestHasher: PaymentRequestHasherPort = {
       amount: params.amount,
       memberId: params.memberId,
       provider: params.provider,
-      seatHoldIds: params.seatHoldIds ?? (params.seatHoldId === undefined ? [] : [params.seatHoldId]),
+      seatHoldIds:
+        params.seatHoldIds ?? (params.seatHoldId === undefined ? [] : [params.seatHoldId]),
     }),
   ),
 };
 
-function heldSeatHold(params: {
-  id?: string;
-  screeningId?: string;
-  seatId?: string;
-  memberId?: string;
-} = {}) {
+function heldSeatHold(
+  params: {
+    id?: string;
+    screeningId?: string;
+    seatId?: string;
+    memberId?: string;
+  } = {},
+) {
   return SeatHoldModel.of({
     screeningId: params.screeningId ?? '101',
     seatId: params.seatId ?? '1001',
@@ -123,9 +126,15 @@ describe('RequestPaymentCommandHandler', () => {
     expect(result.paymentId).toBe('7001');
     expect(result.idempotencyKey).toBe('pay-test-key');
     expect(result.status).toBe('PENDING');
-    const savedEventLogs = vi.mocked(paymentEventLogRepository.save).mock.calls.map(([eventLog]) => eventLog);
-    const savedOutboxEvents = vi.mocked(outboxEventRepository.save).mock.calls.map(([event]) => event);
-    expect(savedEventLogs.some((eventLog) => eventLog.eventType === 'PAYMENT_REQUESTED')).toBe(true);
+    const savedEventLogs = vi
+      .mocked(paymentEventLogRepository.save)
+      .mock.calls.map(([eventLog]) => eventLog);
+    const savedOutboxEvents = vi
+      .mocked(outboxEventRepository.save)
+      .mock.calls.map(([event]) => event);
+    expect(savedEventLogs.some((eventLog) => eventLog.eventType === 'PAYMENT_REQUESTED')).toBe(
+      true,
+    );
     expect(savedOutboxEvents.some((event) => event.eventType === 'PAYMENT_REQUESTED')).toBe(true);
   });
 
@@ -179,7 +188,10 @@ describe('RequestPaymentCommandHandler', () => {
     expect(result.seatHoldIds).toEqual(['9001', '9002']);
     expect(paymentRepository.findBySeatHoldIds).toHaveBeenCalledWith(['9001', '9002']);
     expect(paymentRepository.save).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(paymentRepository.save).mock.calls[0][0].seatHoldIds).toEqual(['9001', '9002']);
+    expect(vi.mocked(paymentRepository.save).mock.calls[0][0].seatHoldIds).toEqual([
+      '9001',
+      '9002',
+    ]);
   });
 
   it('같은 멱등성 키로 동일한 결제 요청이 재전송되면 기존 결제 결과를 반환한다', async () => {
@@ -342,12 +354,18 @@ describe('HandlePaymentCallbackCommandHandler', () => {
     expect(result.handled).toBe(true);
     expect(reservationRepository.save).toHaveBeenCalled();
     expect(reservationSeatRepository.save).toHaveBeenCalled();
-    const savedSeatHolds = vi.mocked(seatHoldRepository.save).mock.calls.map(([seatHold]) => seatHold);
+    const savedSeatHolds = vi
+      .mocked(seatHoldRepository.save)
+      .mock.calls.map(([seatHold]) => seatHold);
     const savedPayments = vi.mocked(paymentRepository.save).mock.calls.map(([payment]) => payment);
-    const savedOutboxEvents = vi.mocked(outboxEventRepository.save).mock.calls.map(([event]) => event);
+    const savedOutboxEvents = vi
+      .mocked(outboxEventRepository.save)
+      .mock.calls.map(([event]) => event);
     expect(savedSeatHolds.some((seatHold) => seatHold.status === 'CONFIRMED')).toBe(true);
     expect(savedPayments.some((payment) => payment.status === 'APPROVED')).toBe(true);
-    expect(savedOutboxEvents.some((event) => event.eventType === 'RESERVATION_CONFIRMED')).toBe(true);
+    expect(savedOutboxEvents.some((event) => event.eventType === 'RESERVATION_CONFIRMED')).toBe(
+      true,
+    );
   });
 
   it('PG 승인 callback 후 여러 좌석 점유를 하나의 예매로 확정한다', async () => {
@@ -389,7 +407,9 @@ describe('HandlePaymentCallbackCommandHandler', () => {
       seatHoldRepository,
       reservationRepository,
       reservationSeatRepository,
-      { save: vi.fn(async (reservationEvent) => reservationEvent) } as unknown as ReservationEventRepositoryPort,
+      {
+        save: vi.fn(async (reservationEvent) => reservationEvent),
+      } as unknown as ReservationEventRepositoryPort,
       { save: vi.fn(async (eventLog) => eventLog) } as unknown as PaymentEventLogRepositoryPort,
       { save: vi.fn(async (event) => event) } as unknown as OutboxEventRepositoryPort,
       { verify: vi.fn(() => true) },
@@ -411,7 +431,9 @@ describe('HandlePaymentCallbackCommandHandler', () => {
     expect(reservationRepository.save).toHaveBeenCalledTimes(1);
     expect(reservationSeatRepository.save).toHaveBeenCalledTimes(3);
     expect(seatHoldRepository.save).toHaveBeenCalledTimes(3);
-    expect(paymentRepository.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'APPROVED' }));
+    expect(paymentRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'APPROVED' }),
+    );
   });
 
   it('PG 승인 후 예약 후처리에 실패하면 환불 요청 아웃박스를 저장한다', async () => {
@@ -425,7 +447,11 @@ describe('HandlePaymentCallbackCommandHandler', () => {
     const handler = new HandlePaymentCallbackCommandHandler(
       paymentRepository,
       { findById: vi.fn(async () => heldSeatHold()) } as unknown as SeatHoldRepositoryPort,
-      { save: vi.fn(async () => { throw new Error('reservation failed'); }) } as unknown as ReservationRepositoryPort,
+      {
+        save: vi.fn(async () => {
+          throw new Error('reservation failed');
+        }),
+      } as unknown as ReservationRepositoryPort,
       { save: vi.fn() } as unknown as ReservationSeatRepositoryPort,
       { save: vi.fn() } as unknown as ReservationEventRepositoryPort,
       { save: vi.fn(async (eventLog) => eventLog) } as unknown as PaymentEventLogRepositoryPort,
@@ -446,9 +472,13 @@ describe('HandlePaymentCallbackCommandHandler', () => {
     );
 
     const savedPayments = vi.mocked(paymentRepository.save).mock.calls.map(([payment]) => payment);
-    const savedOutboxEvents = vi.mocked(outboxEventRepository.save).mock.calls.map(([event]) => event);
+    const savedOutboxEvents = vi
+      .mocked(outboxEventRepository.save)
+      .mock.calls.map(([event]) => event);
     expect(savedPayments.some((payment) => payment.status === 'REFUND_REQUIRED')).toBe(true);
-    expect(savedOutboxEvents.some((event) => event.eventType === 'PAYMENT_REFUND_REQUESTED')).toBe(true);
+    expect(savedOutboxEvents.some((event) => event.eventType === 'PAYMENT_REFUND_REQUESTED')).toBe(
+      true,
+    );
   });
 });
 
@@ -566,12 +596,18 @@ describe('CancelReservationCommandHandler', () => {
 
     expect(result.reservationStatus).toBe('CANCELED');
     expect(result.paymentStatus).toBe('REFUND_REQUIRED');
-    const savedReservations = vi.mocked(reservationRepository.save).mock.calls.map(([reservation]) => reservation);
+    const savedReservations = vi
+      .mocked(reservationRepository.save)
+      .mock.calls.map(([reservation]) => reservation);
     const savedPayments = vi.mocked(paymentRepository.save).mock.calls.map(([payment]) => payment);
-    const savedOutboxEvents = vi.mocked(outboxEventRepository.save).mock.calls.map(([event]) => event);
+    const savedOutboxEvents = vi
+      .mocked(outboxEventRepository.save)
+      .mock.calls.map(([event]) => event);
     expect(savedReservations.some((reservation) => reservation.status === 'CANCELED')).toBe(true);
     expect(savedPayments.some((payment) => payment.status === 'REFUND_REQUIRED')).toBe(true);
-    expect(savedOutboxEvents.some((event) => event.eventType === 'PAYMENT_REFUND_REQUESTED')).toBe(true);
+    expect(savedOutboxEvents.some((event) => event.eventType === 'PAYMENT_REFUND_REQUESTED')).toBe(
+      true,
+    );
   });
 
   it('다른 회원의 예매 취소 요청은 거부한다', async () => {

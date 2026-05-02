@@ -1,6 +1,12 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ListMovieScheduleQuery, ListMoviesQuery, MovieListResultDto, MovieScheduleResultDto, QueryBus } from '@application';
+import {
+  ListMovieScheduleQuery,
+  ListMoviesQuery,
+  MovieListResultDto,
+  MovieScheduleResultDto,
+  QueryBus,
+} from '@application';
 import {
   ListMovieScheduleParamRequestDto,
   ListMovieScheduleRequestDto,
@@ -17,7 +23,9 @@ export class MovieController {
     description: '상영 시간표를 포함하지 않는 영화 마스터 목록을 커서 기반으로 조회합니다.',
   })
   @ApiOkResponse({ type: MovieListResultDto, description: '커서 기반 영화 목록' })
-  @ApiBadRequestResponse({ description: 'time, limit, cursor 등 query 파라미터가 유효하지 않은 경우' })
+  @ApiBadRequestResponse({
+    description: 'time, limit, cursor 등 query 파라미터가 유효하지 않은 경우',
+  })
   @Get()
   list(@Query() query: ListMoviesRequestDto) {
     const request = ListMoviesRequestDto.of(query);

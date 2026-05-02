@@ -17,7 +17,9 @@
     "test": "vitest run --reporter=verbose",
     "test:e2e": "vitest run --config vitest.e2e.config.ts --reporter=verbose",
     "test:coverage": "vitest run --coverage --reporter=verbose",
-    "lint": "echo \"No service lint configured\""
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@kangjuhyup/rvlog": "0.1.1",

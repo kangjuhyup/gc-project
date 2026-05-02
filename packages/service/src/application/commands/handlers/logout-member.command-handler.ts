@@ -1,10 +1,7 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { LogoutMemberCommand, MemberLoggedOutDto } from '../dto';
 import { Transactional } from '../decorators';
-import type {
-  ClockPort,
-  TokenRepositoryPort,
-} from '../ports';
+import type { ClockPort, TokenRepositoryPort } from '../ports';
 import { TokenType } from '../ports';
 
 @Logging

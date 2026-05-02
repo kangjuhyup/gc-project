@@ -28,7 +28,10 @@ describe('좌석 임시점유 해제 후 재점유 e2e', () => {
     expect(holdByA.status).toBe(201);
     expect(await e2e.seatStatus(screeningId, seat.id)).toBe('HELD');
 
-    const releaseByA = await e2e.delete(`/seat-holds/${String((holdByA.body.holdIds as string[])[0])}`, e2e.auth(memberA));
+    const releaseByA = await e2e.delete(
+      `/seat-holds/${String((holdByA.body.holdIds as string[])[0])}`,
+      e2e.auth(memberA),
+    );
     expect(releaseByA.status).toBe(200);
     expect(releaseByA.body).toMatchObject({ released: true });
     expect(await e2e.seatStatus(screeningId, seat.id)).toBe('AVAILABLE');

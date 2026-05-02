@@ -34,9 +34,10 @@ export class MikroOrmSeatHoldRepository implements SeatHoldRepositoryPort {
     for (const model of models) {
       const entity = PersistenceMapper.seatHoldToEntity(model);
       this.applyReferences(entity);
-      const existing = model.id === undefined
-        ? undefined
-        : await this.entityManager.findOne(SeatHoldEntity, { id: model.id });
+      const existing =
+        model.id === undefined
+          ? undefined
+          : await this.entityManager.findOne(SeatHoldEntity, { id: model.id });
 
       if (existing === undefined || existing === null) {
         entity.id = String(await this.entityManager.insert(SeatHoldEntity, entity));
@@ -76,23 +77,33 @@ export class MikroOrmSeatHoldRepository implements SeatHoldRepositoryPort {
     }
 
     const [reservedSeats, heldSeats] = await Promise.all([
-      this.entityManager.find(ReservationSeatEntity, {
-        screening: params.screeningId,
-        seat: { $in: params.seatIds },
-        reservation: { status: { $in: ['PENDING', 'CONFIRMED'] } },
-      }, { populate: ['seat'] }),
-      this.entityManager.find(SeatHoldEntity, {
-        screening: params.screeningId,
-        seat: { $in: params.seatIds },
-        status: 'HELD',
-        expiresAt: { $gt: params.now },
-      }, { populate: ['seat'] }),
+      this.entityManager.find(
+        ReservationSeatEntity,
+        {
+          screening: params.screeningId,
+          seat: { $in: params.seatIds },
+          reservation: { status: { $in: ['PENDING', 'CONFIRMED'] } },
+        },
+        { populate: ['seat'] },
+      ),
+      this.entityManager.find(
+        SeatHoldEntity,
+        {
+          screening: params.screeningId,
+          seat: { $in: params.seatIds },
+          status: 'HELD',
+          expiresAt: { $gt: params.now },
+        },
+        { populate: ['seat'] },
+      ),
     ]);
 
-    return Array.from(new Set([
-      ...reservedSeats.map((reservationSeat) => reservationSeat.seat.id),
-      ...heldSeats.map((seatHold) => seatHold.seat.id),
-    ]));
+    return Array.from(
+      new Set([
+        ...reservedSeats.map((reservationSeat) => reservationSeat.seat.id),
+        ...heldSeats.map((seatHold) => seatHold.seat.id),
+      ]),
+    );
   }
 
   async findSeatIdsInScreening(params: {
@@ -103,18 +114,26 @@ export class MikroOrmSeatHoldRepository implements SeatHoldRepositoryPort {
       return [];
     }
 
-    const screening = await this.entityManager.findOne(ScreeningEntity, { id: params.screeningId }, {
-      populate: ['screen'],
-    });
+    const screening = await this.entityManager.findOne(
+      ScreeningEntity,
+      { id: params.screeningId },
+      {
+        populate: ['screen'],
+      },
+    );
 
     if (screening === null) {
       return [];
     }
 
-    const seats = await this.entityManager.find(SeatEntity, {
-      id: { $in: params.seatIds },
-      screen: screening.screen.id,
-    }, { orderBy: { id: 'ASC' } });
+    const seats = await this.entityManager.find(
+      SeatEntity,
+      {
+        id: { $in: params.seatIds },
+        screen: screening.screen.id,
+      },
+      { orderBy: { id: 'ASC' } },
+    );
 
     return seats.map((seat) => seat.id);
   }
@@ -124,8 +143,9 @@ export class MikroOrmSeatHoldRepository implements SeatHoldRepositoryPort {
     entity.screening = this.entityManager.getReference(ScreeningEntity, entity.screening.id);
     entity.seat = this.entityManager.getReference(SeatEntity, entity.seat.id);
     entity.member = this.entityManager.getReference(MemberEntity, entity.member.id);
-    entity.reservation = entity.reservation === undefined
-      ? undefined
-      : this.entityManager.getReference(ReservationEntity, entity.reservation.id);
+    entity.reservation =
+      entity.reservation === undefined
+        ? undefined
+        : this.entityManager.getReference(ReservationEntity, entity.reservation.id);
   }
 }

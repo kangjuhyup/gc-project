@@ -6,7 +6,13 @@ import { PaymentModel } from '@domain';
 import { PaymentResultDto } from '@application/commands/dto';
 import type { PaymentQueryPort } from '@application/query/ports';
 import type { PaymentRepositoryPort } from '@application/commands/ports';
-import { MemberEntity, PaymentEntity, PaymentSeatHoldEntity, ReservationEntity, SeatHoldEntity } from '../entities';
+import {
+  MemberEntity,
+  PaymentEntity,
+  PaymentSeatHoldEntity,
+  ReservationEntity,
+  SeatHoldEntity,
+} from '../entities';
 import { PersistenceMapper } from '../mappers';
 
 @Injectable()
@@ -17,9 +23,10 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
   async save(model: PaymentModel): Promise<PaymentModel> {
     const entity = PersistenceMapper.paymentToEntity(model);
     this.applyReferences(entity);
-    const existing = model.id === undefined
-      ? undefined
-      : await this.entityManager.findOne(PaymentEntity, { id: model.id });
+    const existing =
+      model.id === undefined
+        ? undefined
+        : await this.entityManager.findOne(PaymentEntity, { id: model.id });
 
     if (existing === undefined || existing === null) {
       entity.id = String(await this.entityManager.insert(PaymentEntity, entity));
@@ -53,9 +60,13 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
       return [];
     }
 
-    const links = await this.entityManager.find(PaymentSeatHoldEntity, {
-      seatHold: { $in: seatHoldIds },
-    }, { populate: ['payment'] });
+    const links = await this.entityManager.find(
+      PaymentSeatHoldEntity,
+      {
+        seatHold: { $in: seatHoldIds },
+      },
+      { populate: ['payment'] },
+    );
     const paymentsById = new Map<string, PaymentEntity>();
 
     for (const link of links) {
@@ -63,11 +74,16 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
     }
 
     return Promise.all(
-      [...paymentsById.values()].map(async (payment) => this.toDomain(payment, await this.findSeatHoldIds(payment.id))),
+      [...paymentsById.values()].map(async (payment) =>
+        this.toDomain(payment, await this.findSeatHoldIds(payment.id)),
+      ),
     );
   }
 
-  async findByMemberIdAndIdempotencyKey(memberId: string, idempotencyKey: string): Promise<PaymentModel | undefined> {
+  async findByMemberIdAndIdempotencyKey(
+    memberId: string,
+    idempotencyKey: string,
+  ): Promise<PaymentModel | undefined> {
     const entity = await this.entityManager.findOne(PaymentEntity, {
       member: memberId,
       idempotencyKey,
@@ -93,29 +109,42 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
     return entity ? this.toDomain(entity, await this.findSeatHoldIds(entity.id)) : undefined;
   }
 
-  async findPaymentById(params: { paymentId: string; memberId: string }): Promise<PaymentResultDto | undefined> {
+  async findPaymentById(params: {
+    paymentId: string;
+    memberId: string;
+  }): Promise<PaymentResultDto | undefined> {
     const entity = await this.entityManager.findOne(PaymentEntity, {
       id: params.paymentId,
       member: params.memberId,
     });
-    return entity ? this.toDto(this.toDomain(entity, await this.findSeatHoldIds(entity.id))) : undefined;
+    return entity
+      ? this.toDto(this.toDomain(entity, await this.findSeatHoldIds(entity.id)))
+      : undefined;
   }
 
   async findSeatHoldIds(paymentId: string): Promise<string[]> {
-    const links = await this.entityManager.find(PaymentSeatHoldEntity, {
-      payment: paymentId,
-    }, {
-      orderBy: { id: 'ASC' },
-      populate: ['seatHold'],
-    });
+    const links = await this.entityManager.find(
+      PaymentSeatHoldEntity,
+      {
+        payment: paymentId,
+      },
+      {
+        orderBy: { id: 'ASC' },
+        populate: ['seatHold'],
+      },
+    );
 
     return links.map((link) => link.seatHold.id);
   }
 
   async saveSeatHoldLinks(paymentId: string, seatHoldIds: string[]): Promise<void> {
-    const existingLinks = await this.entityManager.find(PaymentSeatHoldEntity, {
-      payment: paymentId,
-    }, { populate: ['seatHold'] });
+    const existingLinks = await this.entityManager.find(
+      PaymentSeatHoldEntity,
+      {
+        payment: paymentId,
+      },
+      { populate: ['seatHold'] },
+    );
     const existingSeatHoldIds = new Set(existingLinks.map((link) => link.seatHold.id));
 
     for (const seatHoldId of seatHoldIds) {
@@ -149,9 +178,10 @@ export class MikroOrmPaymentRepository implements PaymentRepositoryPort, Payment
   private applyReferences(entity: PaymentEntity): void {
     entity.member = this.entityManager.getReference(MemberEntity, entity.member.id);
     entity.seatHold = this.entityManager.getReference(SeatHoldEntity, entity.seatHold.id);
-    entity.reservation = entity.reservation === undefined
-      ? undefined
-      : this.entityManager.getReference(ReservationEntity, entity.reservation.id);
+    entity.reservation =
+      entity.reservation === undefined
+        ? undefined
+        : this.entityManager.getReference(ReservationEntity, entity.reservation.id);
   }
 
   @NoLog

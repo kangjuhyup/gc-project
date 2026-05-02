@@ -1,5 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMinSize, IsArray, IsIn, IsInt, IsString, Matches, MaxLength, Min, MinLength } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsIn,
+  IsInt,
+  IsString,
+  Matches,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { PaymentProvider, type PaymentProviderType } from '@domain';
 
 export class RequestPaymentRequestDto {
@@ -22,7 +32,11 @@ export class RequestPaymentRequestDto {
   @Matches(/^[A-Za-z0-9._:-]+$/)
   readonly idempotencyKey!: string;
 
-  @ApiProperty({ enum: PaymentProvider, example: PaymentProvider.LOCAL, description: '결제 provider' })
+  @ApiProperty({
+    enum: PaymentProvider,
+    example: PaymentProvider.LOCAL,
+    description: '결제 provider',
+  })
   @IsIn(Object.values(PaymentProvider))
   readonly provider!: PaymentProviderType;
 

@@ -15,7 +15,9 @@ describe('MemberController', () => {
 
   it('회원가입 요청을 command bus에 위임한다', async () => {
     const queryBus = { execute: vi.fn() };
-    const commandBus = { execute: vi.fn().mockResolvedValue({ memberId: '1', userId: 'member_01' }) };
+    const commandBus = {
+      execute: vi.fn().mockResolvedValue({ memberId: '1', userId: 'member_01' }),
+    };
     const controller = new MemberController(queryBus as never, commandBus as never);
 
     const result = await controller.signup({
@@ -34,7 +36,9 @@ describe('MemberController', () => {
 
   it('로그인 요청을 command bus에 위임한다', async () => {
     const queryBus = { execute: vi.fn() };
-    const commandBus = { execute: vi.fn().mockResolvedValue({ memberId: '1', userId: 'member_01' }) };
+    const commandBus = {
+      execute: vi.fn().mockResolvedValue({ memberId: '1', userId: 'member_01' }),
+    };
     const controller = new MemberController(queryBus as never, commandBus as never);
 
     const result = await controller.login({
@@ -48,7 +52,9 @@ describe('MemberController', () => {
 
   it('refresh token 재발급 요청을 command bus에 위임한다', async () => {
     const queryBus = { execute: vi.fn() };
-    const commandBus = { execute: vi.fn().mockResolvedValue({ memberId: '1', accessToken: 'new-access-token' }) };
+    const commandBus = {
+      execute: vi.fn().mockResolvedValue({ memberId: '1', accessToken: 'new-access-token' }),
+    };
     const controller = new MemberController(queryBus as never, commandBus as never);
 
     const result = await controller.refreshToken({
@@ -62,7 +68,9 @@ describe('MemberController', () => {
   it('임시비밀번호 발급 요청을 command bus에 위임한다', async () => {
     const queryBus = { execute: vi.fn() };
     const commandBus = {
-      execute: vi.fn().mockResolvedValue({ userId: 'member_01', temporaryPassword: 'Temp-abc1231!' }),
+      execute: vi
+        .fn()
+        .mockResolvedValue({ userId: 'member_01', temporaryPassword: 'Temp-abc1231!' }),
     };
     const controller = new MemberController(queryBus as never, commandBus as never);
 

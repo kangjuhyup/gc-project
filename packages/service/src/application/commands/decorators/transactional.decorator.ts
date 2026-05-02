@@ -10,14 +10,8 @@ export function clearTransactionalDecorator(): void {
   transactionManager = undefined;
 }
 
-export function Transactional(
-  propagation: TransactionPropagation = 'REQUIRED',
-): MethodDecorator {
-  return (
-    _target: object,
-    propertyKey: string | symbol,
-    descriptor: PropertyDescriptor,
-  ) => {
+export function Transactional(propagation: TransactionPropagation = 'REQUIRED'): MethodDecorator {
+  return (_target: object, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
     const original = descriptor.value as ((...args: unknown[]) => Promise<unknown>) | undefined;
 
     if (!original) {
@@ -31,10 +25,7 @@ export function Transactional(
         );
       }
 
-      return transactionManager.runInTransaction(
-        () => original.apply(this, args),
-        propagation,
-      );
+      return transactionManager.runInTransaction(() => original.apply(this, args), propagation);
     };
 
     return descriptor;

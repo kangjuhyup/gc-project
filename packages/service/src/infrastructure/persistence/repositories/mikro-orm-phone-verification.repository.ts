@@ -17,9 +17,10 @@ export class MikroOrmPhoneVerificationRepository implements PhoneVerificationRep
 
   async save(model: PhoneVerificationModel): Promise<PhoneVerificationModel> {
     const entity = this.encryptEntity(PersistenceMapper.phoneVerificationToEntity(model));
-    const existing = model.id === undefined
-      ? undefined
-      : await this.entityManager.findOne(PhoneVerificationEntity, { id: model.id });
+    const existing =
+      model.id === undefined
+        ? undefined
+        : await this.entityManager.findOne(PhoneVerificationEntity, { id: model.id });
 
     if (existing === undefined || existing === null) {
       entity.id = String(await this.entityManager.insert(PhoneVerificationEntity, entity));
@@ -35,7 +36,9 @@ export class MikroOrmPhoneVerificationRepository implements PhoneVerificationRep
     return entity ? this.toDomain(entity) : undefined;
   }
 
-  async findVerifiedByPhoneNumber(phoneNumber: string): Promise<PhoneVerificationModel | undefined> {
+  async findVerifiedByPhoneNumber(
+    phoneNumber: string,
+  ): Promise<PhoneVerificationModel | undefined> {
     const entity = await this.entityManager.findOne(PhoneVerificationEntity, {
       phoneNumber: { $in: this.encryption.encryptedValueCandidates(phoneNumber) },
       status: 'VERIFIED',

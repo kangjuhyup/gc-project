@@ -46,15 +46,20 @@ describe('내 예매 목록 조회 e2e', () => {
       }),
     ]);
 
-    const secondPage = await e2e.get(`/reservations?limit=2&cursor=${firstPage.body.nextCursor}`, e2e.auth(member));
+    const secondPage = await e2e.get(
+      `/reservations?limit=2&cursor=${firstPage.body.nextCursor}`,
+      e2e.auth(member),
+    );
     expect(secondPage.status).toBe(200);
     expect(secondPage.body.items).toHaveLength(1);
     expect(secondPage.body.hasNext).toBe(false);
     expect(secondPage.body.nextCursor).toBeUndefined();
     const secondPageItems = secondPage.body.items as Array<Record<string, unknown>>;
-    expect(secondPageItems[0]).toEqual(expect.objectContaining({
-      seats: [expect.objectContaining({ id: seats[0].id })],
-    }));
+    expect(secondPageItems[0]).toEqual(
+      expect.objectContaining({
+        seats: [expect.objectContaining({ id: seats[0].id })],
+      }),
+    );
   });
 
   it('내 예매 상세에서 예매번호, 영화, 상영시간, 좌석, 결제금액, 상태를 조회한다', async () => {
@@ -72,34 +77,39 @@ describe('내 예매 목록 조회 e2e', () => {
 
     const detail = await e2e.get(`/reservations/${reservation.id}`, e2e.auth(member));
     expect(detail.status).toBe(200);
-    expect(detail.body).toEqual(expect.objectContaining({
-      id: reservation.id,
-      reservationNumber: expect.stringMatching(/^R[0-9]+$/),
-      status: 'CONFIRMED',
-      totalPrice: 15000,
-      paymentAmount: 15000,
-      movie: expect.objectContaining({
-        title: expect.any(String),
-      }),
-      screening: expect.objectContaining({
-        id: screeningId,
-        startAt: expect.any(String),
-        endAt: expect.any(String),
-      }),
-      seats: [
-        expect.objectContaining({
-          id: seat.id,
-          row: seat.row,
-          col: seat.col,
+    expect(detail.body).toEqual(
+      expect.objectContaining({
+        id: reservation.id,
+        reservationNumber: expect.stringMatching(/^R[0-9]+$/),
+        status: 'CONFIRMED',
+        totalPrice: 15000,
+        paymentAmount: 15000,
+        movie: expect.objectContaining({
+          title: expect.any(String),
         }),
-      ],
-      payment: expect.objectContaining({
-        amount: 15000,
-        status: 'APPROVED',
+        screening: expect.objectContaining({
+          id: screeningId,
+          startAt: expect.any(String),
+          endAt: expect.any(String),
+        }),
+        seats: [
+          expect.objectContaining({
+            id: seat.id,
+            row: seat.row,
+            col: seat.col,
+          }),
+        ],
+        payment: expect.objectContaining({
+          amount: 15000,
+          status: 'APPROVED',
+        }),
       }),
-    }));
+    );
 
-    const otherMemberDetail = await e2e.get(`/reservations/${reservation.id}`, e2e.auth(otherMember));
+    const otherMemberDetail = await e2e.get(
+      `/reservations/${reservation.id}`,
+      e2e.auth(otherMember),
+    );
     expect(otherMemberDetail.status).toBe(404);
   });
 
@@ -108,41 +118,52 @@ describe('내 예매 목록 조회 e2e', () => {
     const screeningId = await e2e.firstScreeningId();
     const seats = await e2e.availableSeats(screeningId, 3);
 
-    await createApprovedReservation(e2e, member, screeningId, seats, 'pay-my-res-multi-0001', 45000);
+    await createApprovedReservation(
+      e2e,
+      member,
+      screeningId,
+      seats,
+      'pay-my-res-multi-0001',
+      45000,
+    );
 
     const reservations = await e2e.get('/reservations?limit=10', e2e.auth(member));
     expect(reservations.status).toBe(200);
     expect(reservations.body.items).toHaveLength(1);
 
     const reservation = (reservations.body.items as Array<Record<string, unknown>>)[0];
-    expect(reservation).toEqual(expect.objectContaining({
-      status: 'CONFIRMED',
-      totalPrice: 45000,
-      payment: expect.objectContaining({
-        amount: 45000,
-        status: 'APPROVED',
+    expect(reservation).toEqual(
+      expect.objectContaining({
+        status: 'CONFIRMED',
+        totalPrice: 45000,
+        payment: expect.objectContaining({
+          amount: 45000,
+          status: 'APPROVED',
+        }),
+        seats: seats.map((seat) => expect.objectContaining({ id: seat.id })),
       }),
-      seats: seats.map((seat) => expect.objectContaining({ id: seat.id })),
-    }));
+    );
 
     const detail = await e2e.get(`/reservations/${reservation.id}`, e2e.auth(member));
     expect(detail.status).toBe(200);
-    expect(detail.body).toEqual(expect.objectContaining({
-      id: reservation.id,
-      paymentAmount: 45000,
-      totalPrice: 45000,
-      payment: expect.objectContaining({
-        amount: 45000,
-        status: 'APPROVED',
-      }),
-      seats: seats.map((seat) =>
-        expect.objectContaining({
-          id: seat.id,
-          row: seat.row,
-          col: seat.col,
+    expect(detail.body).toEqual(
+      expect.objectContaining({
+        id: reservation.id,
+        paymentAmount: 45000,
+        totalPrice: 45000,
+        payment: expect.objectContaining({
+          amount: 45000,
+          status: 'APPROVED',
         }),
-      ),
-    }));
+        seats: seats.map((seat) =>
+          expect.objectContaining({
+            id: seat.id,
+            row: seat.row,
+            col: seat.col,
+          }),
+        ),
+      }),
+    );
   });
 });
 
@@ -155,10 +176,19 @@ async function createApprovedReservation(
   amount = 15000,
 ): Promise<void> {
   const seats = Array.isArray(seat) ? seat : [seat];
-  const hold = await e2e.createSeatHold(member, screeningId, seats.map((item) => item.id));
+  const hold = await e2e.createSeatHold(
+    member,
+    screeningId,
+    seats.map((item) => item.id),
+  );
   expect(hold.status).toBe(201);
 
-  const payment = await e2e.requestPayment(member, hold.body.holdIds as string[], idempotencyKey, amount);
+  const payment = await e2e.requestPayment(
+    member,
+    hold.body.holdIds as string[],
+    idempotencyKey,
+    amount,
+  );
   expect(payment.status).toBe(201);
 
   const callback = await e2e.approvePayment(payment.body, amount);

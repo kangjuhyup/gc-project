@@ -29,7 +29,9 @@ describe('관리자 회원 관리 e2e', () => {
   it('관리자는 회원 목록을 상태와 검색어로 조회할 수 있다', async () => {
     const member = await e2e.signupAndLogin('admin_member');
     const accessToken = await loginAdmin(e2e);
-    const storedMember = await e2e.orm.em.fork().findOneOrFail(MemberEntity, { id: member.memberId });
+    const storedMember = await e2e.orm.em
+      .fork()
+      .findOneOrFail(MemberEntity, { id: member.memberId });
 
     const list = await e2e.get(
       `/admin/members?keyword=${member.userId}&status=ACTIVE&currentPage=1&countPerPage=5`,
@@ -70,7 +72,9 @@ describe('관리자 회원 관리 e2e', () => {
   it('관리자는 해제 사유 헤더를 남기면 회원 개인정보 원문을 조회하고 audit을 저장한다', async () => {
     const member = await e2e.signupAndLogin('admin_unmask');
     const accessToken = await loginAdmin(e2e);
-    const storedMember = await e2e.orm.em.fork().findOneOrFail(MemberEntity, { id: member.memberId });
+    const storedMember = await e2e.orm.em
+      .fork()
+      .findOneOrFail(MemberEntity, { id: member.memberId });
 
     const list = await e2e.get(
       `/admin/members?keyword=${member.userId}&status=ACTIVE&currentPage=1&countPerPage=5`,

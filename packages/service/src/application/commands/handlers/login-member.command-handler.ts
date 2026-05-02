@@ -56,9 +56,10 @@ export class LoginMemberCommandHandler {
     }
 
     const occurredAt = this.clock.now();
-    const loggedInMember = member.failedLoginCount > 0
-      ? await this.memberRepository.save(member.recordLoginSuccess(occurredAt))
-      : member;
+    const loggedInMember =
+      member.failedLoginCount > 0
+        ? await this.memberRepository.save(member.recordLoginSuccess(occurredAt))
+        : member;
     await this.logEventPublisher.publish(
       LoginSucceededLogEvent.of({
         memberId: loggedInMember.id,

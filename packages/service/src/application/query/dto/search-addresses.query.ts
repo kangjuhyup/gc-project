@@ -8,11 +8,7 @@ export class SearchAddressesQuery {
 
   readonly countPerPage: number;
 
-  private constructor(params: {
-    keyword: string;
-    currentPage: number;
-    countPerPage: number;
-  }) {
+  private constructor(params: { keyword: string; currentPage: number; countPerPage: number }) {
     this.keyword = params.keyword;
     this.currentPage = params.currentPage;
     this.countPerPage = params.countPerPage;

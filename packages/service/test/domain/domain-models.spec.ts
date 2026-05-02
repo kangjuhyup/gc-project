@@ -320,8 +320,9 @@ describe('domain persistence models', () => {
       totalPrice: 15000,
     }).setPersistence('reservation-1', createdAt, createdAt);
 
-    expect(() => reservation.cancel({ reason: 'again', now: new Date('2026-04-29T01:05:00.000Z') }))
-      .toThrow(new DomainError(DomainErrorCode.INVALID_RESERVATION_STATUS));
+    expect(() =>
+      reservation.cancel({ reason: 'again', now: new Date('2026-04-29T01:05:00.000Z') }),
+    ).toThrow(new DomainError(DomainErrorCode.INVALID_RESERVATION_STATUS));
   });
 
   it('다른 회원의 예매는 소유권 검증에서 거부한다', () => {
@@ -513,8 +514,9 @@ describe('domain persistence models', () => {
       now: new Date('2026-04-29T01:00:00.000Z'),
     });
 
-    expect(() => payment.assertIdempotentRequestHash('different-hash'))
-      .toThrow('PAYMENT_IDEMPOTENCY_KEY_CONFLICT');
+    expect(() => payment.assertIdempotentRequestHash('different-hash')).toThrow(
+      'PAYMENT_IDEMPOTENCY_KEY_CONFLICT',
+    );
   });
 
   it('callback provider가 기존 결제 provider와 다르면 거부한다', () => {

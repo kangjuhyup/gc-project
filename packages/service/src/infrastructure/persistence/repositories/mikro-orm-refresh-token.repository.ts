@@ -13,9 +13,10 @@ export class MikroOrmRefreshTokenRepository {
   async save(model: RefreshTokenModel): Promise<RefreshTokenModel> {
     const entity = PersistenceMapper.refreshTokenToEntity(model);
     entity.member = this.entityManager.getReference(MemberEntity, entity.member.id);
-    const existing = model.id === undefined
-      ? undefined
-      : await this.entityManager.findOne(RefreshTokenEntity, { id: model.id });
+    const existing =
+      model.id === undefined
+        ? undefined
+        : await this.entityManager.findOne(RefreshTokenEntity, { id: model.id });
 
     if (existing === undefined || existing === null) {
       entity.id = String(await this.entityManager.insert(RefreshTokenEntity, entity));

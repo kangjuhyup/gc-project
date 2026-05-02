@@ -177,18 +177,23 @@ export class ServiceE2eContext {
 
   async availableSeats(screeningId: string, count = 1): Promise<E2eSeat[]> {
     const em = this.orm.em.fork();
-    const screening = await em.findOne(ScreeningEntity, { id: screeningId }, { populate: ['screen.seats'] });
-    const rows: E2eSeatRow[] = screening?.screen.seats
-      .getItems()
-      .slice()
-      .sort((left, right) => this.compareSeat(left, right))
-      .slice(0, count)
-      .map((seat) => ({
-        id: seat.id,
-        row: seat.seatRow,
-        col: seat.seatCol,
-        type: seat.seatType ?? 'NORMAL',
-      })) ?? [];
+    const screening = await em.findOne(
+      ScreeningEntity,
+      { id: screeningId },
+      { populate: ['screen.seats'] },
+    );
+    const rows: E2eSeatRow[] =
+      screening?.screen.seats
+        .getItems()
+        .slice()
+        .sort((left, right) => this.compareSeat(left, right))
+        .slice(0, count)
+        .map((seat) => ({
+          id: seat.id,
+          row: seat.seatRow,
+          col: seat.seatCol,
+          type: seat.seatType ?? 'NORMAL',
+        })) ?? [];
     expect(rows.length).toBeGreaterThanOrEqual(count);
 
     return rows.map((seat) => ({
@@ -199,9 +204,13 @@ export class ServiceE2eContext {
 
   async seatStatus(screeningId: string, seatId: string): Promise<string | undefined> {
     const em = this.orm.em.fork();
-    const screening = await em.findOne(ScreeningEntity, { id: screeningId }, {
-      populate: ['reservationSeats.seat', 'reservationSeats.reservation', 'seatHolds.seat'],
-    });
+    const screening = await em.findOne(
+      ScreeningEntity,
+      { id: screeningId },
+      {
+        populate: ['reservationSeats.seat', 'reservationSeats.reservation', 'seatHolds.seat'],
+      },
+    );
 
     if (screening === null) {
       return undefined;
@@ -209,9 +218,10 @@ export class ServiceE2eContext {
 
     const reserved = screening.reservationSeats
       .getItems()
-      .some((reservationSeat) =>
-        reservationSeat.seat.id === seatId &&
-        ['PENDING', 'CONFIRMED'].includes(reservationSeat.reservation.status),
+      .some(
+        (reservationSeat) =>
+          reservationSeat.seat.id === seatId &&
+          ['PENDING', 'CONFIRMED'].includes(reservationSeat.reservation.status),
       );
 
     if (reserved) {
@@ -221,7 +231,10 @@ export class ServiceE2eContext {
     const now = new Date();
     const held = screening.seatHolds
       .getItems()
-      .some((seatHold) => seatHold.seat.id === seatId && seatHold.status === 'HELD' && seatHold.expiresAt > now);
+      .some(
+        (seatHold) =>
+          seatHold.seat.id === seatId && seatHold.status === 'HELD' && seatHold.expiresAt > now,
+      );
 
     return held ? 'HELD' : 'AVAILABLE';
   }
@@ -235,7 +248,11 @@ export class ServiceE2eContext {
     return seat?.status;
   }
 
-  async createSeatHold(member: E2eMember, screeningId: string, seatIds: string[]): Promise<HttpResult> {
+  async createSeatHold(
+    member: E2eMember,
+    screeningId: string,
+    seatIds: string[],
+  ): Promise<HttpResult> {
     return this.post(
       '/seat-holds',
       {
@@ -287,7 +304,10 @@ export class ServiceE2eContext {
       return em.count(MemberEntity, { id: String(params[0]), status: 'WITHDRAWN' });
     }
 
-    if (tableName === 'member_refresh_token' && where === 'member_id = ? AND revoked_at IS NOT NULL') {
+    if (
+      tableName === 'member_refresh_token' &&
+      where === 'member_id = ? AND revoked_at IS NOT NULL'
+    ) {
       return em.count(RefreshTokenEntity, { member: String(params[0]), revokedAt: { $ne: null } });
     }
 
@@ -296,15 +316,24 @@ export class ServiceE2eContext {
     }
 
     if (tableName === 'payment' && where === 'member_id = ? AND idempotency_key = ?') {
-      return em.count(PaymentEntity, { member: String(params[0]), idempotencyKey: String(params[1]) });
+      return em.count(PaymentEntity, {
+        member: String(params[0]),
+        idempotencyKey: String(params[1]),
+      });
     }
 
     if (tableName === 'payment' && where === "id = ? AND status = 'REFUND_REQUIRED'") {
       return em.count(PaymentEntity, { id: String(params[0]), status: 'REFUND_REQUIRED' });
     }
 
-    if (tableName === 'outbox_event' && where === "aggregate_type = 'PAYMENT' AND event_type = 'PAYMENT_REQUESTED'") {
-      return em.count(OutboxEventEntity, { aggregateType: 'PAYMENT', eventType: 'PAYMENT_REQUESTED' });
+    if (
+      tableName === 'outbox_event' &&
+      where === "aggregate_type = 'PAYMENT' AND event_type = 'PAYMENT_REQUESTED'"
+    ) {
+      return em.count(OutboxEventEntity, {
+        aggregateType: 'PAYMENT',
+        eventType: 'PAYMENT_REQUESTED',
+      });
     }
 
     if (tableName === 'reservation' && where === 'member_id = ?') {
@@ -316,15 +345,24 @@ export class ServiceE2eContext {
     }
 
     if (tableName === 'reservation_seat' && where === 'screening_id = ? AND seat_id = ?') {
-      return em.count(ReservationSeatEntity, { screening: String(params[0]), seat: String(params[1]) });
+      return em.count(ReservationSeatEntity, {
+        screening: String(params[0]),
+        seat: String(params[1]),
+      });
     }
 
     if (tableName === 'reservation_event' && where === 'TRUE') {
       return em.count(ReservationEventEntity, {});
     }
 
-    if (tableName === 'payment_event_log' && where === "payment_id = ? AND event_type = 'PAYMENT_REFUND_REQUESTED'") {
-      return em.count(PaymentEventLogEntity, { payment: String(params[0]), eventType: 'PAYMENT_REFUND_REQUESTED' });
+    if (
+      tableName === 'payment_event_log' &&
+      where === "payment_id = ? AND event_type = 'PAYMENT_REFUND_REQUESTED'"
+    ) {
+      return em.count(PaymentEventLogEntity, {
+        payment: String(params[0]),
+        eventType: 'PAYMENT_REFUND_REQUESTED',
+      });
     }
 
     throw new Error(`UNSUPPORTED_E2E_COUNT_ROWS: ${tableName} ${where}`);
@@ -332,7 +370,11 @@ export class ServiceE2eContext {
 
   async findPayment(paymentId: string): Promise<JsonObject | undefined> {
     const em = this.orm.em.fork();
-    const payment = await em.findOne(PaymentEntity, { id: paymentId }, { populate: ['reservation'] });
+    const payment = await em.findOne(
+      PaymentEntity,
+      { id: paymentId },
+      { populate: ['reservation'] },
+    );
 
     return payment === null
       ? undefined
@@ -344,7 +386,11 @@ export class ServiceE2eContext {
   }
 
   private compareSeat(left: SeatEntity, right: SeatEntity): number {
-    return left.seatRow.localeCompare(right.seatRow) || left.seatCol - right.seatCol || Number(left.id) - Number(right.id);
+    return (
+      left.seatRow.localeCompare(right.seatRow) ||
+      left.seatCol - right.seatCol ||
+      Number(left.id) - Number(right.id)
+    );
   }
 
   auth(member: E2eMember): Record<string, string> {
@@ -381,7 +427,7 @@ export class ServiceE2eContext {
 
     return {
       status: response.status,
-      body: text.length === 0 ? {} : JSON.parse(text) as JsonObject,
+      body: text.length === 0 ? {} : (JSON.parse(text) as JsonObject),
     };
   }
 }

@@ -3,12 +3,21 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class SignupMemberRequestDto {
-  @ApiProperty({ example: 'movie_user', pattern: '^[a-z][a-z0-9_]{3,19}$', description: '회원 로그인 ID' })
+  @ApiProperty({
+    example: 'movie_user',
+    pattern: '^[a-z][a-z0-9_]{3,19}$',
+    description: '회원 로그인 ID',
+  })
   @IsString()
   @Matches(/^[a-z][a-z0-9_]{3,19}$/)
   readonly userId!: string;
 
-  @ApiProperty({ example: 'password123!', minLength: 8, maxLength: 72, description: '회원 비밀번호' })
+  @ApiProperty({
+    example: 'password123!',
+    minLength: 8,
+    maxLength: 72,
+    description: '회원 비밀번호',
+  })
   @IsString()
   @MinLength(8)
   @MaxLength(72)
@@ -33,7 +42,12 @@ export class SignupMemberRequestDto {
   @MaskLog({ type: 'phone' })
   readonly phoneNumber!: string;
 
-  @ApiProperty({ example: '서울특별시 강남구 테헤란로 427', minLength: 1, maxLength: 255, description: '회원 주소' })
+  @ApiProperty({
+    example: '서울특별시 강남구 테헤란로 427',
+    minLength: 1,
+    maxLength: 255,
+    description: '회원 주소',
+  })
   @IsString()
   @MinLength(1)
   @MaxLength(255)

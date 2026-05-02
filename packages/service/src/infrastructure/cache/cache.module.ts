@@ -20,11 +20,6 @@ import { RedisModule } from './redis.module';
       useExisting: RedisSeatHoldLock,
     },
   ],
-  exports: [
-    RedisModule,
-    RedisAccessTokenRepository,
-    SEAT_HOLD_CACHE,
-    SEAT_HOLD_LOCK,
-  ],
+  exports: [RedisModule, RedisAccessTokenRepository, SEAT_HOLD_CACHE, SEAT_HOLD_LOCK],
 })
 export class CacheModule {}

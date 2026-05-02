@@ -5,15 +5,7 @@ export class ListMoviesQuery {
     readonly cursor?: string,
   ) {}
 
-  static of(params: {
-    limit?: number;
-    keyword?: string;
-    cursor?: string;
-  }): ListMoviesQuery {
-    return new ListMoviesQuery(
-      params.limit ?? 20,
-      params.keyword,
-      params.cursor,
-    );
+  static of(params: { limit?: number; keyword?: string; cursor?: string }): ListMoviesQuery {
+    return new ListMoviesQuery(params.limit ?? 20, params.keyword, params.cursor);
   }
 }

@@ -7,7 +7,10 @@ export class MemberTokenRefreshedDto {
   @ApiProperty({ example: 'movie_user', description: '회원 로그인 ID' })
   readonly userId: string;
 
-  @ApiProperty({ example: 'member:1:1d6a6de7-bf58-4f11-8f42-a83ff755b0e8', description: '새 access token' })
+  @ApiProperty({
+    example: 'member:1:1d6a6de7-bf58-4f11-8f42-a83ff755b0e8',
+    description: '새 access token',
+  })
   readonly accessToken: string;
 
   @ApiProperty({ example: '2026-04-29T00:15:00.000Z', description: '새 access token 만료 시각' })

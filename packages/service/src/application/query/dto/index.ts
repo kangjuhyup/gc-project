@@ -40,7 +40,10 @@ export {
   ReservationSummaryDto,
   ReservationTheaterSummaryDto,
 } from './reservation-list-result.dto';
-export { ScreeningSeatListResultDto, ScreeningSeatSummaryDto } from './screening-seat-list-result.dto';
+export {
+  ScreeningSeatListResultDto,
+  ScreeningSeatSummaryDto,
+} from './screening-seat-list-result.dto';
 export {
   TheaterScheduleMovieDto,
   TheaterScheduleResultDto,

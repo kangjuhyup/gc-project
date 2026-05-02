@@ -48,7 +48,7 @@ export class JusoAddressSearchAdapter implements AddressSearchPort {
       throw new Error('ADDRESS_SEARCH_FAILED');
     }
 
-    const payload = await response.json() as JusoApiResponse;
+    const payload = (await response.json()) as JusoApiResponse;
     const common = payload.results?.common;
 
     if (common?.errorCode !== '0') {

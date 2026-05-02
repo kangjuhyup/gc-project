@@ -26,7 +26,9 @@ describe('phone verification command handlers', () => {
     } satisfies PhoneVerificationRepositoryPort;
     const handler = new RequestPhoneVerificationCommandHandler(repository, generator, clock);
 
-    const result = await handler.execute(RequestPhoneVerificationCommand.of({ phoneNumber: '01000000000' }));
+    const result = await handler.execute(
+      RequestPhoneVerificationCommand.of({ phoneNumber: '01000000000' }),
+    );
 
     expect(repository.save).toHaveBeenCalledOnce();
     expect(result.verificationId).toBe('verification-1');

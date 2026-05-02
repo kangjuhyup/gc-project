@@ -14,7 +14,9 @@
     "test": "vitest run --reporter=verbose",
     "test:coverage": "vitest run --coverage --reporter=verbose",
     "test:watch": "vitest --reporter=verbose",
-    "lint": "echo \"No ui lint configured\""
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@kangjuhyup/rvlog": "0.1.1",

@@ -63,7 +63,12 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
     return theaters
       .map((theater) => ({
         theater,
-        distanceMeters: this.calculateDistanceMeters(query.latitude, query.longitude, theater.latitude, theater.longitude),
+        distanceMeters: this.calculateDistanceMeters(
+          query.latitude,
+          query.longitude,
+          theater.latitude,
+          theater.longitude,
+        ),
       }))
       .sort((left, right) => this.compareDistance(left, right));
   }
@@ -89,8 +94,11 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
     const longitudeDelta = this.toRadians(theaterLongitude - currentLongitude);
     const currentLatitudeRadians = this.toRadians(currentLatitude);
     const theaterLatitudeRadians = this.toRadians(theaterLatitude);
-    const haversine = Math.sin(latitudeDelta / 2) ** 2
-      + Math.cos(currentLatitudeRadians) * Math.cos(theaterLatitudeRadians) * Math.sin(longitudeDelta / 2) ** 2;
+    const haversine =
+      Math.sin(latitudeDelta / 2) ** 2 +
+      Math.cos(currentLatitudeRadians) *
+        Math.cos(theaterLatitudeRadians) *
+        Math.sin(longitudeDelta / 2) ** 2;
 
     return earthRadiusMeters * 2 * Math.asin(Math.sqrt(haversine));
   }
@@ -109,12 +117,15 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
       return -1;
     }
 
-    return left.distanceMeters - right.distanceMeters || Number(left.theater.id) - Number(right.theater.id);
+    return (
+      left.distanceMeters - right.distanceMeters ||
+      Number(left.theater.id) - Number(right.theater.id)
+    );
   }
 
   @NoLog
   private toRadians(value: number): number {
-    return value * Math.PI / 180;
+    return (value * Math.PI) / 180;
   }
 
   @NoLog
@@ -131,26 +142,26 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
 
   @NoLog
   private findScheduleRows(query: ListTheaterScheduleQuery): Promise<ScreeningEntity[]> {
-    return this.entityManager.find(ScreeningEntity, {
-      screen: {
-        theater: query.theaterId,
+    return this.entityManager.find(
+      ScreeningEntity,
+      {
+        screen: {
+          theater: query.theaterId,
+        },
+        startAt: {
+          $gte: query.startAt,
+          $lt: query.endAt,
+        },
       },
-      startAt: {
-        $gte: query.startAt,
-        $lt: query.endAt,
+      {
+        populate: ['movie.images', 'screen.theater', 'reservationSeats.reservation'],
+        orderBy: {
+          movie: { title: 'ASC' },
+          startAt: 'ASC',
+          id: 'ASC',
+        },
       },
-    }, {
-      populate: [
-        'movie.images',
-        'screen.theater',
-        'reservationSeats.reservation',
-      ],
-      orderBy: {
-        movie: { title: 'ASC' },
-        startAt: 'ASC',
-        id: 'ASC',
-      },
-    });
+    );
   }
 
   @NoLog
@@ -174,9 +185,11 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
     const leftFirst = left[0];
     const rightFirst = right[0];
 
-    return leftFirst.startAt.getTime() - rightFirst.startAt.getTime()
-      || leftFirst.movie.title.localeCompare(rightFirst.movie.title)
-      || Number(leftFirst.movie.id) - Number(rightFirst.movie.id);
+    return (
+      leftFirst.startAt.getTime() - rightFirst.startAt.getTime() ||
+      leftFirst.movie.title.localeCompare(rightFirst.movie.title) ||
+      Number(leftFirst.movie.id) - Number(rightFirst.movie.id)
+    );
   }
 
   @NoLog
@@ -191,7 +204,10 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
       runningTime: movie.runningTime,
       posterUrl: this.posterUrl(movie) ?? '',
       screenings: screenings
-        .sort((left, right) => left.startAt.getTime() - right.startAt.getTime() || Number(left.id) - Number(right.id))
+        .sort(
+          (left, right) =>
+            left.startAt.getTime() - right.startAt.getTime() || Number(left.id) - Number(right.id),
+        )
         .map((screening) => this.toScheduleScreeningDto(screening)),
     });
   }
@@ -218,7 +234,9 @@ export class MikroOrmTheaterQueryRepository implements TheaterQueryPort {
     const poster = movie.images
       .getItems()
       .filter((image) => image.imageType === 'POSTER')
-      .sort((left, right) => left.sortOrder - right.sortOrder || Number(left.id) - Number(right.id))[0];
+      .sort(
+        (left, right) => left.sortOrder - right.sortOrder || Number(left.id) - Number(right.id),
+      )[0];
 
     return poster?.url ?? movie.posterUrl;
   }

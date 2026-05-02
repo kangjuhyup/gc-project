@@ -9,10 +9,7 @@ export class TemporaryPasswordIssuedDto {
   @MaskLog({ type: 'full' })
   readonly temporaryPassword: string;
 
-  private constructor(
-    userId: string,
-    temporaryPassword: string,
-  ) {
+  private constructor(userId: string, temporaryPassword: string) {
     this.userId = userId;
     this.temporaryPassword = temporaryPassword;
   }

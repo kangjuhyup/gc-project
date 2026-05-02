@@ -1,4 +1,8 @@
-import type { PaymentEventTypeType, PaymentProviderType, PaymentStatusType } from '@domain/property';
+import type {
+  PaymentEventTypeType,
+  PaymentProviderType,
+  PaymentStatusType,
+} from '@domain/property';
 import { PersistenceModel } from '@domain/shared';
 
 export interface PaymentEventLogPersistenceProps {
@@ -14,7 +18,10 @@ export interface PaymentEventLogPersistenceProps {
   readonly occurredAt: Date;
 }
 
-export class PaymentEventLogModel extends PersistenceModel<string, PaymentEventLogPersistenceProps> {
+export class PaymentEventLogModel extends PersistenceModel<
+  string,
+  PaymentEventLogPersistenceProps
+> {
   private constructor(props: PaymentEventLogPersistenceProps, id?: string) {
     super(props, id);
   }

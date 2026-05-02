@@ -15,9 +15,10 @@ export class MikroOrmReservationRepository implements ReservationRepositoryPort 
   async save(model: ReservationModel): Promise<ReservationModel> {
     const entity = PersistenceMapper.reservationToEntity(model);
     this.applyReferences(entity);
-    const existing = model.id === undefined
-      ? undefined
-      : await this.entityManager.findOne(ReservationEntity, { id: model.id });
+    const existing =
+      model.id === undefined
+        ? undefined
+        : await this.entityManager.findOne(ReservationEntity, { id: model.id });
 
     if (existing === undefined || existing === null) {
       entity.id = String(await this.entityManager.insert(ReservationEntity, entity));
@@ -47,7 +48,10 @@ export class MikroOrmReservationRepository implements ReservationRepositoryPort 
     return entity ? PersistenceMapper.reservationToDomain(entity) : undefined;
   }
 
-  async hasIncompleteReservationByMemberId(params: { memberId: string; now: Date }): Promise<boolean> {
+  async hasIncompleteReservationByMemberId(params: {
+    memberId: string;
+    now: Date;
+  }): Promise<boolean> {
     const entity = await this.entityManager.findOne(ReservationEntity, {
       member: params.memberId,
       status: { $in: ['PENDING', 'CONFIRMED'] },

@@ -29,7 +29,9 @@ export class SignupMemberCommandHandler {
     const existingPhoneMember = await this.memberRepository.findByPhoneNumber(command.phoneNumber);
     assertTrue(existingPhoneMember === undefined, () => new Error('PHONE_NUMBER_ALREADY_EXISTS'));
 
-    const verification = await this.phoneVerificationRepository.findById(command.phoneVerificationId);
+    const verification = await this.phoneVerificationRepository.findById(
+      command.phoneVerificationId,
+    );
     assertDefined(verification, () => new Error('PHONE_VERIFICATION_REQUIRED'));
     assertTrue(
       verification.phoneNumber === command.phoneNumber && verification.status === 'VERIFIED',

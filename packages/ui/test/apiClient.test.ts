@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  apiClient,
-  clearStoredAccessToken,
-  setStoredAccessToken,
-} from '@/lib/apiClient';
+import { apiClient, clearStoredAccessToken, setStoredAccessToken } from '@/lib/apiClient';
 
 describe('apiClient', () => {
   afterEach(() => {

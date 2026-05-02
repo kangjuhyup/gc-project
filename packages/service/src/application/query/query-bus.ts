@@ -32,6 +32,6 @@ export class QueryBus {
       throw new Error('QUERY_HANDLER_NOT_FOUND');
     }
 
-    return await handler.execute(query) as RESULT;
+    return (await handler.execute(query)) as RESULT;
   }
 }

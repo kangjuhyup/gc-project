@@ -24,7 +24,11 @@ describe('상영 좌석 상태 목록 e2e', () => {
 
     const holdForReservation = await e2e.createSeatHold(memberA, screeningId, [reservedSeat.id]);
     expect(holdForReservation.status).toBe(201);
-    const payment = await e2e.requestPayment(memberA, String((holdForReservation.body.holdIds as string[])[0]), 'pay-statuses-0001');
+    const payment = await e2e.requestPayment(
+      memberA,
+      String((holdForReservation.body.holdIds as string[])[0]),
+      'pay-statuses-0001',
+    );
     expect(payment.status).toBe(201);
     const callback = await e2e.approvePayment(payment.body);
     expect(callback.status).toBe(201);

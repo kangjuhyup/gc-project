@@ -128,7 +128,9 @@ export function SeatSelectionPage() {
             <dl>
               <div>
                 <dt>선택 좌석</dt>
-                <dd>{selectedSeats.length ? selectedSeats.map((seat) => seat.label).join(', ') : '-'}</dd>
+                <dd>
+                  {selectedSeats.length ? selectedSeats.map((seat) => seat.label).join(', ') : '-'}
+                </dd>
               </div>
               <div>
                 <dt>결제 예정 금액</dt>

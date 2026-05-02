@@ -1,9 +1,6 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { assertDefined } from '@application/assertions';
-import {
-  ConfirmPhoneVerificationCommand,
-  PhoneVerificationConfirmedDto,
-} from '../dto';
+import { ConfirmPhoneVerificationCommand, PhoneVerificationConfirmedDto } from '../dto';
 import { Transactional } from '../decorators';
 import type { ClockPort, PhoneVerificationRepositoryPort } from '../ports';
 

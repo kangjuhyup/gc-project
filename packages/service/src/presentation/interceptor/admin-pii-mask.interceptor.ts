@@ -148,7 +148,9 @@ export class AdminPiiMaskInterceptor implements NestInterceptor {
   }
 
   private requestPath(request: AdminPiiRequest): string {
-    return request.route?.path ?? request.originalUrl?.split('?')[0] ?? request.url?.split('?')[0] ?? '';
+    return (
+      request.route?.path ?? request.originalUrl?.split('?')[0] ?? request.url?.split('?')[0] ?? ''
+    );
   }
 
   private transform<RESPONSE extends PrivacyListResponse>(
@@ -163,7 +165,9 @@ export class AdminPiiMaskInterceptor implements NestInterceptor {
         ...Object.fromEntries(
           privacyFields.map((field) => [
             field.propertyKey,
-            masked ? this.maskValue(String(item[field.propertyKey] ?? ''), field.mask) : item[field.propertyKey],
+            masked
+              ? this.maskValue(String(item[field.propertyKey] ?? ''), field.mask)
+              : item[field.propertyKey],
           ]),
         ),
       })),

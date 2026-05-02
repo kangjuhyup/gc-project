@@ -30,7 +30,9 @@ import { AES256_STRING_ENCRYPTOR } from './tokens';
       provide: AES256_STRING_ENCRYPTOR,
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
-        new Aes256StringEncryptor(configService.getOrThrow<string>(ENV_KEY.PHONE_NUMBER_ENCRYPTION_KEY)),
+        new Aes256StringEncryptor(
+          configService.getOrThrow<string>(ENV_KEY.PHONE_NUMBER_ENCRYPTION_KEY),
+        ),
     },
     {
       provide: CLOCK,

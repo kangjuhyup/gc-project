@@ -8,7 +8,10 @@ export interface PaymentRepositoryPort extends RepositoryPort<PaymentModel> {
   findBySeatHoldIds(seatHoldIds: string[]): Promise<PaymentModel[]>;
   findSeatHoldIds(paymentId: string): Promise<string[]>;
   saveSeatHoldLinks(paymentId: string, seatHoldIds: string[]): Promise<void>;
-  findByMemberIdAndIdempotencyKey(memberId: string, idempotencyKey: string): Promise<PaymentModel | undefined>;
+  findByMemberIdAndIdempotencyKey(
+    memberId: string,
+    idempotencyKey: string,
+  ): Promise<PaymentModel | undefined>;
   findByIdForUpdate(id: string): Promise<PaymentModel | undefined>;
   findByReservationIdForUpdate(reservationId: string): Promise<PaymentModel | undefined>;
 }

@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { SeatHoldModel } from '@domain';
 import { CreateSeatHoldCommand, ReleaseSeatHoldCommand } from '@application/commands/dto';
-import { CreateSeatHoldCommandHandler, ReleaseSeatHoldCommandHandler } from '@application/commands/handlers';
+import {
+  CreateSeatHoldCommandHandler,
+  ReleaseSeatHoldCommandHandler,
+} from '@application/commands/handlers';
 import type {
   ClockPort,
   SeatHoldCachePort,
@@ -28,16 +31,14 @@ describe('CreateSeatHoldCommandHandler', () => {
       release: vi.fn(),
     } satisfies SeatHoldCachePort;
     const lock = {
-      acquire: vi.fn().mockResolvedValue({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' }),
+      acquire: vi
+        .fn()
+        .mockResolvedValue({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' }),
       release: vi.fn(),
     } satisfies SeatHoldLockPort;
-    const handler = new CreateSeatHoldCommandHandler(
-      repository,
-      cache,
-      lock,
-      clock,
-      { ttlSeconds: 3 },
-    );
+    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, clock, {
+      ttlSeconds: 3,
+    });
 
     const result = await handler.execute(
       CreateSeatHoldCommand.of({
@@ -55,8 +56,14 @@ describe('CreateSeatHoldCommandHandler', () => {
     });
     expect(repository.findUnavailableSeatIds).toHaveBeenCalledOnce();
     expect(cache.hold.mock.calls[0][1]).toBe(3);
-    expect(lock.release).toHaveBeenCalledWith({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' });
-    expect(repository.saveMany.mock.calls[0][0][0].expiresAt).toEqual(new Date('2026-04-29T00:00:03.000Z'));
+    expect(lock.release).toHaveBeenCalledWith({
+      screeningId: '101',
+      seatIds: ['1001', '1002'],
+      token: 'lock-token',
+    });
+    expect(repository.saveMany.mock.calls[0][0][0].expiresAt).toEqual(
+      new Date('2026-04-29T00:00:03.000Z'),
+    );
     expect(result).toEqual({
       screeningId: '101',
       seatIds: ['1001', '1002'],
@@ -81,15 +88,14 @@ describe('CreateSeatHoldCommandHandler', () => {
       release: vi.fn(),
     } satisfies SeatHoldCachePort;
     const lock = {
-      acquire: vi.fn().mockResolvedValue({ screeningId: '101', seatIds: ['1001'], token: 'lock-token' }),
+      acquire: vi
+        .fn()
+        .mockResolvedValue({ screeningId: '101', seatIds: ['1001'], token: 'lock-token' }),
       release: vi.fn(),
     } satisfies SeatHoldLockPort;
-    const handler = new CreateSeatHoldCommandHandler(
-      repository,
-      cache,
-      lock,
-      { now: vi.fn(() => now) },
-    );
+    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, {
+      now: vi.fn(() => now),
+    });
 
     await expect(
       handler.execute(
@@ -103,7 +109,11 @@ describe('CreateSeatHoldCommandHandler', () => {
 
     expect(cache.hold).not.toHaveBeenCalled();
     expect(repository.saveMany).not.toHaveBeenCalled();
-    expect(lock.release).toHaveBeenCalledWith({ screeningId: '101', seatIds: ['1001'], token: 'lock-token' });
+    expect(lock.release).toHaveBeenCalledWith({
+      screeningId: '101',
+      seatIds: ['1001'],
+      token: 'lock-token',
+    });
   });
 
   it('일부 Redis 임시점유가 실패하면 이미 잡은 Redis 키를 해제한다', async () => {
@@ -121,15 +131,14 @@ describe('CreateSeatHoldCommandHandler', () => {
       release: vi.fn(),
     } satisfies SeatHoldCachePort;
     const lock = {
-      acquire: vi.fn().mockResolvedValue({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' }),
+      acquire: vi
+        .fn()
+        .mockResolvedValue({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' }),
       release: vi.fn(),
     } satisfies SeatHoldLockPort;
-    const handler = new CreateSeatHoldCommandHandler(
-      repository,
-      cache,
-      lock,
-      { now: vi.fn(() => now) },
-    );
+    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, {
+      now: vi.fn(() => now),
+    });
 
     await expect(
       handler.execute(
@@ -142,7 +151,11 @@ describe('CreateSeatHoldCommandHandler', () => {
     ).rejects.toThrow('SEAT_ALREADY_HELD');
 
     expect(cache.release).toHaveBeenCalledWith('101', '1001');
-    expect(lock.release).toHaveBeenCalledWith({ screeningId: '101', seatIds: ['1001', '1002'], token: 'lock-token' });
+    expect(lock.release).toHaveBeenCalledWith({
+      screeningId: '101',
+      seatIds: ['1001', '1002'],
+      token: 'lock-token',
+    });
     expect(repository.saveMany).not.toHaveBeenCalled();
   });
 
@@ -164,12 +177,9 @@ describe('CreateSeatHoldCommandHandler', () => {
       acquire: vi.fn().mockResolvedValue(undefined),
       release: vi.fn(),
     } satisfies SeatHoldLockPort;
-    const handler = new CreateSeatHoldCommandHandler(
-      repository,
-      cache,
-      lock,
-      { now: vi.fn(() => now) },
-    );
+    const handler = new CreateSeatHoldCommandHandler(repository, cache, lock, {
+      now: vi.fn(() => now),
+    });
 
     await expect(
       handler.execute(
@@ -211,7 +221,9 @@ describe('ReleaseSeatHoldCommandHandler', () => {
     } satisfies SeatHoldCachePort;
     const handler = new ReleaseSeatHoldCommandHandler(repository, cache);
 
-    const result = await handler.execute(ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '1' }));
+    const result = await handler.execute(
+      ReleaseSeatHoldCommand.of({ holdId: 'hold-1', memberId: '1' }),
+    );
 
     expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'RELEASED' }));
     expect(cache.release).toHaveBeenCalledWith('101', '1001');

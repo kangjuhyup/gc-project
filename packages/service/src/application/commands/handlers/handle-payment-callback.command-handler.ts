@@ -134,8 +134,13 @@ export class HandlePaymentCallbackCommandHandler {
 
   @NoLog
   private async confirmReservation(payment: PaymentModel, now: Date): Promise<void> {
-    const seatHolds = await Promise.all(payment.seatHoldIds.map((seatHoldId) => this.seatHoldRepository.findById(seatHoldId)));
-    assertTrue(seatHolds.every((seatHold) => seatHold !== undefined), () => new Error('SEAT_HOLD_NOT_FOUND'));
+    const seatHolds = await Promise.all(
+      payment.seatHoldIds.map((seatHoldId) => this.seatHoldRepository.findById(seatHoldId)),
+    );
+    assertTrue(
+      seatHolds.every((seatHold) => seatHold !== undefined),
+      () => new Error('SEAT_HOLD_NOT_FOUND'),
+    );
 
     const payableSeatHolds = seatHolds.filter((seatHold) => seatHold !== undefined);
     const [firstSeatHold] = payableSeatHolds;

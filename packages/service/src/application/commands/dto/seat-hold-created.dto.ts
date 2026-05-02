@@ -10,7 +10,10 @@ export class SeatHoldCreatedDto {
   @ApiProperty({ example: ['9001', '9002'], description: 'DB에 저장된 좌석별 임시점유 ID 목록' })
   readonly holdIds: string[];
 
-  @ApiProperty({ example: 3, description: '좌석 임시점유 TTL(초). SEAT_HOLD_TTL_SECONDS 환경변수로 조정' })
+  @ApiProperty({
+    example: 3,
+    description: '좌석 임시점유 TTL(초). SEAT_HOLD_TTL_SECONDS 환경변수로 조정',
+  })
   readonly ttlSeconds: number;
 
   @ApiProperty({ example: '2026-04-29T01:00:03.000Z', description: '좌석 임시점유 만료 시각' })

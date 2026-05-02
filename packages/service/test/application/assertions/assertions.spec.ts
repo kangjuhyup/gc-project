@@ -7,11 +7,15 @@ describe('application assertions', () => {
   });
 
   it('값이 undefined이면 assertDefined는 지정한 에러를 던진다', () => {
-    expect(() => assertDefined(undefined, () => new Error('MEMBER_NOT_FOUND'))).toThrow('MEMBER_NOT_FOUND');
+    expect(() => assertDefined(undefined, () => new Error('MEMBER_NOT_FOUND'))).toThrow(
+      'MEMBER_NOT_FOUND',
+    );
   });
 
   it('배열이 비어있지 않으면 assertNonEmpty는 통과한다', () => {
-    expect(() => assertNonEmpty(['seat-1'], () => new Error('INVALID_SEAT_HOLD_REQUEST'))).not.toThrow();
+    expect(() =>
+      assertNonEmpty(['seat-1'], () => new Error('INVALID_SEAT_HOLD_REQUEST')),
+    ).not.toThrow();
   });
 
   it('배열이 비어있으면 assertNonEmpty는 지정한 에러를 던진다', () => {
@@ -25,6 +29,8 @@ describe('application assertions', () => {
   });
 
   it('조건이 false이면 assertTrue는 지정한 에러를 던진다', () => {
-    expect(() => assertTrue(false, () => new Error('CONDITION_FAILED'))).toThrow('CONDITION_FAILED');
+    expect(() => assertTrue(false, () => new Error('CONDITION_FAILED'))).toThrow(
+      'CONDITION_FAILED',
+    );
   });
 });

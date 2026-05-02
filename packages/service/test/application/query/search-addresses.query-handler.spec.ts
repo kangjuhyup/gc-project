@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AddressSearchItemDto, AddressSearchResultDto, SearchAddressesQuery } from '@application/query/dto';
+import {
+  AddressSearchItemDto,
+  AddressSearchResultDto,
+  SearchAddressesQuery,
+} from '@application/query/dto';
 import { SearchAddressesQueryHandler } from '@application/query/handlers';
 import type { AddressSearchPort } from '@application/query/ports';
 
@@ -31,7 +35,11 @@ describe('SearchAddressesQueryHandler', () => {
       search: vi.fn().mockResolvedValue(expected),
     } satisfies AddressSearchPort;
     const handler = new SearchAddressesQueryHandler(addressSearch);
-    const query = SearchAddressesQuery.of({ keyword: '테헤란로', currentPage: 2, countPerPage: 20 });
+    const query = SearchAddressesQuery.of({
+      keyword: '테헤란로',
+      currentPage: 2,
+      countPerPage: 20,
+    });
 
     const result = await handler.execute(query);
 

@@ -44,7 +44,11 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
   }
 
   async listSchedule(query: ListMovieScheduleQuery): Promise<MovieScheduleResultDto> {
-    const movie = await this.entityManager.findOne(MovieEntity, { id: query.movieId }, { populate: ['images'] });
+    const movie = await this.entityManager.findOne(
+      MovieEntity,
+      { id: query.movieId },
+      { populate: ['images'] },
+    );
 
     if (movie === null) {
       throw new Error('MOVIE_NOT_FOUND');
@@ -170,15 +174,16 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     const poster = movie.images
       ?.getItems()
       .filter((image) => image.imageType === 'POSTER')
-      .sort((left, right) => left.sortOrder - right.sortOrder || Number(left.id) - Number(right.id))[0];
+      .sort(
+        (left, right) => left.sortOrder - right.sortOrder || Number(left.id) - Number(right.id),
+      )[0];
 
     return poster?.url ?? movie.posterUrl;
   }
 
   @NoLog
   private compareCursor(row: MovieEntity, cursor: MovieCursor): number {
-    return row.title.localeCompare(cursor.title)
-      || Number(row.id) - cursor.movieId;
+    return row.title.localeCompare(cursor.title) || Number(row.id) - cursor.movieId;
   }
 
   @NoLog
@@ -217,12 +222,11 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     }
 
     try {
-      const decoded = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Partial<MovieCursor>;
+      const decoded = JSON.parse(
+        Buffer.from(cursor, 'base64url').toString('utf8'),
+      ) as Partial<MovieCursor>;
 
-      if (
-        typeof decoded.title !== 'string' ||
-        typeof decoded.movieId !== 'number'
-      ) {
+      if (typeof decoded.title !== 'string' || typeof decoded.movieId !== 'number') {
         throw new Error('INVALID_MOVIE_CURSOR');
       }
 
@@ -260,26 +264,27 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
 
   @NoLog
   private findScheduleRows(query: ListMovieScheduleQuery): Promise<ScreeningEntity[]> {
-    return this.entityManager.find(ScreeningEntity, {
-      movie: query.movieId,
-      startAt: {
-        $gte: query.startAt,
-        $lt: query.endAt,
-      },
-    }, {
-      populate: [
-        'screen.theater',
-        'reservationSeats.reservation',
-      ],
-      orderBy: {
-        screen: {
-          theater: { name: 'ASC' },
-          name: 'ASC',
+    return this.entityManager.find(
+      ScreeningEntity,
+      {
+        movie: query.movieId,
+        startAt: {
+          $gte: query.startAt,
+          $lt: query.endAt,
         },
-        startAt: 'ASC',
-        id: 'ASC',
       },
-    });
+      {
+        populate: ['screen.theater', 'reservationSeats.reservation'],
+        orderBy: {
+          screen: {
+            theater: { name: 'ASC' },
+            name: 'ASC',
+          },
+          startAt: 'ASC',
+          id: 'ASC',
+        },
+      },
+    );
   }
 
   @NoLog
@@ -303,8 +308,10 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
     const leftFirst = left[0];
     const rightFirst = right[0];
 
-    return leftFirst.screen.theater.name.localeCompare(rightFirst.screen.theater.name)
-      || Number(leftFirst.screen.theater.id) - Number(rightFirst.screen.theater.id);
+    return (
+      leftFirst.screen.theater.name.localeCompare(rightFirst.screen.theater.name) ||
+      Number(leftFirst.screen.theater.id) - Number(rightFirst.screen.theater.id)
+    );
   }
 
   @NoLog
@@ -318,7 +325,10 @@ export class MikroOrmMovieQueryRepository implements MovieQueryPort {
         address: theater.address,
       }),
       screenings: screenings
-        .sort((left, right) => left.startAt.getTime() - right.startAt.getTime() || Number(left.id) - Number(right.id))
+        .sort(
+          (left, right) =>
+            left.startAt.getTime() - right.startAt.getTime() || Number(left.id) - Number(right.id),
+        )
         .map((screening) => this.toScheduleScreeningDto(screening)),
     });
   }

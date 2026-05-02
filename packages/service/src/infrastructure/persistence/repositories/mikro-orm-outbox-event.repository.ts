@@ -15,20 +15,24 @@ export class MikroOrmOutboxEventRepository implements OutboxEventRepositoryPort 
     const entity = PersistenceMapper.outboxEventToEntity(model);
 
     if (model.id !== undefined) {
-      await this.entityManager.nativeUpdate(OutboxEventEntity, { id: model.id }, {
-        aggregateType: entity.aggregateType,
-        aggregateId: entity.aggregateId,
-        eventType: entity.eventType,
-        payload: entity.payload,
-        status: entity.status,
-        retryCount: entity.retryCount,
-        nextRetryAt: entity.nextRetryAt,
-        lockedUntil: entity.lockedUntil,
-        lastError: entity.lastError,
-        occurredAt: entity.occurredAt,
-        publishedAt: entity.publishedAt,
-        updatedAt: entity.updatedAt,
-      });
+      await this.entityManager.nativeUpdate(
+        OutboxEventEntity,
+        { id: model.id },
+        {
+          aggregateType: entity.aggregateType,
+          aggregateId: entity.aggregateId,
+          eventType: entity.eventType,
+          payload: entity.payload,
+          status: entity.status,
+          retryCount: entity.retryCount,
+          nextRetryAt: entity.nextRetryAt,
+          lockedUntil: entity.lockedUntil,
+          lastError: entity.lastError,
+          occurredAt: entity.occurredAt,
+          publishedAt: entity.publishedAt,
+          updatedAt: entity.updatedAt,
+        },
+      );
       return PersistenceMapper.outboxEventToDomain(entity);
     }
 
@@ -46,10 +50,7 @@ export class MikroOrmOutboxEventRepository implements OutboxEventRepositoryPort 
       OutboxEventEntity,
       {
         status: { $in: ['PENDING', 'FAILED'] },
-        $or: [
-          { nextRetryAt: undefined },
-          { nextRetryAt: { $lte: params.now } },
-        ],
+        $or: [{ nextRetryAt: undefined }, { nextRetryAt: { $lte: params.now } }],
       },
       {
         limit: params.limit,

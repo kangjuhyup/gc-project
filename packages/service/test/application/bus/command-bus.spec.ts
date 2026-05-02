@@ -32,6 +32,8 @@ describe('CommandBus', () => {
   it('등록되지 않은 command는 명시적인 에러로 거부한다', async () => {
     const bus = CommandBus.of([]);
 
-    await expect(bus.execute(UnregisteredCommand.of())).rejects.toThrow('COMMAND_HANDLER_NOT_FOUND');
+    await expect(bus.execute(UnregisteredCommand.of())).rejects.toThrow(
+      'COMMAND_HANDLER_NOT_FOUND',
+    );
   });
 });

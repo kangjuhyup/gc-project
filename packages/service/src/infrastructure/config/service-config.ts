@@ -68,10 +68,7 @@ export type ServiceEnvKey = ApiEnvKey | WorkerEnvKey;
 export const ENV_KEY: { [K in ServiceEnvKey]: K } = Object.keys({
   ...apiServiceEnvSpec,
   ...workerServiceEnvSpec,
-}).reduce(
-  (acc, key) => ({ ...acc, [key]: key }),
-  {} as { [K in ServiceEnvKey]: K },
-);
+}).reduce((acc, key) => ({ ...acc, [key]: key }), {} as { [K in ServiceEnvKey]: K });
 
 export const serviceValidationOptions = {
   abortEarly: false,
@@ -90,9 +87,7 @@ export function validateWorkerConfig(config: RawConfig): RawConfig {
 }
 
 export function validateServiceConfig(config: RawConfig, process: ServiceProcess): RawConfig {
-  const validationSchema = process === 'api'
-    ? apiValidationSchema
-    : workerValidationSchema;
+  const validationSchema = process === 'api' ? apiValidationSchema : workerValidationSchema;
   const { error, value } = validationSchema.validate(config, serviceValidationOptions);
 
   if (error) {
@@ -109,10 +104,11 @@ function createValidationSchema(envSpec: EnvSpec): Joi.ObjectSchema {
 }
 
 type EnvSpecToType<T extends EnvSpec> = {
-  [K in keyof T]:
-    T[K]['joi'] extends Joi.NumberSchema ? number
-      : T[K]['joi'] extends Joi.BooleanSchema ? boolean
-        : string;
+  [K in keyof T]: T[K]['joi'] extends Joi.NumberSchema
+    ? number
+    : T[K]['joi'] extends Joi.BooleanSchema
+      ? boolean
+      : string;
 };
 
 export type ApiEnvironmentVariables = EnvSpecToType<typeof apiServiceEnvSpec>;

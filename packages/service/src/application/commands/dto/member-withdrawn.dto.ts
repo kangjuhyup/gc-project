@@ -10,11 +10,7 @@ export class MemberWithdrawnDto {
   @ApiProperty({ example: true, description: '회원탈퇴 완료 여부' })
   readonly withdrawn: boolean;
 
-  private constructor(
-    memberId: string,
-    userId: string,
-    withdrawn: boolean,
-  ) {
+  private constructor(memberId: string, userId: string, withdrawn: boolean) {
     this.memberId = memberId;
     this.userId = userId;
     this.withdrawn = withdrawn;

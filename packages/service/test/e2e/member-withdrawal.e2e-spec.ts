@@ -28,8 +28,14 @@ describe('회원탈퇴 e2e', () => {
       withdrawn: true,
     });
 
-    expect(await e2e.countRows('member', "id = ? AND status = 'WITHDRAWN'", [member.memberId])).toBe(1);
-    expect(await e2e.countRows('member_refresh_token', 'member_id = ? AND revoked_at IS NOT NULL', [member.memberId])).toBe(1);
+    expect(
+      await e2e.countRows('member', "id = ? AND status = 'WITHDRAWN'", [member.memberId]),
+    ).toBe(1);
+    expect(
+      await e2e.countRows('member_refresh_token', 'member_id = ? AND revoked_at IS NOT NULL', [
+        member.memberId,
+      ]),
+    ).toBe(1);
 
     const login = await e2e.post('/members/login', {
       userId: member.userId,
@@ -52,7 +58,9 @@ describe('회원탈퇴 e2e', () => {
       phoneNumber: '01091000001',
     });
     expect(firstSignup.status).toBe(201);
-    const storedMember = await e2e.orm.em.fork().findOne(MemberEntity, { id: String(firstSignup.body.memberId) });
+    const storedMember = await e2e.orm.em
+      .fork()
+      .findOne(MemberEntity, { id: String(firstSignup.body.memberId) });
     expect(storedMember?.phoneNumber).toMatch(/^aes256-cbc:v1:/);
     expect(storedMember?.phoneNumber).not.toBe('01091000001');
 
@@ -86,7 +94,9 @@ async function signup(
   e2e: ServiceE2eContext,
   params: { userId: string; password: string; phoneNumber: string },
 ) {
-  const phoneVerification = await e2e.post('/phone-verifications', { phoneNumber: params.phoneNumber });
+  const phoneVerification = await e2e.post('/phone-verifications', {
+    phoneNumber: params.phoneNumber,
+  });
   expect(phoneVerification.status).toBe(201);
 
   const confirmed = await e2e.post('/phone-verifications/confirm', {

@@ -64,8 +64,18 @@ describe('paymentSummary', () => {
 
   it('여러 예매 상세를 결제 완료 화면 요약으로 합산한다', () => {
     const reservations: ReservationDetail[] = [
-      reservationDetail({ id: '5001', reservationNumber: 'R00000000000005001', seats: ['A1'], paymentAmount: 14000 }),
-      reservationDetail({ id: '5002', reservationNumber: 'R00000000000005002', seats: ['A2'], paymentAmount: 14000 }),
+      reservationDetail({
+        id: '5001',
+        reservationNumber: 'R00000000000005001',
+        seats: ['A1'],
+        paymentAmount: 14000,
+      }),
+      reservationDetail({
+        id: '5002',
+        reservationNumber: 'R00000000000005002',
+        seats: ['A2'],
+        paymentAmount: 14000,
+      }),
     ];
 
     expect(summarizePaymentCompleteReservations({ reservations })).toEqual({
@@ -103,9 +113,7 @@ describe('paymentSummary', () => {
   });
 });
 
-function reservationDetail(
-  overrides: Partial<ReservationDetail> = {},
-): ReservationDetail {
+function reservationDetail(overrides: Partial<ReservationDetail> = {}): ReservationDetail {
   return {
     id: '5001',
     reservationNumber: 'R00000000000005001',

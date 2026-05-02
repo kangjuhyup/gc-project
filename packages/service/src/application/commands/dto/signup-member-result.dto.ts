@@ -7,10 +7,7 @@ export class SignupMemberResultDto {
   @ApiProperty({ example: 'movie_user', description: '회원 로그인 ID' })
   readonly userId: string;
 
-  private constructor(
-    memberId: string,
-    userId: string,
-  ) {
+  private constructor(memberId: string, userId: string) {
     this.memberId = memberId;
     this.userId = userId;
   }

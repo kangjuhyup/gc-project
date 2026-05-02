@@ -4,7 +4,10 @@ export class IssueTemporaryPasswordCommand {
     readonly phoneVerificationId: string,
   ) {}
 
-  static of(params: { userId: string; phoneVerificationId: string }): IssueTemporaryPasswordCommand {
+  static of(params: {
+    userId: string;
+    phoneVerificationId: string;
+  }): IssueTemporaryPasswordCommand {
     return new IssueTemporaryPasswordCommand(params.userId, params.phoneVerificationId);
   }
 }

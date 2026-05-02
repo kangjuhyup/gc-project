@@ -34,9 +34,11 @@ describe('회원 토큰 재발급 e2e', () => {
     });
     expect(refresh.body.accessToken).not.toBe(member.accessToken);
     expect(refresh.body.refreshToken).not.toBe(member.refreshToken);
-    expect(await e2e.countRows('member_refresh_token', 'member_id = ? AND revoked_at IS NOT NULL', [
-      member.memberId,
-    ])).toBe(1);
+    expect(
+      await e2e.countRows('member_refresh_token', 'member_id = ? AND revoked_at IS NOT NULL', [
+        member.memberId,
+      ]),
+    ).toBe(1);
 
     const oldTokenRefresh = await e2e.post('/members/token/refresh', {
       refreshToken: member.refreshToken,
@@ -44,9 +46,13 @@ describe('회원 토큰 재발급 e2e', () => {
     expect(oldTokenRefresh.status).toBe(401);
     expect(oldTokenRefresh.body.message).toBe('INVALID_REFRESH_TOKEN');
 
-    const logout = await e2e.post('/members/logout', {}, {
-      Authorization: `Bearer ${String(refresh.body.accessToken)}`,
-    });
+    const logout = await e2e.post(
+      '/members/logout',
+      {},
+      {
+        Authorization: `Bearer ${String(refresh.body.accessToken)}`,
+      },
+    );
     expect(logout.status).toBe(201);
   });
 

@@ -9,11 +9,7 @@ export class ConfirmPhoneVerificationCommand {
   @MaskLog({ type: 'full' })
   readonly code: string;
 
-  private constructor(params: {
-    verificationId: string;
-    phoneNumber: string;
-    code: string;
-  }) {
+  private constructor(params: { verificationId: string; phoneNumber: string; code: string }) {
     this.verificationId = params.verificationId;
     this.phoneNumber = params.phoneNumber;
     this.code = params.code;

@@ -77,34 +77,39 @@ describe('movie timeline', () => {
   });
 
   it('선택한 영화관의 상영만 남기고 영화 목록을 필터링한다', () => {
-    const filtered = filterMoviesForTheater([
-      {
-        ...movies[0],
-        screenings: [
-          movies[0].screenings[0],
-          {
-            ...movies[0].screenings[0],
-            id: 12,
-            theater: {
-              id: 2,
-              name: 'GC 시네마 홍대',
-              address: '서울특별시 마포구 양화로 160',
+    const filtered = filterMoviesForTheater(
+      [
+        {
+          ...movies[0],
+          screenings: [
+            movies[0].screenings[0],
+            {
+              ...movies[0].screenings[0],
+              id: 12,
+              theater: {
+                id: 2,
+                name: 'GC 시네마 홍대',
+                address: '서울특별시 마포구 양화로 160',
+              },
             },
-          },
-        ],
-      },
-      {
-        ...movies[1],
-        screenings: [{
-          ...movies[1].screenings[0],
-          theater: {
-            id: 2,
-            name: 'GC 시네마 홍대',
-            address: '서울특별시 마포구 양화로 160',
-          },
-        }],
-      },
-    ], 1);
+          ],
+        },
+        {
+          ...movies[1],
+          screenings: [
+            {
+              ...movies[1].screenings[0],
+              theater: {
+                id: 2,
+                name: 'GC 시네마 홍대',
+                address: '서울특별시 마포구 양화로 160',
+              },
+            },
+          ],
+        },
+      ],
+      1,
+    );
 
     expect(filtered).toHaveLength(1);
     expect(filtered[0].id).toBe(1);

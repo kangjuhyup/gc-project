@@ -63,9 +63,6 @@ export class Aes256StringEncryptor {
   }
 
   private mac(iv: Buffer, encrypted: Buffer): Buffer {
-    return createHmac('sha256', this.macKey)
-      .update(iv)
-      .update(encrypted)
-      .digest();
+    return createHmac('sha256', this.macKey).update(iv).update(encrypted).digest();
   }
 }

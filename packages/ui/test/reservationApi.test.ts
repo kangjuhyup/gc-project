@@ -23,7 +23,7 @@ describe('reservationApi', () => {
               reservationNumber: 'R00000000000005001',
               status: 'CONFIRMED',
               totalPrice: 30000,
-          createdAt: '2026-04-30T10:20:00.000Z',
+              createdAt: '2026-04-30T10:20:00.000Z',
               movie: {
                 id: '1',
                 title: '파묘',

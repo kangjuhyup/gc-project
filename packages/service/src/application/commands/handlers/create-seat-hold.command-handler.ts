@@ -98,13 +98,23 @@ export class CreateSeatHoldCommandHandler {
   }
 
   @NoLog
-  private async ensureSeatsBelongToScreening(screeningId: string, seatIds: string[]): Promise<void> {
-    const matchedSeatIds = await this.seatHoldRepository.findSeatIdsInScreening({ screeningId, seatIds });
+  private async ensureSeatsBelongToScreening(
+    screeningId: string,
+    seatIds: string[],
+  ): Promise<void> {
+    const matchedSeatIds = await this.seatHoldRepository.findSeatIdsInScreening({
+      screeningId,
+      seatIds,
+    });
     assertTrue(matchedSeatIds.length === seatIds.length, () => new Error('SEAT_NOT_FOUND'));
   }
 
   @NoLog
-  private async ensureSeatsAvailable(screeningId: string, seatIds: string[], now: Date): Promise<void> {
+  private async ensureSeatsAvailable(
+    screeningId: string,
+    seatIds: string[],
+    now: Date,
+  ): Promise<void> {
     const unavailableSeatIds = await this.seatHoldRepository.findUnavailableSeatIds({
       screeningId,
       seatIds,

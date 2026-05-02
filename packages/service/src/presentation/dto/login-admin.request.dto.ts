@@ -9,7 +9,12 @@ export class LoginAdminRequestDto {
   @MaxLength(50)
   readonly userId!: string;
 
-  @ApiProperty({ example: 'admin-password123!', minLength: 8, maxLength: 72, description: '관리자 비밀번호' })
+  @ApiProperty({
+    example: 'admin-password123!',
+    minLength: 8,
+    maxLength: 72,
+    description: '관리자 비밀번호',
+  })
   @IsString()
   @MinLength(8)
   @MaxLength(72)

@@ -380,7 +380,9 @@ export async function resolveMockApi({
     const keyword = url.searchParams.get('keyword') ?? '';
 
     return toMockResponse({
-      items: filterMoviesForKeyword(demoMovies, keyword).map(({ screenings: _screenings, ...movie }) => movie),
+      items: filterMoviesForKeyword(demoMovies, keyword).map(
+        ({ screenings: _screenings, ...movie }) => movie,
+      ),
       hasNext: false,
     });
   }
@@ -396,10 +398,13 @@ export async function resolveMockApi({
       return null;
     }
 
-    const theaters = new Map<number, {
-      theater: { id: number; name: string; address: string };
-      screenings: NonNullable<typeof movie.screenings>;
-    }>();
+    const theaters = new Map<
+      number,
+      {
+        theater: { id: number; name: string; address: string };
+        screenings: NonNullable<typeof movie.screenings>;
+      }
+    >();
 
     (movie.screenings ?? [])
       .filter((screening) => screening.startAt.slice(0, 10) === date)
@@ -481,7 +486,9 @@ export async function resolveMockApi({
     const movie = demoMovies.find((currentMovie) =>
       (currentMovie.screenings ?? []).some((screening) => screening.id === screeningId),
     );
-    const screening = movie?.screenings?.find((currentScreening) => currentScreening.id === screeningId);
+    const screening = movie?.screenings?.find(
+      (currentScreening) => currentScreening.id === screeningId,
+    );
 
     if (!movie || !screening) {
       return null;
@@ -610,7 +617,9 @@ function getMockSeatStatus(screeningId: number, seatNumber: number): SeatSummary
 
 function findMockScreening(screeningId: number) {
   for (const movie of demoMovies) {
-    const screening = movie.screenings?.find((currentScreening) => currentScreening.id === screeningId);
+    const screening = movie.screenings?.find(
+      (currentScreening) => currentScreening.id === screeningId,
+    );
 
     if (screening) {
       return {

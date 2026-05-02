@@ -27,18 +27,16 @@ export function useLoginPage() {
     },
   });
 
-  const handleChange =
-    (field: keyof LoginFormValues) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setValues((current) => ({
-        ...current,
-        [field]: event.target.value,
-      }));
-      setErrors((current) => ({
-        ...current,
-        [field]: undefined,
-      }));
-    };
+  const handleChange = (field: keyof LoginFormValues) => (event: ChangeEvent<HTMLInputElement>) => {
+    setValues((current) => ({
+      ...current,
+      [field]: event.target.value,
+    }));
+    setErrors((current) => ({
+      ...current,
+      [field]: undefined,
+    }));
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

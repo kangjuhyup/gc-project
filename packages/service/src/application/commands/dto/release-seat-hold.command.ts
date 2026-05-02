@@ -4,10 +4,7 @@ export class ReleaseSeatHoldCommand {
     readonly memberId: string,
   ) {}
 
-  static of(params: {
-    holdId: string;
-    memberId: string;
-  }): ReleaseSeatHoldCommand {
+  static of(params: { holdId: string; memberId: string }): ReleaseSeatHoldCommand {
     return new ReleaseSeatHoldCommand(params.holdId, params.memberId);
   }
 }

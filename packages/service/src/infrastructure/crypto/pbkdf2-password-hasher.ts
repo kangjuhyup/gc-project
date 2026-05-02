@@ -20,7 +20,12 @@ export class Pbkdf2PasswordHasher implements PasswordHasherPort {
   @NoLog
   async verify(params: { password: string; passwordHash: string }): Promise<boolean> {
     const [algorithm, iterations, salt, hash] = params.passwordHash.split('$');
-    if (algorithm !== 'pbkdf2' || iterations === undefined || salt === undefined || hash === undefined) {
+    if (
+      algorithm !== 'pbkdf2' ||
+      iterations === undefined ||
+      salt === undefined ||
+      hash === undefined
+    ) {
       return false;
     }
 

@@ -54,12 +54,14 @@ import {
     GetHealthQueryHandler,
     {
       provide: CheckUserIdAvailabilityQueryHandler,
-      useFactory: (memberQuery: MemberQueryPort) => new CheckUserIdAvailabilityQueryHandler(memberQuery),
+      useFactory: (memberQuery: MemberQueryPort) =>
+        new CheckUserIdAvailabilityQueryHandler(memberQuery),
       inject: [MEMBER_QUERY],
     },
     {
       provide: SearchAddressesQueryHandler,
-      useFactory: (addressSearch: AddressSearchPort) => new SearchAddressesQueryHandler(addressSearch),
+      useFactory: (addressSearch: AddressSearchPort) =>
+        new SearchAddressesQueryHandler(addressSearch),
       inject: [ADDRESS_SEARCH],
     },
     {
@@ -89,7 +91,8 @@ import {
     },
     {
       provide: ListTheaterScheduleQueryHandler,
-      useFactory: (theaterQuery: TheaterQueryPort) => new ListTheaterScheduleQueryHandler(theaterQuery),
+      useFactory: (theaterQuery: TheaterQueryPort) =>
+        new ListTheaterScheduleQueryHandler(theaterQuery),
       inject: [THEATER_QUERY],
     },
     {
@@ -104,12 +107,14 @@ import {
     },
     {
       provide: GetMyReservationQueryHandler,
-      useFactory: (reservationQuery: ReservationQueryPort) => new GetMyReservationQueryHandler(reservationQuery),
+      useFactory: (reservationQuery: ReservationQueryPort) =>
+        new GetMyReservationQueryHandler(reservationQuery),
       inject: [RESERVATION_QUERY],
     },
     {
       provide: ListMyReservationsQueryHandler,
-      useFactory: (reservationQuery: ReservationQueryPort) => new ListMyReservationsQueryHandler(reservationQuery),
+      useFactory: (reservationQuery: ReservationQueryPort) =>
+        new ListMyReservationsQueryHandler(reservationQuery),
       inject: [RESERVATION_QUERY],
     },
     {

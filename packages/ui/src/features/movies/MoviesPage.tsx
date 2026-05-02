@@ -240,7 +240,11 @@ function TheaterSchedulePanel({
                   {movie.genre} · {movie.rating} · {movie.runningTime}분
                 </p>
               </header>
-              <ScreeningButtons movieId={movie.id} movieTitle={movie.title} screenings={movie.screenings} />
+              <ScreeningButtons
+                movieId={movie.id}
+                movieTitle={movie.title}
+                screenings={movie.screenings}
+              />
             </section>
           ))}
         </div>

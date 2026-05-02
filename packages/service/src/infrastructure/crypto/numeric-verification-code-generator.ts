@@ -6,6 +6,8 @@ import type { VerificationCodeGeneratorPort } from '@application/commands/ports'
 @Logging
 export class NumericVerificationCodeGenerator implements VerificationCodeGeneratorPort {
   generate(): string {
-    return Math.floor(Math.random() * 1_000_000).toString().padStart(6, '0');
+    return Math.floor(Math.random() * 1_000_000)
+      .toString()
+      .padStart(6, '0');
   }
 }

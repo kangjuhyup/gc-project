@@ -2,7 +2,10 @@ import { Entity, Index, ManyToOne, PrimaryKey, Property, Rel } from '@mikro-orm/
 import { MovieEntity } from './movie.entity';
 
 @Entity({ tableName: 'movie_image' })
-@Index({ name: 'idx_movie_image_movie_type_order', properties: ['movie', 'imageType', 'sortOrder'] })
+@Index({
+  name: 'idx_movie_image_movie_type_order',
+  properties: ['movie', 'imageType', 'sortOrder'],
+})
 export class MovieImageEntity {
   @PrimaryKey({ type: 'bigint' })
   id!: string;

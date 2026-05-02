@@ -73,7 +73,10 @@ export class TheaterScheduleMovieDto {
   @ApiProperty({ example: 'https://images.example.com/poster.jpg', description: '대표 포스터 URL' })
   readonly posterUrl: string;
 
-  @ApiProperty({ type: [TheaterScheduleScreeningDto], description: '해당 영화관의 일자별 상영 시간표' })
+  @ApiProperty({
+    type: [TheaterScheduleScreeningDto],
+    description: '해당 영화관의 일자별 상영 시간표',
+  })
   readonly screenings: TheaterScheduleScreeningDto[];
 
   private constructor(params: {

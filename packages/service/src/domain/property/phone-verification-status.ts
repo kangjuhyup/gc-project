@@ -4,4 +4,5 @@ export const PhoneVerificationStatus = {
   EXPIRED: 'EXPIRED',
 } as const;
 
-export type PhoneVerificationStatus = (typeof PhoneVerificationStatus)[keyof typeof PhoneVerificationStatus];
+export type PhoneVerificationStatus =
+  (typeof PhoneVerificationStatus)[keyof typeof PhoneVerificationStatus];

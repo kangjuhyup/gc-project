@@ -15,9 +15,7 @@ export interface LocalPaymentGatewayOptions {
 @Injectable()
 @Logging
 export class LocalPaymentGateway implements PaymentGatewayPort {
-  constructor(
-    private readonly options: LocalPaymentGatewayOptions,
-  ) {}
+  constructor(private readonly options: LocalPaymentGatewayOptions) {}
 
   async request(params: {
     paymentId: string;

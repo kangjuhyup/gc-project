@@ -1,9 +1,6 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { PhoneVerificationModel } from '@domain';
-import {
-  PhoneVerificationIssuedDto,
-  RequestPhoneVerificationCommand,
-} from '../dto';
+import { PhoneVerificationIssuedDto, RequestPhoneVerificationCommand } from '../dto';
 import { Transactional } from '../decorators';
 import type {
   ClockPort,

@@ -42,7 +42,13 @@ export class ScreeningSeatSummaryDto {
     type: string;
     status: SeatAvailabilityStatusType;
   }): ScreeningSeatSummaryDto {
-    return new ScreeningSeatSummaryDto(params.id, params.row, params.col, params.type, params.status);
+    return new ScreeningSeatSummaryDto(
+      params.id,
+      params.row,
+      params.col,
+      params.type,
+      params.status,
+    );
   }
 }
 
@@ -53,10 +59,7 @@ export class ScreeningSeatListResultDto {
   @ApiProperty({ type: [ScreeningSeatSummaryDto], description: '상영관 좌석 목록' })
   readonly seats: ScreeningSeatSummaryDto[];
 
-  private constructor(
-    screeningId: string,
-    seats: ScreeningSeatSummaryDto[],
-  ) {
+  private constructor(screeningId: string, seats: ScreeningSeatSummaryDto[]) {
     this.screeningId = screeningId;
     this.seats = seats;
   }

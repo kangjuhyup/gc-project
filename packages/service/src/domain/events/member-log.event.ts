@@ -7,7 +7,11 @@ export class MemberSignedUpLogEvent implements DomainEvent {
     readonly occurredAt: Date,
   ) {}
 
-  static of(params: { memberId: string; userId: string; occurredAt: Date }): MemberSignedUpLogEvent {
+  static of(params: {
+    memberId: string;
+    userId: string;
+    occurredAt: Date;
+  }): MemberSignedUpLogEvent {
     return new MemberSignedUpLogEvent(params.memberId, params.userId, params.occurredAt);
   }
 }
@@ -26,7 +30,12 @@ export class LoginFailedLogEvent implements DomainEvent {
     locked: boolean;
     occurredAt: Date;
   }): LoginFailedLogEvent {
-    return new LoginFailedLogEvent(params.userId, params.failedLoginCount, params.locked, params.occurredAt);
+    return new LoginFailedLogEvent(
+      params.userId,
+      params.failedLoginCount,
+      params.locked,
+      params.occurredAt,
+    );
   }
 }
 
@@ -37,7 +46,11 @@ export class LoginSucceededLogEvent implements DomainEvent {
     readonly occurredAt: Date,
   ) {}
 
-  static of(params: { memberId: string; userId: string; occurredAt: Date }): LoginSucceededLogEvent {
+  static of(params: {
+    memberId: string;
+    userId: string;
+    occurredAt: Date;
+  }): LoginSucceededLogEvent {
     return new LoginSucceededLogEvent(params.memberId, params.userId, params.occurredAt);
   }
 }
@@ -49,7 +62,11 @@ export class MemberPasswordChangedLogEvent implements DomainEvent {
     readonly occurredAt: Date,
   ) {}
 
-  static of(params: { memberId: string; userId: string; occurredAt: Date }): MemberPasswordChangedLogEvent {
+  static of(params: {
+    memberId: string;
+    userId: string;
+    occurredAt: Date;
+  }): MemberPasswordChangedLogEvent {
     return new MemberPasswordChangedLogEvent(params.memberId, params.userId, params.occurredAt);
   }
 }
@@ -61,7 +78,11 @@ export class MemberWithdrawnLogEvent implements DomainEvent {
     readonly occurredAt: Date,
   ) {}
 
-  static of(params: { memberId: string; userId: string; occurredAt: Date }): MemberWithdrawnLogEvent {
+  static of(params: {
+    memberId: string;
+    userId: string;
+    occurredAt: Date;
+  }): MemberWithdrawnLogEvent {
     return new MemberWithdrawnLogEvent(params.memberId, params.userId, params.occurredAt);
   }
 }

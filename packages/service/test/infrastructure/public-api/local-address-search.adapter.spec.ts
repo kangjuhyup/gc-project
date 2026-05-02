@@ -34,9 +34,7 @@ describe('LocalAddressSearchAdapter', () => {
   it('검색어가 없으면 빈 목록을 반환한다', async () => {
     const adapter = new LocalAddressSearchAdapter();
 
-    const result = await adapter.search(
-      SearchAddressesQuery.of({ keyword: '존재하지않는주소' }),
-    );
+    const result = await adapter.search(SearchAddressesQuery.of({ keyword: '존재하지않는주소' }));
 
     expect(result.totalCount).toBe(0);
     expect(result.items).toEqual([]);

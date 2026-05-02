@@ -23,8 +23,7 @@ export function usePasswordChangePage() {
   const formErrors = useMemo(() => validatePasswordChangeForm(values), [values]);
 
   const handleChange =
-    (field: keyof PasswordChangeFormValues) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
+    (field: keyof PasswordChangeFormValues) => (event: ChangeEvent<HTMLInputElement>) => {
       setValues((current) => ({
         ...current,
         [field]: event.target.value,

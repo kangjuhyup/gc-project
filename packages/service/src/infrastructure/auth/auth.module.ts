@@ -13,10 +13,7 @@ import { MemberIdAuthorizationVerifier } from './member-id-authorization-verifie
 import { RoutingTokenRepository } from './routing-token.repository';
 
 @Module({
-  imports: [
-    PersistenceModule,
-    CacheModule,
-  ],
+  imports: [PersistenceModule, CacheModule],
   providers: [
     {
       provide: TOKEN_REPOSITORY,
@@ -24,10 +21,8 @@ import { RoutingTokenRepository } from './routing-token.repository';
     },
     {
       provide: AUTHORIZATION_VERIFIER,
-      useFactory: (
-        memberRepository: MemberRepositoryPort,
-        tokenRepository: TokenRepositoryPort,
-      ) => new MemberIdAuthorizationVerifier(memberRepository, tokenRepository),
+      useFactory: (memberRepository: MemberRepositoryPort, tokenRepository: TokenRepositoryPort) =>
+        new MemberIdAuthorizationVerifier(memberRepository, tokenRepository),
       inject: [MEMBER_REPOSITORY, TOKEN_REPOSITORY],
     },
     {

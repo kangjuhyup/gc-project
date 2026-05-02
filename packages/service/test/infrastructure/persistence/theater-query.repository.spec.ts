@@ -11,7 +11,7 @@ describe('MikroOrmTheaterQueryRepository', () => {
           name: 'GC 시네마 강남',
           address: '서울특별시 강남구 테헤란로 427',
           latitude: 37.5065,
-          longitude: 127.0530,
+          longitude: 127.053,
         },
       ]),
     };
@@ -19,7 +19,11 @@ describe('MikroOrmTheaterQueryRepository', () => {
 
     const result = await repository.list(ListTheatersQuery.of({}));
 
-    expect(entityManager.find).toHaveBeenCalledWith(expect.any(Function), {}, { orderBy: { id: 'ASC' } });
+    expect(entityManager.find).toHaveBeenCalledWith(
+      expect.any(Function),
+      {},
+      { orderBy: { id: 'ASC' } },
+    );
     expect(result.items[0]?.distanceMeters).toBeUndefined();
     expect(result.items[0]?.latitude).toBe(37.5065);
   });
@@ -32,7 +36,7 @@ describe('MikroOrmTheaterQueryRepository', () => {
           name: 'GC 시네마 강남',
           address: '서울특별시 강남구 테헤란로 427',
           latitude: 37.5065,
-          longitude: 127.0530,
+          longitude: 127.053,
         },
       ]),
     };
@@ -42,7 +46,11 @@ describe('MikroOrmTheaterQueryRepository', () => {
       ListTheatersQuery.of({ latitude: 37.5, longitude: 127.05 }),
     );
 
-    expect(entityManager.find).toHaveBeenCalledWith(expect.any(Function), {}, { orderBy: { id: 'ASC' } });
+    expect(entityManager.find).toHaveBeenCalledWith(
+      expect.any(Function),
+      {},
+      { orderBy: { id: 'ASC' } },
+    );
     expect(result.items[0]?.distanceMeters).toBeCloseTo(769.7, 1);
   });
 });

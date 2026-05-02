@@ -101,6 +101,8 @@ describe('paymentApi', () => {
       randomUUID: () => 'payment-uuid',
     });
 
-    expect(createPaymentIdempotencyKey(['9001', '9002', '9003'])).toBe('pay-9001-9002-9003-payment-uuid');
+    expect(createPaymentIdempotencyKey(['9001', '9002', '9003'])).toBe(
+      'pay-9001-9002-9003-payment-uuid',
+    );
   });
 });

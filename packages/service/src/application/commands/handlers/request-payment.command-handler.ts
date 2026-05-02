@@ -50,8 +50,13 @@ export class RequestPaymentCommandHandler {
       return this.toResult(existingIdempotentPayment);
     }
 
-    const seatHolds = await Promise.all(seatHoldIds.map((seatHoldId) => this.seatHoldRepository.findById(seatHoldId)));
-    assertTrue(seatHolds.every((seatHold) => seatHold !== undefined), () => new Error('SEAT_HOLD_NOT_FOUND'));
+    const seatHolds = await Promise.all(
+      seatHoldIds.map((seatHoldId) => this.seatHoldRepository.findById(seatHoldId)),
+    );
+    assertTrue(
+      seatHolds.every((seatHold) => seatHold !== undefined),
+      () => new Error('SEAT_HOLD_NOT_FOUND'),
+    );
 
     const payableSeatHolds = seatHolds.filter((seatHold) => seatHold !== undefined);
     payableSeatHolds.forEach((seatHold) => seatHold.assertPayableBy(command.memberId));

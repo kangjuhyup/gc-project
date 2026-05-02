@@ -7,18 +7,12 @@ export class ListTheatersQuery {
   @MaskLog({ type: 'full' })
   readonly longitude?: number;
 
-  private constructor(params: {
-    latitude?: number;
-    longitude?: number;
-  }) {
+  private constructor(params: { latitude?: number; longitude?: number }) {
     this.latitude = params.latitude;
     this.longitude = params.longitude;
   }
 
-  static of(params: {
-    latitude?: number;
-    longitude?: number;
-  }): ListTheatersQuery {
+  static of(params: { latitude?: number; longitude?: number }): ListTheatersQuery {
     return new ListTheatersQuery(params);
   }
 

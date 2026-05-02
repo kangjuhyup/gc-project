@@ -45,9 +45,7 @@ import { PaymentOutboxWorker } from './payment-outbox-worker';
           clock,
           orm,
           {
-            enabled: configService.getOrThrow<boolean>(
-              ENV_KEY.PAYMENT_OUTBOX_WORKER_ENABLED,
-            ),
+            enabled: configService.getOrThrow<boolean>(ENV_KEY.PAYMENT_OUTBOX_WORKER_ENABLED),
             intervalMilliseconds: configService.getOrThrow<number>(
               ENV_KEY.PAYMENT_OUTBOX_WORKER_INTERVAL_MS,
             ),

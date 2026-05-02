@@ -5,7 +5,11 @@ export class ListMyReservationsQuery {
     readonly cursor?: string,
   ) {}
 
-  static of(params: { memberId: string; limit?: number; cursor?: string }): ListMyReservationsQuery {
+  static of(params: {
+    memberId: string;
+    limit?: number;
+    cursor?: string;
+  }): ListMyReservationsQuery {
     return new ListMyReservationsQuery(params.memberId, params.limit ?? 20, params.cursor);
   }
 }

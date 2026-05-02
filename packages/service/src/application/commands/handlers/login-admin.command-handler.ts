@@ -1,11 +1,7 @@
 import { Logging } from '@kangjuhyup/rvlog';
 import { assertTrue } from '@application/assertions';
 import { LoginAdminCommand, LoginAdminResultDto } from '../dto';
-import type {
-  ClockPort,
-  OpaqueTokenGeneratorPort,
-  TokenRepositoryPort,
-} from '../ports';
+import type { ClockPort, OpaqueTokenGeneratorPort, TokenRepositoryPort } from '../ports';
 import { TokenType } from '../ports';
 
 export interface LoginAdminOptions {

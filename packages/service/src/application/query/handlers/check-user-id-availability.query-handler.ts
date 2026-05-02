@@ -1,8 +1,5 @@
 import { Logging } from '@kangjuhyup/rvlog';
-import {
-  CheckUserIdAvailabilityQuery,
-  CheckUserIdAvailabilityResultDto,
-} from '../dto';
+import { CheckUserIdAvailabilityQuery, CheckUserIdAvailabilityResultDto } from '../dto';
 import type { MemberQueryPort } from '../ports';
 
 @Logging

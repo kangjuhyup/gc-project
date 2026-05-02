@@ -25,7 +25,10 @@ describe('다른 회원 좌석 임시점유 해제 차단 e2e', () => {
     const holdByA = await e2e.createSeatHold(memberA, screeningId, [seat.id]);
     expect(holdByA.status).toBe(201);
 
-    const releaseByB = await e2e.delete(`/seat-holds/${String((holdByA.body.holdIds as string[])[0])}`, e2e.auth(memberB));
+    const releaseByB = await e2e.delete(
+      `/seat-holds/${String((holdByA.body.holdIds as string[])[0])}`,
+      e2e.auth(memberB),
+    );
     expect(releaseByB.status).toBe(403);
     expect(await e2e.seatStatus(screeningId, seat.id)).toBe('HELD');
 

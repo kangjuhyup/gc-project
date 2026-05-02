@@ -178,8 +178,12 @@ describe('PaymentOutboxWorker', () => {
       providerPaymentId: 'local-payment-7001',
       amount: 15000,
     });
-    const savedPayments = vi.mocked(paymentRepository.save).mock.calls.map(([savedPayment]) => savedPayment);
-    const savedEventLogs = vi.mocked(paymentEventLogRepository.save).mock.calls.map(([eventLog]) => eventLog);
+    const savedPayments = vi
+      .mocked(paymentRepository.save)
+      .mock.calls.map(([savedPayment]) => savedPayment);
+    const savedEventLogs = vi
+      .mocked(paymentEventLogRepository.save)
+      .mock.calls.map(([eventLog]) => eventLog);
     expect(savedPayments.some((savedPayment) => savedPayment.status === 'REFUNDED')).toBe(true);
     expect(savedEventLogs.some((eventLog) => eventLog.eventType === 'PAYMENT_REFUNDED')).toBe(true);
   });

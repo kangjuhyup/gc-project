@@ -32,12 +32,15 @@ export class ReservationModel extends PersistenceModel<string, ReservationPersis
       throw new DomainError(DomainErrorCode.INVALID_RESERVATION_STATUS);
     }
 
-    return new ReservationModel({
-      ...this.etc,
-      status: ReservationStatus.CANCELED,
-      canceledAt: params.now,
-      cancelReason: params.reason,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new ReservationModel(
+      {
+        ...this.etc,
+        status: ReservationStatus.CANCELED,
+        canceledAt: params.now,
+        cancelReason: params.reason,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   get reservationNumber(): string {

@@ -64,7 +64,9 @@ describe('MikroOrmTransactionManager transaction boundary integration', () => {
         if (entityManager === undefined) {
           throw new Error('RequestContext EntityManager is required');
         }
-        const probe = entityManager.create(TransactionBoundaryProbeEntity, { label: 'rolled-back' });
+        const probe = entityManager.create(TransactionBoundaryProbeEntity, {
+          label: 'rolled-back',
+        });
         entityManager.persist(probe);
         await entityManager.flush();
         throw new Error('ROLLBACK_PROBE');

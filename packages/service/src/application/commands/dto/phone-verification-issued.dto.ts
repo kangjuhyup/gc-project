@@ -12,17 +12,17 @@ export class PhoneVerificationIssuedDto {
   @ApiProperty({ example: '2026-04-28T01:05:00.000Z', description: '인증 코드 만료 시각' })
   readonly expiresAt: Date;
 
-  private constructor(
-    verificationId: string,
-    code: string,
-    expiresAt: Date,
-  ) {
+  private constructor(verificationId: string, code: string, expiresAt: Date) {
     this.verificationId = verificationId;
     this.code = code;
     this.expiresAt = expiresAt;
   }
 
-  static of(params: { verificationId: string; code: string; expiresAt: Date }): PhoneVerificationIssuedDto {
+  static of(params: {
+    verificationId: string;
+    code: string;
+    expiresAt: Date;
+  }): PhoneVerificationIssuedDto {
     return new PhoneVerificationIssuedDto(params.verificationId, params.code, params.expiresAt);
   }
 }

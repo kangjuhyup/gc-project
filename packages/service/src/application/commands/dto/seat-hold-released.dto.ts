@@ -7,10 +7,7 @@ export class SeatHoldReleasedDto {
   @ApiProperty({ example: true, description: '좌석 임시점유 해제 성공 여부' })
   readonly released: boolean;
 
-  private constructor(
-    holdId: string,
-    released: boolean,
-  ) {
+  private constructor(holdId: string, released: boolean) {
     this.holdId = holdId;
     this.released = released;
   }

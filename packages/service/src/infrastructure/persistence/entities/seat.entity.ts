@@ -1,4 +1,13 @@
-import { Collection, Entity, ManyToOne, OneToMany, PrimaryKey, Property, Rel, Unique } from '@mikro-orm/core';
+import {
+  Collection,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryKey,
+  Property,
+  Rel,
+  Unique,
+} from '@mikro-orm/core';
 import { ReservationSeatEntity } from './reservation-seat.entity';
 import { ScreenEntity } from './screen.entity';
 import { SeatHoldEntity } from './seat-hold.entity';

@@ -8,7 +8,11 @@ describe('CreateMovieCommandHandler', () => {
   it('관리자가 입력한 영화 기본 정보를 저장하고 생성 결과를 반환한다', async () => {
     const movieRepository = {
       save: vi.fn(async (movie: MovieModel) =>
-        movie.setPersistence('movie-1', new Date('2026-05-01T00:00:00.000Z'), new Date('2026-05-01T00:00:00.000Z')),
+        movie.setPersistence(
+          'movie-1',
+          new Date('2026-05-01T00:00:00.000Z'),
+          new Date('2026-05-01T00:00:00.000Z'),
+        ),
       ),
       findById: vi.fn(),
     } satisfies MovieRepositoryPort;

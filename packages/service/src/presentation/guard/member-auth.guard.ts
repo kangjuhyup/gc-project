@@ -6,10 +6,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import {
-  AUTHORIZATION_VERIFIER,
-  type AuthorizationVerifierPort,
-} from '@application/query/ports';
+import { AUTHORIZATION_VERIFIER, type AuthorizationVerifierPort } from '@application/query/ports';
 import type { AuthenticatedUserDto } from '@application/query/dto';
 
 export interface HttpRequestWithAuthenticatedUser {
@@ -31,7 +28,11 @@ export class MemberAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<HttpRequestWithAuthenticatedUser>();
     const authorization = request.headers.authorization;
 
-    if (authorization === undefined || Array.isArray(authorization) || authorization.trim().length === 0) {
+    if (
+      authorization === undefined ||
+      Array.isArray(authorization) ||
+      authorization.trim().length === 0
+    ) {
       throw new UnauthorizedException('AUTHORIZATION_REQUIRED');
     }
 

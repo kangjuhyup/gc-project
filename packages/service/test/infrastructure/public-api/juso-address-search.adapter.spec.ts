@@ -77,8 +77,8 @@ describe('JusoAddressSearchAdapter', () => {
     );
     const adapter = new JusoAddressSearchAdapter('juso-test-key');
 
-    await expect(
-      adapter.search(SearchAddressesQuery.of({ keyword: '테헤란로' })),
-    ).rejects.toThrow('ADDRESS_SEARCH_FAILED');
+    await expect(adapter.search(SearchAddressesQuery.of({ keyword: '테헤란로' }))).rejects.toThrow(
+      'ADDRESS_SEARCH_FAILED',
+    );
   });
 });

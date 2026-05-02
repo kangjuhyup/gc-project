@@ -25,7 +25,10 @@ export class MikroOrmReservationSeatRepository implements ReservationSeatReposit
     return entity ? PersistenceMapper.reservationSeatToDomain(entity) : undefined;
   }
 
-  async findByScreeningAndSeat(screeningId: string, seatId: string): Promise<ReservationSeatModel | undefined> {
+  async findByScreeningAndSeat(
+    screeningId: string,
+    seatId: string,
+  ): Promise<ReservationSeatModel | undefined> {
     const entity = await this.entityManager.findOne(ReservationSeatEntity, {
       screening: screeningId,
       seat: seatId,

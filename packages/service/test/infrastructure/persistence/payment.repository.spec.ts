@@ -1,7 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { LockMode } from '@mikro-orm/core';
-import { OutboxEventEntity, PaymentEntity, PaymentSeatHoldEntity, SeatHoldEntity } from '@infrastructure/persistence/entities';
-import { MikroOrmOutboxEventRepository, MikroOrmPaymentRepository } from '@infrastructure/persistence/repositories';
+import {
+  OutboxEventEntity,
+  PaymentEntity,
+  PaymentSeatHoldEntity,
+  SeatHoldEntity,
+} from '@infrastructure/persistence/entities';
+import {
+  MikroOrmOutboxEventRepository,
+  MikroOrmPaymentRepository,
+} from '@infrastructure/persistence/repositories';
 
 describe('MikroOrmPaymentRepository', () => {
   it('결제 조회 결과를 API 응답 DTO로 매핑한다', async () => {
@@ -98,23 +106,23 @@ describe('MikroOrmPaymentRepository', () => {
     entity.createdAt = requestedAt;
     entity.updatedAt = requestedAt;
     const entityManager = {
-      find: vi.fn()
-        .mockResolvedValueOnce([
-          { payment: entity },
-          { payment: entity },
-        ])
-        .mockResolvedValueOnce([
-          { seatHold: { id: '9001' } },
-          { seatHold: { id: '9002' } },
-        ]),
+      find: vi
+        .fn()
+        .mockResolvedValueOnce([{ payment: entity }, { payment: entity }])
+        .mockResolvedValueOnce([{ seatHold: { id: '9001' } }, { seatHold: { id: '9002' } }]),
     };
     const repository = new MikroOrmPaymentRepository(entityManager as never);
 
     const result = await repository.findBySeatHoldIds(['9001', '9002']);
 
-    expect(entityManager.find).toHaveBeenNthCalledWith(1, PaymentSeatHoldEntity, {
-      seatHold: { $in: ['9001', '9002'] },
-    }, { populate: ['payment'] });
+    expect(entityManager.find).toHaveBeenNthCalledWith(
+      1,
+      PaymentSeatHoldEntity,
+      {
+        seatHold: { $in: ['9001', '9002'] },
+      },
+      { populate: ['payment'] },
+    );
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('7001');
     expect(result[0].seatHoldIds).toEqual(['9001', '9002']);
@@ -130,9 +138,13 @@ describe('MikroOrmPaymentRepository', () => {
 
     await repository.saveSeatHoldLinks('7001', ['9001', '9002']);
 
-    expect(entityManager.find).toHaveBeenCalledWith(PaymentSeatHoldEntity, {
-      payment: '7001',
-    }, { populate: ['seatHold'] });
+    expect(entityManager.find).toHaveBeenCalledWith(
+      PaymentSeatHoldEntity,
+      {
+        payment: '7001',
+      },
+      { populate: ['seatHold'] },
+    );
     expect(entityManager.getReference).toHaveBeenCalledWith(PaymentEntity, '7001');
     expect(entityManager.getReference).toHaveBeenCalledWith(SeatHoldEntity, '9002');
     expect(entityManager.insert).toHaveBeenCalledTimes(1);
@@ -148,21 +160,19 @@ describe('MikroOrmOutboxEventRepository', () => {
     };
     const repository = new MikroOrmOutboxEventRepository(entityManager as never);
 
-    const result = await repository.save(
-      {
-        id: '8001',
-        aggregateType: 'PAYMENT',
-        aggregateId: '7001',
-        eventType: 'PAYMENT_REQUESTED',
-        payload: { paymentId: '7001' },
-        status: 'PROCESSING',
-        retryCount: 0,
-        lockedUntil: now,
-        occurredAt: now,
-        createdAt: now,
-        updatedAt: now,
-      } as never,
-    );
+    const result = await repository.save({
+      id: '8001',
+      aggregateType: 'PAYMENT',
+      aggregateId: '7001',
+      eventType: 'PAYMENT_REQUESTED',
+      payload: { paymentId: '7001' },
+      status: 'PROCESSING',
+      retryCount: 0,
+      lockedUntil: now,
+      occurredAt: now,
+      createdAt: now,
+      updatedAt: now,
+    } as never);
 
     expect(entityManager.nativeUpdate).toHaveBeenCalledWith(
       OutboxEventEntity,
@@ -190,10 +200,7 @@ describe('MikroOrmOutboxEventRepository', () => {
       expect.any(Function),
       {
         status: { $in: ['PENDING', 'FAILED'] },
-        $or: [
-          { nextRetryAt: undefined },
-          { nextRetryAt: { $lte: now } },
-        ],
+        $or: [{ nextRetryAt: undefined }, { nextRetryAt: { $lte: now } }],
       },
       {
         limit: 10,

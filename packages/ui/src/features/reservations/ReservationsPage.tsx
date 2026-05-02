@@ -161,7 +161,9 @@ export function ReservationHistoryPanel({ actionSlot }: ReservationHistoryPanelP
         )
       ) : null}
 
-      {!reservationsQuery.isLoading && !reservationsQuery.isError && reservationsQuery.hasNextPage ? (
+      {!reservationsQuery.isLoading &&
+      !reservationsQuery.isError &&
+      reservationsQuery.hasNextPage ? (
         <div className="reservation-actions reservation-actions-centered">
           <Button
             disabled={reservationsQuery.isFetchingNextPage}

@@ -7,7 +7,11 @@ export class ConfirmPhoneVerificationRequestDto {
   @IsString()
   readonly verificationId!: string;
 
-  @ApiProperty({ example: '01012345678', pattern: '^\\d{10,11}$', description: '인증 대상 휴대전화번호' })
+  @ApiProperty({
+    example: '01012345678',
+    pattern: '^\\d{10,11}$',
+    description: '인증 대상 휴대전화번호',
+  })
   @IsString()
   @Matches(/^\d{10,11}$/)
   @MaskLog({ type: 'phone' })

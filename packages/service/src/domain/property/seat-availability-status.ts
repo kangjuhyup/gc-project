@@ -4,4 +4,5 @@ export const SeatAvailabilityStatus = {
   RESERVED: 'RESERVED',
 } as const;
 
-export type SeatAvailabilityStatus = (typeof SeatAvailabilityStatus)[keyof typeof SeatAvailabilityStatus];
+export type SeatAvailabilityStatus =
+  (typeof SeatAvailabilityStatus)[keyof typeof SeatAvailabilityStatus];

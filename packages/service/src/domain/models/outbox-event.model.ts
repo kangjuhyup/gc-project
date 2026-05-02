@@ -43,31 +43,40 @@ export class OutboxEventModel extends PersistenceModel<string, OutboxEventPersis
   }
 
   markProcessing(params: { lockedUntil: Date; now: Date }): OutboxEventModel {
-    return new OutboxEventModel({
-      ...this.etc,
-      status: OutboxStatus.PROCESSING,
-      lockedUntil: params.lockedUntil,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new OutboxEventModel(
+      {
+        ...this.etc,
+        status: OutboxStatus.PROCESSING,
+        lockedUntil: params.lockedUntil,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   markPublished(params: { now: Date }): OutboxEventModel {
-    return new OutboxEventModel({
-      ...this.etc,
-      status: OutboxStatus.PUBLISHED,
-      lockedUntil: undefined,
-      publishedAt: params.now,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new OutboxEventModel(
+      {
+        ...this.etc,
+        status: OutboxStatus.PUBLISHED,
+        lockedUntil: undefined,
+        publishedAt: params.now,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   markFailed(params: { error: string; nextRetryAt: Date; now: Date }): OutboxEventModel {
-    return new OutboxEventModel({
-      ...this.etc,
-      status: OutboxStatus.FAILED,
-      retryCount: this.retryCount + 1,
-      nextRetryAt: params.nextRetryAt,
-      lockedUntil: undefined,
-      lastError: params.error,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new OutboxEventModel(
+      {
+        ...this.etc,
+        status: OutboxStatus.FAILED,
+        retryCount: this.retryCount + 1,
+        nextRetryAt: params.nextRetryAt,
+        lockedUntil: undefined,
+        lastError: params.error,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   get aggregateType(): string {

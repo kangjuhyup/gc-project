@@ -31,8 +31,14 @@ export function useSeatSelectionPage() {
     id: seatsQuery.data?.screening.id ?? String(validScreeningId ?? ''),
     movieTitle: routeScreening?.movieTitle ?? seatsQuery.data?.screening.movieTitle ?? '상영 좌석',
     screenName: routeScreening?.screenName ?? seatsQuery.data?.screening.screenName ?? '상영관',
-    startAt: routeScreening?.screeningStartAt ?? seatsQuery.data?.screening.startAt ?? new Date().toISOString(),
-    endAt: routeScreening?.screeningEndAt ?? seatsQuery.data?.screening.endAt ?? new Date().toISOString(),
+    startAt:
+      routeScreening?.screeningStartAt ??
+      seatsQuery.data?.screening.startAt ??
+      new Date().toISOString(),
+    endAt:
+      routeScreening?.screeningEndAt ??
+      seatsQuery.data?.screening.endAt ??
+      new Date().toISOString(),
     price: seatsQuery.data?.screening.price ?? 14000,
   };
   const selectedSeats = useMemo(
@@ -67,23 +73,26 @@ export function useSeatSelectionPage() {
   const canProceedToPayment =
     selectedSeats.length > 0 && paymentRouteState.seatHoldIds.length === selectedSeats.length;
 
-  const releaseHeldSeat = useCallback(async (seatId: string, options: Pick<RequestInit, 'keepalive'> = {}) => {
-    const holdId = heldSeatIdsRef.current.get(seatId);
+  const releaseHeldSeat = useCallback(
+    async (seatId: string, options: Pick<RequestInit, 'keepalive'> = {}) => {
+      const holdId = heldSeatIdsRef.current.get(seatId);
 
-    if (!holdId) {
-      return;
-    }
-
-    heldSeatIdsRef.current.delete(seatId);
-
-    try {
-      await releaseSeatHold(holdId, options);
-    } catch {
-      if (!options.keepalive) {
-        heldSeatIdsRef.current.set(seatId, holdId);
+      if (!holdId) {
+        return;
       }
-    }
-  }, []);
+
+      heldSeatIdsRef.current.delete(seatId);
+
+      try {
+        await releaseSeatHold(holdId, options);
+      } catch {
+        if (!options.keepalive) {
+          heldSeatIdsRef.current.set(seatId, holdId);
+        }
+      }
+    },
+    [],
+  );
 
   const releaseAllHeldSeats = useCallback((options: Pick<RequestInit, 'keepalive'> = {}) => {
     const holdIds = Array.from(heldSeatIdsRef.current.values());

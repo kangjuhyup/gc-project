@@ -49,7 +49,7 @@ function tokenRepository(): TokenRepositoryPort {
     findSubjectId: vi.fn(),
     findRefreshToken: vi.fn(),
     revokeRefreshToken: vi.fn(),
-    revokeActiveBySubjectId: vi.fn(async (params) => params.type === TokenType.REFRESH ? 1 : 1),
+    revokeActiveBySubjectId: vi.fn(async (params) => (params.type === TokenType.REFRESH ? 1 : 1)),
   };
 }
 
@@ -65,7 +65,8 @@ function reservationRepository(hasIncompleteReservation = false): ReservationRep
 
 function opaqueTokenGenerator(): OpaqueTokenGeneratorPort {
   return {
-    generate: vi.fn()
+    generate: vi
+      .fn()
       .mockReturnValueOnce('access-token-0001')
       .mockReturnValueOnce('refresh-token-0001'),
   };
@@ -102,7 +103,9 @@ describe('LoginMemberCommandHandler', () => {
       loginTokenTtlOptions,
     );
 
-    const result = await handler.execute(LoginMemberCommand.of({ userId: 'member_01', password: 'password123!' }));
+    const result = await handler.execute(
+      LoginMemberCommand.of({ userId: 'member_01', password: 'password123!' }),
+    );
 
     expect(result.memberId).toBe('member-1');
     expect(result.userId).toBe('member_01');
@@ -321,7 +324,10 @@ describe('IssueTemporaryPasswordCommandHandler', () => {
     );
 
     const result = await handler.execute(
-      IssueTemporaryPasswordCommand.of({ userId: 'member_01', phoneVerificationId: 'verification-1' }),
+      IssueTemporaryPasswordCommand.of({
+        userId: 'member_01',
+        phoneVerificationId: 'verification-1',
+      }),
     );
 
     expect(result.temporaryPassword).toBe('Temp-abc1231!');
@@ -364,7 +370,11 @@ describe('RefreshMemberTokenCommandHandler', () => {
       memberId: 'member-1',
       token: 'old-refresh-token',
       expiresAt: new Date('2026-05-12T00:01:00.000Z'),
-    }).setPersistence('refresh-token-1', new Date('2026-04-28T00:01:00.000Z'), new Date('2026-04-28T00:01:00.000Z'));
+    }).setPersistence(
+      'refresh-token-1',
+      new Date('2026-04-28T00:01:00.000Z'),
+      new Date('2026-04-28T00:01:00.000Z'),
+    );
     const memberRepository = {
       findByUserId: vi.fn(),
       findByPhoneNumber: vi.fn(),
@@ -375,7 +385,8 @@ describe('RefreshMemberTokenCommandHandler', () => {
     const tokens = tokenRepository();
     vi.mocked(tokens.findRefreshToken).mockResolvedValue(refreshToken);
     const generator = {
-      generate: vi.fn()
+      generate: vi
+        .fn()
         .mockReturnValueOnce('new-access-token')
         .mockReturnValueOnce('new-refresh-token'),
     } satisfies OpaqueTokenGeneratorPort;
@@ -388,11 +399,16 @@ describe('RefreshMemberTokenCommandHandler', () => {
       loginTokenTtlOptions,
     );
 
-    const result = await handler.execute(RefreshMemberTokenCommand.of({ refreshToken: 'old-refresh-token' }));
+    const result = await handler.execute(
+      RefreshMemberTokenCommand.of({ refreshToken: 'old-refresh-token' }),
+    );
 
     expect(tokens.findRefreshToken).toHaveBeenCalledWith('old-refresh-token');
     expect(memberRepository.findById).toHaveBeenCalledWith('member-1');
-    expect(tokens.revokeRefreshToken).toHaveBeenCalledWith(refreshToken, new Date('2026-04-28T00:06:00.000Z'));
+    expect(tokens.revokeRefreshToken).toHaveBeenCalledWith(
+      refreshToken,
+      new Date('2026-04-28T00:06:00.000Z'),
+    );
     expect(tokens.save).toHaveBeenCalledWith({
       type: TokenType.ACCESS,
       subjectId: 'member-1',
@@ -449,7 +465,11 @@ describe('RefreshMemberTokenCommandHandler', () => {
       memberId: 'member-1',
       token: 'expired-refresh-token',
       expiresAt: new Date('2026-04-28T00:05:59.000Z'),
-    }).setPersistence('refresh-token-1', new Date('2026-04-28T00:01:00.000Z'), new Date('2026-04-28T00:01:00.000Z'));
+    }).setPersistence(
+      'refresh-token-1',
+      new Date('2026-04-28T00:01:00.000Z'),
+      new Date('2026-04-28T00:01:00.000Z'),
+    );
     const memberRepository = {
       findByUserId: vi.fn(),
       findByPhoneNumber: vi.fn(),

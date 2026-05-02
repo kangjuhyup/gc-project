@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ListMoviesQuery,
-  MovieListResultDto,
-  MovieSummaryDto,
-} from '@application/query/dto';
+import { ListMoviesQuery, MovieListResultDto, MovieSummaryDto } from '@application/query/dto';
 import { ListMoviesQueryHandler } from '@application/query/handlers';
 import type { MovieQueryPort } from '@application/query/ports';
 

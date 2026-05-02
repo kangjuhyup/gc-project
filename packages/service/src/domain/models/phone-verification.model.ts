@@ -10,7 +10,10 @@ export interface PhoneVerificationPersistenceProps {
   readonly verifiedAt?: Date;
 }
 
-export class PhoneVerificationModel extends PersistenceModel<string, PhoneVerificationPersistenceProps> {
+export class PhoneVerificationModel extends PersistenceModel<
+  string,
+  PhoneVerificationPersistenceProps
+> {
   private constructor(props: PhoneVerificationPersistenceProps, id?: string) {
     super(props, id);
   }
@@ -19,7 +22,11 @@ export class PhoneVerificationModel extends PersistenceModel<string, PhoneVerifi
     return new PhoneVerificationModel(props);
   }
 
-  static issue(params: { phoneNumber: string; code: string; expiresAt: Date }): PhoneVerificationModel {
+  static issue(params: {
+    phoneNumber: string;
+    code: string;
+    expiresAt: Date;
+  }): PhoneVerificationModel {
     if (!/^\d{10,11}$/.test(params.phoneNumber)) {
       throw new DomainError(DomainErrorCode.INVALID_PHONE_NUMBER);
     }

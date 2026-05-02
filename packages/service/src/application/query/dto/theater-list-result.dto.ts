@@ -16,7 +16,10 @@ export class TheaterSummaryDto {
   @ApiPropertyOptional({ example: 127.053, description: '극장 경도' })
   readonly longitude?: number;
 
-  @ApiPropertyOptional({ example: 120.5, description: '현재 위치와의 거리(미터). 현재 위치와 극장 좌표가 모두 있을 때만 제공' })
+  @ApiPropertyOptional({
+    example: 120.5,
+    description: '현재 위치와의 거리(미터). 현재 위치와 극장 좌표가 모두 있을 때만 제공',
+  })
   readonly distanceMeters?: number;
 
   private constructor(params: {

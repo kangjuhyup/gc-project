@@ -30,7 +30,10 @@ export class RefreshMemberTokenCommandHandler {
     const now = this.clock.now();
     const storedRefreshToken = await this.tokenRepository.findRefreshToken(command.refreshToken);
     assertDefined(storedRefreshToken, () => new Error('INVALID_REFRESH_TOKEN'));
-    assertTrue(storedRefreshToken.revokedAt === undefined, () => new Error('INVALID_REFRESH_TOKEN'));
+    assertTrue(
+      storedRefreshToken.revokedAt === undefined,
+      () => new Error('INVALID_REFRESH_TOKEN'),
+    );
     assertTrue(storedRefreshToken.expiresAt > now, () => new Error('REFRESH_TOKEN_EXPIRED'));
 
     const member = await this.memberRepository.findById(storedRefreshToken.memberId);

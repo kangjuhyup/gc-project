@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsIn, IsInt, IsOptional, IsString, IsUrl, Max, MaxLength, Min, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { MovieRating } from '@domain';
 
 export class CreateMovieRequestDto {
@@ -27,7 +38,11 @@ export class CreateMovieRequestDto {
   @MaxLength(50)
   readonly genre?: string;
 
-  @ApiPropertyOptional({ example: '15', enum: Object.values(MovieRating), description: '관람 등급' })
+  @ApiPropertyOptional({
+    example: '15',
+    enum: Object.values(MovieRating),
+    description: '관람 등급',
+  })
   @IsOptional()
   @IsIn(Object.values(MovieRating))
   readonly rating?: string;
@@ -37,13 +52,21 @@ export class CreateMovieRequestDto {
   @IsDateString()
   readonly releaseDate?: string;
 
-  @ApiPropertyOptional({ example: 'https://images.example.com/poster.jpg', maxLength: 500, description: '대표 포스터 URL' })
+  @ApiPropertyOptional({
+    example: 'https://images.example.com/poster.jpg',
+    maxLength: 500,
+    description: '대표 포스터 URL',
+  })
   @IsOptional()
   @IsUrl({ require_tld: false })
   @MaxLength(500)
   readonly posterUrl?: string;
 
-  @ApiPropertyOptional({ example: '기묘한 의뢰를 받은 사람들이 오래된 비밀을 마주하는 오컬트 미스터리.', maxLength: 2000, description: '영화 설명' })
+  @ApiPropertyOptional({
+    example: '기묘한 의뢰를 받은 사람들이 오래된 비밀을 마주하는 오컬트 미스터리.',
+    maxLength: 2000,
+    description: '영화 설명',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(2000)

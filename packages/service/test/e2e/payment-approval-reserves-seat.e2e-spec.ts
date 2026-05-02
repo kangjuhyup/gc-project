@@ -25,7 +25,11 @@ describe('결제 승인 후 좌석 예매 완료 e2e', () => {
     const hold = await e2e.createSeatHold(memberA, screeningId, [seat.id]);
     expect(hold.status).toBe(201);
 
-    const payment = await e2e.requestPayment(memberA, String((hold.body.holdIds as string[])[0]), 'pay-approval-0001');
+    const payment = await e2e.requestPayment(
+      memberA,
+      String((hold.body.holdIds as string[])[0]),
+      'pay-approval-0001',
+    );
     expect(payment.status).toBe(201);
     expect(payment.body.status).toBe('PENDING');
 
@@ -39,7 +43,12 @@ describe('결제 승인 후 좌석 예매 완료 e2e', () => {
     expect(duplicateHoldByB.status).toBe(409);
 
     expect(await e2e.countRows('reservation', 'member_id = ?', [memberA.memberId])).toBe(1);
-    expect(await e2e.countRows('reservation_seat', 'screening_id = ? AND seat_id = ?', [screeningId, seat.id])).toBe(1);
+    expect(
+      await e2e.countRows('reservation_seat', 'screening_id = ? AND seat_id = ?', [
+        screeningId,
+        seat.id,
+      ]),
+    ).toBe(1);
     expect(await e2e.countRows('reservation_event')).toBe(1);
   });
 
@@ -48,7 +57,11 @@ describe('결제 승인 후 좌석 예매 완료 e2e', () => {
     const screeningId = await e2e.firstScreeningId();
     const seats = await e2e.availableSeats(screeningId, 3);
 
-    const hold = await e2e.createSeatHold(member, screeningId, seats.map((seat) => seat.id));
+    const hold = await e2e.createSeatHold(
+      member,
+      screeningId,
+      seats.map((seat) => seat.id),
+    );
     expect(hold.status).toBe(201);
     const holdIds = hold.body.holdIds as string[];
 
@@ -64,13 +77,20 @@ describe('결제 승인 후 좌석 예매 완료 e2e', () => {
     await Promise.all(
       seats.map(async (seat) => {
         expect(await e2e.seatStatus(screeningId, seat.id)).toBe('RESERVED');
-        expect(await e2e.countRows('reservation_seat', 'screening_id = ? AND seat_id = ?', [screeningId, seat.id])).toBe(1);
+        expect(
+          await e2e.countRows('reservation_seat', 'screening_id = ? AND seat_id = ?', [
+            screeningId,
+            seat.id,
+          ]),
+        ).toBe(1);
       }),
     );
-    expect(await e2e.countRows('payment', 'member_id = ? AND idempotency_key = ?', [
-      member.memberId,
-      'pay-approval-multi-0001',
-    ])).toBe(1);
+    expect(
+      await e2e.countRows('payment', 'member_id = ? AND idempotency_key = ?', [
+        member.memberId,
+        'pay-approval-multi-0001',
+      ]),
+    ).toBe(1);
     expect(await e2e.countRows('reservation', 'member_id = ?', [member.memberId])).toBe(1);
   });
 });

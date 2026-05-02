@@ -28,18 +28,22 @@ describe('관리자 영화 관리 e2e', () => {
   it('관리자는 영화 기본 정보를 등록할 수 있다', async () => {
     const accessToken = await loginAdmin(e2e);
 
-    const response = await e2e.post('/admin/movies', {
-      title: '관리자 등록 영화',
-      runningTime: 121,
-      director: '관리자 감독',
-      genre: '드라마',
-      rating: '15',
-      releaseDate: '2026-05-01',
-      posterUrl: 'https://images.example.com/admin-movie.jpg',
-      description: '관리자가 등록한 영화입니다.',
-    }, {
-      Authorization: `Bearer ${accessToken}`,
-    });
+    const response = await e2e.post(
+      '/admin/movies',
+      {
+        title: '관리자 등록 영화',
+        runningTime: 121,
+        director: '관리자 감독',
+        genre: '드라마',
+        rating: '15',
+        releaseDate: '2026-05-01',
+        posterUrl: 'https://images.example.com/admin-movie.jpg',
+        description: '관리자가 등록한 영화입니다.',
+      },
+      {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    );
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
@@ -69,14 +73,18 @@ describe('관리자 영화 관리 e2e', () => {
   it('관리자는 상영 일정이 없는 영화도 목록에서 조회할 수 있다', async () => {
     const accessToken = await loginAdmin(e2e);
     const auth = { Authorization: `Bearer ${accessToken}` };
-    const created = await e2e.post('/admin/movies', {
-      title: '목록 조회용 관리자 영화',
-      runningTime: 110,
-      director: '목록 감독',
-      genre: '스릴러',
-      rating: '12',
-      releaseDate: '2026-05-02',
-    }, auth);
+    const created = await e2e.post(
+      '/admin/movies',
+      {
+        title: '목록 조회용 관리자 영화',
+        runningTime: 110,
+        director: '목록 감독',
+        genre: '스릴러',
+        rating: '12',
+        releaseDate: '2026-05-02',
+      },
+      auth,
+    );
     expect(created.status).toBe(201);
 
     const list = await e2e.get(

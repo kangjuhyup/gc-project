@@ -24,7 +24,11 @@ describe('예매 취소 e2e', () => {
 
     const hold = await e2e.createSeatHold(memberA, screeningId, [seat.id]);
     expect(hold.status).toBe(201);
-    const payment = await e2e.requestPayment(memberA, String((hold.body.holdIds as string[])[0]), 'pay-cancel-0001');
+    const payment = await e2e.requestPayment(
+      memberA,
+      String((hold.body.holdIds as string[])[0]),
+      'pay-cancel-0001',
+    );
     expect(payment.status).toBe(201);
     const callback = await e2e.approvePayment(payment.body);
     expect(callback.status).toBe(201);
@@ -50,9 +54,21 @@ describe('예매 취소 e2e', () => {
     expect(canceled.body.paymentStatus).toBe('REFUND_REQUIRED');
 
     expect(await e2e.apiSeatStatus(screeningId, seat.id)).toBe('AVAILABLE');
-    expect(await e2e.countRows('payment', "id = ? AND status = 'REFUND_REQUIRED'", [payment.body.paymentId])).toBe(1);
-    expect(await e2e.countRows('reservation', "id = ? AND status = 'CANCELED'", [reservationId])).toBe(1);
-    expect(await e2e.countRows('payment_event_log', "payment_id = ? AND event_type = 'PAYMENT_REFUND_REQUESTED'", [payment.body.paymentId])).toBe(1);
+    expect(
+      await e2e.countRows('payment', "id = ? AND status = 'REFUND_REQUIRED'", [
+        payment.body.paymentId,
+      ]),
+    ).toBe(1);
+    expect(
+      await e2e.countRows('reservation', "id = ? AND status = 'CANCELED'", [reservationId]),
+    ).toBe(1);
+    expect(
+      await e2e.countRows(
+        'payment_event_log',
+        "payment_id = ? AND event_type = 'PAYMENT_REFUND_REQUESTED'",
+        [payment.body.paymentId],
+      ),
+    ).toBe(1);
   });
 
   it('여러 좌석을 하나의 결제로 예매한 경우 취소도 한 번에 처리한다', async () => {
@@ -60,7 +76,11 @@ describe('예매 취소 e2e', () => {
     const screeningId = await e2e.firstScreeningId();
     const seats = await e2e.availableSeats(screeningId, 3);
 
-    const hold = await e2e.createSeatHold(member, screeningId, seats.map((seat) => seat.id));
+    const hold = await e2e.createSeatHold(
+      member,
+      screeningId,
+      seats.map((seat) => seat.id),
+    );
     expect(hold.status).toBe(201);
     const payment = await e2e.requestPayment(
       member,
@@ -94,8 +114,20 @@ describe('예매 취소 e2e', () => {
         expect(await e2e.apiSeatStatus(screeningId, seat.id)).toBe('AVAILABLE');
       }),
     );
-    expect(await e2e.countRows('payment', "id = ? AND status = 'REFUND_REQUIRED'", [payment.body.paymentId])).toBe(1);
-    expect(await e2e.countRows('reservation', "id = ? AND status = 'CANCELED'", [reservationId])).toBe(1);
-    expect(await e2e.countRows('payment_event_log', "payment_id = ? AND event_type = 'PAYMENT_REFUND_REQUESTED'", [payment.body.paymentId])).toBe(1);
+    expect(
+      await e2e.countRows('payment', "id = ? AND status = 'REFUND_REQUIRED'", [
+        payment.body.paymentId,
+      ]),
+    ).toBe(1);
+    expect(
+      await e2e.countRows('reservation', "id = ? AND status = 'CANCELED'", [reservationId]),
+    ).toBe(1);
+    expect(
+      await e2e.countRows(
+        'payment_event_log',
+        "payment_id = ? AND event_type = 'PAYMENT_REFUND_REQUESTED'",
+        [payment.body.paymentId],
+      ),
+    ).toBe(1);
   });
 });

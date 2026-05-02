@@ -43,7 +43,8 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       throw new DomainError(DomainErrorCode.INVALID_PAYMENT_AMOUNT);
     }
 
-    const seatHoldIds = params.seatHoldIds ?? (params.seatHoldId === undefined ? [] : [params.seatHoldId]);
+    const seatHoldIds =
+      params.seatHoldIds ?? (params.seatHoldId === undefined ? [] : [params.seatHoldId]);
     const primarySeatHoldId = seatHoldIds[0];
 
     if (primarySeatHoldId === undefined) {
@@ -102,11 +103,14 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       throw new DomainError(DomainErrorCode.PAYMENT_AMOUNT_MISMATCH);
     }
 
-    return new PaymentModel({
-      ...this.etc,
-      providerPaymentId: params.providerPaymentId,
-      status: PaymentStatus.APPROVING,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new PaymentModel(
+      {
+        ...this.etc,
+        providerPaymentId: params.providerPaymentId,
+        status: PaymentStatus.APPROVING,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   approve(params: { reservationId: string; now: Date }): PaymentModel {
@@ -118,12 +122,15 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       throw new DomainError(DomainErrorCode.INVALID_PAYMENT_STATUS);
     }
 
-    return new PaymentModel({
-      ...this.etc,
-      reservationId: params.reservationId,
-      status: PaymentStatus.APPROVED,
-      approvedAt: params.now,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new PaymentModel(
+      {
+        ...this.etc,
+        reservationId: params.reservationId,
+        status: PaymentStatus.APPROVED,
+        approvedAt: params.now,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   fail(params: { providerPaymentId?: string; reason?: string; now: Date }): PaymentModel {
@@ -135,13 +142,16 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       throw new DomainError(DomainErrorCode.INVALID_PAYMENT_STATUS);
     }
 
-    return new PaymentModel({
-      ...this.etc,
-      providerPaymentId: params.providerPaymentId ?? this.providerPaymentId,
-      status: PaymentStatus.FAILED,
-      failedAt: params.now,
-      failureReason: params.reason,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new PaymentModel(
+      {
+        ...this.etc,
+        providerPaymentId: params.providerPaymentId ?? this.providerPaymentId,
+        status: PaymentStatus.FAILED,
+        failedAt: params.now,
+        failureReason: params.reason,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   requireRefund(params: { reason: string; now: Date }): PaymentModel {
@@ -153,11 +163,14 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       throw new DomainError(DomainErrorCode.INVALID_PAYMENT_STATUS);
     }
 
-    return new PaymentModel({
-      ...this.etc,
-      status: PaymentStatus.REFUND_REQUIRED,
-      failureReason: params.reason,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new PaymentModel(
+      {
+        ...this.etc,
+        status: PaymentStatus.REFUND_REQUIRED,
+        failureReason: params.reason,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   requestCancelRefund(params: { reason: string; now: Date }): PaymentModel {
@@ -165,11 +178,14 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       throw new DomainError(DomainErrorCode.INVALID_PAYMENT_STATUS);
     }
 
-    return new PaymentModel({
-      ...this.etc,
-      status: PaymentStatus.REFUND_REQUIRED,
-      failureReason: params.reason,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new PaymentModel(
+      {
+        ...this.etc,
+        status: PaymentStatus.REFUND_REQUIRED,
+        failureReason: params.reason,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   startRefund(params: { now: Date }): PaymentModel {
@@ -177,14 +193,20 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       return this;
     }
 
-    if (this.status !== PaymentStatus.REFUND_REQUIRED && this.status !== PaymentStatus.REFUND_FAILED) {
+    if (
+      this.status !== PaymentStatus.REFUND_REQUIRED &&
+      this.status !== PaymentStatus.REFUND_FAILED
+    ) {
       throw new DomainError(DomainErrorCode.INVALID_PAYMENT_STATUS);
     }
 
-    return new PaymentModel({
-      ...this.etc,
-      status: PaymentStatus.REFUNDING,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new PaymentModel(
+      {
+        ...this.etc,
+        status: PaymentStatus.REFUNDING,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   completeRefund(params: { now: Date }): PaymentModel {
@@ -196,11 +218,14 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       throw new DomainError(DomainErrorCode.INVALID_PAYMENT_STATUS);
     }
 
-    return new PaymentModel({
-      ...this.etc,
-      status: PaymentStatus.REFUNDED,
-      refundedAt: params.now,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new PaymentModel(
+      {
+        ...this.etc,
+        status: PaymentStatus.REFUNDED,
+        refundedAt: params.now,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   failRefund(params: { reason: string; now: Date }): PaymentModel {
@@ -208,11 +233,14 @@ export class PaymentModel extends PersistenceModel<string, PaymentPersistencePro
       throw new DomainError(DomainErrorCode.INVALID_PAYMENT_STATUS);
     }
 
-    return new PaymentModel({
-      ...this.etc,
-      status: PaymentStatus.REFUND_FAILED,
-      failureReason: params.reason,
-    }, this.id).setPersistence(this.id, this.createdAt, params.now);
+    return new PaymentModel(
+      {
+        ...this.etc,
+        status: PaymentStatus.REFUND_FAILED,
+        failureReason: params.reason,
+      },
+      this.id,
+    ).setPersistence(this.id, this.createdAt, params.now);
   }
 
   get memberId(): string {

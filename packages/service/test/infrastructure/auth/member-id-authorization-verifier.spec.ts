@@ -14,7 +14,10 @@ describe('MemberIdAuthorizationVerifier', () => {
         status: 'ACTIVE',
       }),
     };
-    const verifier = new MemberIdAuthorizationVerifier(memberRepository as never, tokenRepository as never);
+    const verifier = new MemberIdAuthorizationVerifier(
+      memberRepository as never,
+      tokenRepository as never,
+    );
 
     const result = await verifier.verify('Bearer access-token-0001');
 
@@ -34,7 +37,10 @@ describe('MemberIdAuthorizationVerifier', () => {
     const memberRepository = {
       findById: vi.fn(),
     };
-    const verifier = new MemberIdAuthorizationVerifier(memberRepository as never, tokenRepository as never);
+    const verifier = new MemberIdAuthorizationVerifier(
+      memberRepository as never,
+      tokenRepository as never,
+    );
 
     await expect(verifier.verify('Bearer missing-token')).rejects.toThrow('AUTHORIZATION_INVALID');
     expect(memberRepository.findById).not.toHaveBeenCalled();
@@ -51,8 +57,13 @@ describe('MemberIdAuthorizationVerifier', () => {
         status: 'WITHDRAWN',
       }),
     };
-    const verifier = new MemberIdAuthorizationVerifier(memberRepository as never, tokenRepository as never);
+    const verifier = new MemberIdAuthorizationVerifier(
+      memberRepository as never,
+      tokenRepository as never,
+    );
 
-    await expect(verifier.verify('Bearer access-token-0001')).rejects.toThrow('AUTHORIZATION_INVALID');
+    await expect(verifier.verify('Bearer access-token-0001')).rejects.toThrow(
+      'AUTHORIZATION_INVALID',
+    );
   });
 });

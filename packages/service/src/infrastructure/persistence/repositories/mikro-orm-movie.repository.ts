@@ -13,9 +13,10 @@ export class MikroOrmMovieRepository implements MovieRepositoryPort {
 
   async save(model: MovieModel): Promise<MovieModel> {
     const entity = PersistenceMapper.movieToEntity(model);
-    const existing = model.id === undefined
-      ? undefined
-      : await this.entityManager.findOne(MovieEntity, { id: model.id });
+    const existing =
+      model.id === undefined
+        ? undefined
+        : await this.entityManager.findOne(MovieEntity, { id: model.id });
 
     if (existing === undefined || existing === null) {
       entity.id = String(await this.entityManager.insert(MovieEntity, entity));

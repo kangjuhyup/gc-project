@@ -4,20 +4,13 @@ export class EnvironmentAdapterFlag {
     private readonly value?: string,
   ) {}
 
-  static of(params: {
-    name: string;
-    value?: string;
-  }): EnvironmentAdapterFlag {
+  static of(params: { name: string; value?: string }): EnvironmentAdapterFlag {
     return new EnvironmentAdapterFlag(params.name, params.value);
   }
 
-  select<T>(params: {
-    adapters: Record<string, T>;
-    fallback: T;
-  }): T {
-    const adapter = this.normalizedValue === undefined
-      ? undefined
-      : params.adapters[this.normalizedValue];
+  select<T>(params: { adapters: Record<string, T>; fallback: T }): T {
+    const adapter =
+      this.normalizedValue === undefined ? undefined : params.adapters[this.normalizedValue];
 
     return adapter ?? params.fallback;
   }

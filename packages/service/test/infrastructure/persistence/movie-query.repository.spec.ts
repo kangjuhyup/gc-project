@@ -5,10 +5,12 @@ import { MikroOrmMovieQueryRepository } from '@infrastructure/persistence/reposi
 describe('MikroOrmMovieQueryRepository', () => {
   it('영화 마스터 목록을 조회하고 다음 커서를 만든다', async () => {
     const entityManager = {
-      find: vi.fn().mockResolvedValue([
-        createMovie({ movieId: '1', title: '파묘' }),
-        createMovie({ movieId: '2', title: '듄: 파트 2' }),
-      ]),
+      find: vi
+        .fn()
+        .mockResolvedValue([
+          createMovie({ movieId: '1', title: '파묘' }),
+          createMovie({ movieId: '2', title: '듄: 파트 2' }),
+        ]),
     };
     const repository = new MikroOrmMovieQueryRepository(entityManager as never);
 
@@ -19,18 +21,22 @@ describe('MikroOrmMovieQueryRepository', () => {
       }),
     );
 
-    expect(entityManager.find).toHaveBeenCalledWith(expect.any(Function), {
-      $or: [
-        { title: { $ilike: '%파묘%' } },
-        { director: { $ilike: '%파묘%' } },
-        { genre: { $ilike: '%파묘%' } },
-        { rating: { $ilike: '%파묘%' } },
-        { description: { $ilike: '%파묘%' } },
-      ],
-    }, {
-      populate: ['images'],
-      orderBy: { title: 'ASC', id: 'ASC' },
-    });
+    expect(entityManager.find).toHaveBeenCalledWith(
+      expect.any(Function),
+      {
+        $or: [
+          { title: { $ilike: '%파묘%' } },
+          { director: { $ilike: '%파묘%' } },
+          { genre: { $ilike: '%파묘%' } },
+          { rating: { $ilike: '%파묘%' } },
+          { description: { $ilike: '%파묘%' } },
+        ],
+      },
+      {
+        populate: ['images'],
+        orderBy: { title: 'ASC', id: 'ASC' },
+      },
+    );
     expect(result.items).toHaveLength(1);
     expect(result.items[0]?.title).toBe('파묘');
     expect(result.hasNext).toBe(true);
@@ -39,10 +45,12 @@ describe('MikroOrmMovieQueryRepository', () => {
 
   it('커서가 있으면 이전 페이지 마지막 영화 이후 목록을 조회한다', async () => {
     const entityManager = {
-      find: vi.fn().mockResolvedValue([
-        createMovie({ movieId: '1', title: '파묘' }),
-        createMovie({ movieId: '2', title: '해바라기' }),
-      ]),
+      find: vi
+        .fn()
+        .mockResolvedValue([
+          createMovie({ movieId: '1', title: '파묘' }),
+          createMovie({ movieId: '2', title: '해바라기' }),
+        ]),
     };
     const repository = new MikroOrmMovieQueryRepository(entityManager as never);
     const firstPage = await repository.list(
@@ -80,14 +88,22 @@ describe('MikroOrmMovieQueryRepository', () => {
       ListMovieScheduleQuery.of({ movieId: '1', date: '2026-05-01' }),
     );
 
-    expect(entityManager.findOne).toHaveBeenCalledWith(expect.any(Function), { id: '1' }, { populate: ['images'] });
-    expect(entityManager.find).toHaveBeenCalledWith(expect.any(Function), {
-      movie: '1',
-      startAt: {
-        $gte: new Date('2026-04-30T15:00:00.000Z'),
-        $lt: new Date('2026-05-01T15:00:00.000Z'),
+    expect(entityManager.findOne).toHaveBeenCalledWith(
+      expect.any(Function),
+      { id: '1' },
+      { populate: ['images'] },
+    );
+    expect(entityManager.find).toHaveBeenCalledWith(
+      expect.any(Function),
+      {
+        movie: '1',
+        startAt: {
+          $gte: new Date('2026-04-30T15:00:00.000Z'),
+          $lt: new Date('2026-05-01T15:00:00.000Z'),
+        },
       },
-    }, expect.any(Object));
+      expect.any(Object),
+    );
     expect(result.movie.title).toBe('파묘');
     expect(result.theaters[0]?.theater.name).toBe('GC 시네마 강남');
     expect(result.theaters[0]?.screenings[0]?.screenName).toBe('1관');
@@ -127,11 +143,7 @@ function createMovie(params: { movieId: string; title: string }) {
   };
 }
 
-function createScreening(params: {
-  movieId: string;
-  screeningId: string;
-  screeningStartAt: Date;
-}) {
+function createScreening(params: { movieId: string; screeningId: string; screeningStartAt: Date }) {
   const movie = {
     id: params.movieId,
     title: params.movieId === '1' ? '파묘' : '듄: 파트 2',

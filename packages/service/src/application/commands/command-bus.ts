@@ -32,6 +32,6 @@ export class CommandBus {
       throw new Error('COMMAND_HANDLER_NOT_FOUND');
     }
 
-    return await handler.execute(command) as RESULT;
+    return (await handler.execute(command)) as RESULT;
   }
 }

@@ -16,11 +16,7 @@ export class MovieTheaterSummaryDto {
     this.address = params.address;
   }
 
-  static of(params: {
-    id: number;
-    name: string;
-    address: string;
-  }): MovieTheaterSummaryDto {
+  static of(params: { id: number; name: string; address: string }): MovieTheaterSummaryDto {
     return new MovieTheaterSummaryDto(params);
   }
 }
@@ -47,7 +43,10 @@ export class MovieSummaryDto {
   @ApiProperty({ example: 'https://images.example.com/poster.jpg', description: '대표 포스터 URL' })
   readonly posterUrl: string;
 
-  @ApiProperty({ example: '기묘한 의뢰를 받은 사람들이 오래된 비밀을 마주하는 오컬트 미스터리.', description: '영화 설명' })
+  @ApiProperty({
+    example: '기묘한 의뢰를 받은 사람들이 오래된 비밀을 마주하는 오컬트 미스터리.',
+    description: '영화 설명',
+  })
   readonly description: string;
 
   private constructor(params: {
@@ -91,14 +90,13 @@ export class MovieListResultDto {
   @ApiProperty({ example: true, description: '다음 페이지 존재 여부' })
   readonly hasNext: boolean;
 
-  @ApiPropertyOptional({ example: 'eyJkaXN0YW5jZU1zIjoxMjAwMDAwfQ', description: '다음 페이지 조회 커서' })
+  @ApiPropertyOptional({
+    example: 'eyJkaXN0YW5jZU1zIjoxMjAwMDAwfQ',
+    description: '다음 페이지 조회 커서',
+  })
   readonly nextCursor?: string;
 
-  private constructor(params: {
-    items: MovieSummaryDto[];
-    hasNext: boolean;
-    nextCursor?: string;
-  }) {
+  private constructor(params: { items: MovieSummaryDto[]; hasNext: boolean; nextCursor?: string }) {
     this.items = params.items;
     this.hasNext = params.hasNext;
     this.nextCursor = params.nextCursor;

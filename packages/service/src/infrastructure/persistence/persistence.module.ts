@@ -1,10 +1,5 @@
 import { Module } from '@nestjs/common';
-import {
-  DefaultLogger,
-  type Logger,
-  type LoggerNamespace,
-  type LogContext,
-} from '@mikro-orm/core';
+import { DefaultLogger, type Logger, type LoggerNamespace, type LogContext } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
@@ -106,7 +101,10 @@ class ThresholdMikroOrmLogger implements Logger {
             : DefaultLogger.create,
           migrations: {
             migrationsList: [
-              { name: 'Migration202604300001CreateTables', class: Migration202604300001CreateTables },
+              {
+                name: 'Migration202604300001CreateTables',
+                class: Migration202604300001CreateTables,
+              },
               { name: 'Migration202604300002SeedData', class: Migration202604300002SeedData },
             ],
           },

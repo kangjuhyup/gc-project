@@ -332,7 +332,8 @@ export class PersistenceMapper {
     entity.screening = ref<ScreeningEntity>(model.screeningId);
     entity.seat = ref<SeatEntity>(model.seatId);
     entity.member = ref<MemberEntity>(model.memberId);
-    entity.reservation = model.reservationId === undefined ? undefined : ref<ReservationEntity>(model.reservationId);
+    entity.reservation =
+      model.reservationId === undefined ? undefined : ref<ReservationEntity>(model.reservationId);
     entity.status = model.status;
     entity.expiresAt = model.expiresAt;
     if (model.createdAt !== undefined) {
@@ -389,7 +390,8 @@ export class PersistenceMapper {
     entity.seatHold = ref<SeatHoldEntity>(model.seatHoldId);
     entity.idempotencyKey = model.idempotencyKey;
     entity.requestHash = model.requestHash;
-    entity.reservation = model.reservationId === undefined ? undefined : ref<ReservationEntity>(model.reservationId);
+    entity.reservation =
+      model.reservationId === undefined ? undefined : ref<ReservationEntity>(model.reservationId);
     entity.provider = model.provider;
     entity.providerPaymentId = model.providerPaymentId;
     entity.amount = model.amount;

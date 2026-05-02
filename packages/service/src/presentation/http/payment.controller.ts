@@ -46,7 +46,9 @@ export class PaymentController {
       '인증된 회원이 자신이 점유한 좌석 임시점유를 기준으로 결제를 요청합니다. 결제 요청은 이벤트 로그와 outbox 이벤트로 기록됩니다.',
   })
   @ApiCreatedResponse({ type: PaymentResultDto, description: '결제 요청 생성 결과' })
-  @ApiBadRequestResponse({ description: '요청 금액/provider/좌석 임시점유 상태가 유효하지 않은 경우' })
+  @ApiBadRequestResponse({
+    description: '요청 금액/provider/좌석 임시점유 상태가 유효하지 않은 경우',
+  })
   @ApiForbiddenResponse({ description: '다른 회원이 점유한 좌석 임시점유로 결제를 요청한 경우' })
   @ApiNotFoundResponse({ description: '좌석 임시점유를 찾을 수 없는 경우' })
   @ApiUnauthorizedResponse({ description: 'Authorization 검증에 실패한 경우' })
@@ -91,7 +93,9 @@ export class PaymentController {
       'PG 또는 local payment adapter callback을 처리합니다. 승인 callback 후 예약 생성, 좌석 확정, 결제 승인을 같은 application flow에서 처리합니다.',
   })
   @ApiCreatedResponse({ type: PaymentCallbackResultDto, description: 'callback 처리 결과' })
-  @ApiBadRequestResponse({ description: 'callback 검증 실패, provider 불일치, 승인 금액 불일치 등 처리 불가한 경우' })
+  @ApiBadRequestResponse({
+    description: 'callback 검증 실패, provider 불일치, 승인 금액 불일치 등 처리 불가한 경우',
+  })
   @ApiNotFoundResponse({ description: '결제를 찾을 수 없는 경우' })
   @Post('/callback')
   callback(@Body() body: HandlePaymentCallbackRequestDto) {
@@ -115,7 +119,9 @@ export class PaymentController {
       '환불 필요 상태의 결제를 provider adapter를 통해 환불합니다. 환불 결과는 결제 이벤트 로그에 기록됩니다.',
   })
   @ApiCreatedResponse({ type: PaymentRefundResultDto, description: '환불 처리 결과' })
-  @ApiBadRequestResponse({ description: '환불 가능한 결제 상태가 아니거나 provider 결제 ID가 없는 경우' })
+  @ApiBadRequestResponse({
+    description: '환불 가능한 결제 상태가 아니거나 provider 결제 ID가 없는 경우',
+  })
   @ApiNotFoundResponse({ description: '결제를 찾을 수 없는 경우' })
   @Post('/:paymentId/refund')
   refund(@Param() params: RefundPaymentRequestDto) {

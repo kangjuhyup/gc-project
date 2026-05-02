@@ -3,7 +3,11 @@ import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Matches, Min } from 'clas
 import { PaymentProvider, type PaymentProviderType } from '@domain';
 
 export class HandlePaymentCallbackRequestDto {
-  @ApiProperty({ enum: PaymentProvider, example: PaymentProvider.LOCAL, description: 'callback을 보낸 결제 provider' })
+  @ApiProperty({
+    enum: PaymentProvider,
+    example: PaymentProvider.LOCAL,
+    description: 'callback을 보낸 결제 provider',
+  })
   @IsIn(Object.values(PaymentProvider))
   readonly provider!: PaymentProviderType;
 
@@ -30,7 +34,10 @@ export class HandlePaymentCallbackRequestDto {
   @IsString()
   readonly failureReason?: string;
 
-  @ApiPropertyOptional({ example: 'local:7001:local-payment-7001', description: 'callback 검증 token' })
+  @ApiPropertyOptional({
+    example: 'local:7001:local-payment-7001',
+    description: 'callback 검증 token',
+  })
   @IsOptional()
   @IsString()
   readonly token?: string;

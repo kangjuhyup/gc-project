@@ -7,10 +7,7 @@ export class HealthStatusDto {
   @ApiProperty({ example: 'gc-service', description: '서비스 식별자' })
   readonly service: string;
 
-  private constructor(
-    ok: boolean,
-    service: string,
-  ) {
+  private constructor(ok: boolean, service: string) {
     this.ok = ok;
     this.service = service;
   }

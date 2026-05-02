@@ -22,10 +22,16 @@ export class AdminMovieSummaryDto {
   @ApiPropertyOptional({ example: '2024-02-22', description: '개봉일' })
   readonly releaseDate?: string;
 
-  @ApiPropertyOptional({ example: 'https://images.example.com/poster.jpg', description: '대표 포스터 URL' })
+  @ApiPropertyOptional({
+    example: 'https://images.example.com/poster.jpg',
+    description: '대표 포스터 URL',
+  })
   readonly posterUrl?: string;
 
-  @ApiPropertyOptional({ example: '기묘한 의뢰를 받은 사람들이 오래된 비밀을 마주하는 오컬트 미스터리.', description: '영화 설명' })
+  @ApiPropertyOptional({
+    example: '기묘한 의뢰를 받은 사람들이 오래된 비밀을 마주하는 오컬트 미스터리.',
+    description: '영화 설명',
+  })
   readonly description?: string;
 
   @ApiProperty({ example: '2026-05-01T00:00:00.000Z', description: '등록 시각' })

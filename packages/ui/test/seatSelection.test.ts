@@ -34,9 +34,8 @@ describe('seatSelection', () => {
   });
 
   it('선택한 좌석 상세 정보를 선택 순서대로 반환한다', () => {
-    expect(getSelectedSeats([availableSeat, heldSeat], ['2', '1']).map((seat) => seat.label)).toEqual([
-      'A2',
-      'A1',
-    ]);
+    expect(
+      getSelectedSeats([availableSeat, heldSeat], ['2', '1']).map((seat) => seat.label),
+    ).toEqual(['A2', 'A1']);
   });
 });

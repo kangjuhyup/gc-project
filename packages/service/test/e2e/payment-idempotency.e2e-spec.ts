@@ -37,10 +37,17 @@ describe('결제 요청 멱등성 e2e', () => {
       status: 'PENDING',
     });
 
-    expect(await e2e.countRows('payment', 'member_id = ? AND idempotency_key = ?', [
-      member.memberId,
-      'pay-idempotency-0001',
-    ])).toBe(1);
-    expect(await e2e.countRows('outbox_event', "aggregate_type = 'PAYMENT' AND event_type = 'PAYMENT_REQUESTED'")).toBe(1);
+    expect(
+      await e2e.countRows('payment', 'member_id = ? AND idempotency_key = ?', [
+        member.memberId,
+        'pay-idempotency-0001',
+      ]),
+    ).toBe(1);
+    expect(
+      await e2e.countRows(
+        'outbox_event',
+        "aggregate_type = 'PAYMENT' AND event_type = 'PAYMENT_REQUESTED'",
+      ),
+    ).toBe(1);
   });
 });

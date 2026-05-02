@@ -253,8 +253,7 @@ export function SignupPage() {
           />
           <Button
             disabled={
-              confirmPhoneVerificationMutation.isPending ||
-              phoneVerificationState === 'idle'
+              confirmPhoneVerificationMutation.isPending || phoneVerificationState === 'idle'
             }
             onClick={handleConfirmPhoneVerification}
             type="button"
@@ -360,7 +359,9 @@ interface StatusMessageProps {
 
 function StatusMessage({ error, failure, idle, pending, status, success }: StatusMessageProps) {
   const message =
-    pending ?? error ?? (status === 'available' ? success : status === 'unavailable' ? failure : idle);
+    pending ??
+    error ??
+    (status === 'available' ? success : status === 'unavailable' ? failure : idle);
 
   if (!message) {
     return null;

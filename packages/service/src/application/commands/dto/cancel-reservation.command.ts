@@ -5,7 +5,11 @@ export class CancelReservationCommand {
     readonly reason?: string,
   ) {}
 
-  static of(params: { memberId: string; reservationId: string; reason?: string }): CancelReservationCommand {
+  static of(params: {
+    memberId: string;
+    reservationId: string;
+    reason?: string;
+  }): CancelReservationCommand {
     return new CancelReservationCommand(params.memberId, params.reservationId, params.reason);
   }
 }

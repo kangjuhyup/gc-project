@@ -11,7 +11,10 @@ export class ReservationCanceledDto {
   @ApiProperty({ example: 'CANCELED', description: '예매 상태' })
   readonly reservationStatus: ReservationStatusType;
 
-  @ApiProperty({ example: 'REFUND_REQUIRED', description: '결제 상태. 취소 후 환불 요청 상태로 전환됩니다.' })
+  @ApiProperty({
+    example: 'REFUND_REQUIRED',
+    description: '결제 상태. 취소 후 환불 요청 상태로 전환됩니다.',
+  })
   readonly paymentStatus: PaymentStatusType;
 
   @ApiPropertyOptional({ example: 'user request', description: '취소 사유' })

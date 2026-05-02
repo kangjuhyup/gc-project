@@ -16,7 +16,12 @@ export class RedisAccessTokenRepository {
   }): Promise<void> {
     await this.redis
       .multi()
-      .set(this.tokenKey(params.namespace, params.accessToken), params.subjectId, 'EX', params.ttlSeconds)
+      .set(
+        this.tokenKey(params.namespace, params.accessToken),
+        params.subjectId,
+        'EX',
+        params.ttlSeconds,
+      )
       .sadd(this.subjectKey(params.namespace, params.subjectId), params.accessToken)
       .expire(this.subjectKey(params.namespace, params.subjectId), params.ttlSeconds)
       .exec();

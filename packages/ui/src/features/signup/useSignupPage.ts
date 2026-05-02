@@ -83,8 +83,7 @@ export function useSignupPage() {
   const formErrors = useMemo(() => validateSignupForm(values), [values]);
 
   const handleChange =
-    (field: keyof SignupFormValues) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
+    (field: keyof SignupFormValues) => (event: ChangeEvent<HTMLInputElement>) => {
       const nextValue = event.target.value;
 
       setValues((current) => ({

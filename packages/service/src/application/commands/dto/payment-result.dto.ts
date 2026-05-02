@@ -29,7 +29,10 @@ export class PaymentResultDto {
   @ApiProperty({ example: 30000, description: '결제 금액' })
   readonly amount: number;
 
-  @ApiPropertyOptional({ example: 'http://localhost:4000/local-payment/7001', description: 'PG 승인 URL. local adapter는 생략 가능' })
+  @ApiPropertyOptional({
+    example: 'http://localhost:4000/local-payment/7001',
+    description: 'PG 승인 URL. local adapter는 생략 가능',
+  })
   readonly approvalUrl?: string;
 
   @ApiPropertyOptional({ example: '2026-04-29T01:10:00.000Z', description: '결제 만료 시각' })

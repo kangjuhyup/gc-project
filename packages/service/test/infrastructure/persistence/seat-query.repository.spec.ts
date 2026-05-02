@@ -9,16 +9,22 @@ describe('MikroOrmSeatQueryRepository', () => {
     };
     const repository = new MikroOrmSeatQueryRepository(entityManager as never);
 
-    const result = await repository.listByScreening(ListScreeningSeatsQuery.of({ screeningId: '101' }));
+    const result = await repository.listByScreening(
+      ListScreeningSeatsQuery.of({ screeningId: '101' }),
+    );
 
-    expect(entityManager.findOne).toHaveBeenCalledWith(expect.any(Function), { id: '101' }, {
-      populate: [
-        'screen.seats',
-        'reservationSeats.seat',
-        'reservationSeats.reservation',
-        'seatHolds.seat',
-      ],
-    });
+    expect(entityManager.findOne).toHaveBeenCalledWith(
+      expect.any(Function),
+      { id: '101' },
+      {
+        populate: [
+          'screen.seats',
+          'reservationSeats.seat',
+          'reservationSeats.reservation',
+          'seatHolds.seat',
+        ],
+      },
+    );
     expect(result).toEqual({
       screeningId: '101',
       seats: [

@@ -1,5 +1,9 @@
 import { MikroORM, RequestContext } from '@mikro-orm/core';
-import { Injectable, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
+import {
+  Injectable,
+  type OnApplicationBootstrap,
+  type OnApplicationShutdown,
+} from '@nestjs/common';
 import { OutboxEventModel, PaymentEventLogModel, PaymentEventType } from '@domain';
 import type {
   ClockPort,
@@ -49,10 +53,7 @@ export class PaymentOutboxWorker implements OnApplicationBootstrap, OnApplicatio
     }
 
     void this.processSafely();
-    this.interval = setInterval(
-      () => void this.processSafely(),
-      this.options.intervalMilliseconds,
-    );
+    this.interval = setInterval(() => void this.processSafely(), this.options.intervalMilliseconds);
   }
 
   stop(): void {
@@ -108,9 +109,7 @@ export class PaymentOutboxWorker implements OnApplicationBootstrap, OnApplicatio
 
       try {
         await this.publish(processing);
-        await this.outboxEventRepository.save(
-          processing.markPublished({ now: this.clock.now() }),
-        );
+        await this.outboxEventRepository.save(processing.markPublished({ now: this.clock.now() }));
       } catch (error) {
         await this.outboxEventRepository.save(
           processing.markFailed({

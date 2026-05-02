@@ -34,25 +34,29 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
   constructor(private readonly entityManager: EntityManager) {}
 
   async getMyReservation(query: GetMyReservationQuery): Promise<ReservationDetailDto | undefined> {
-    const reservation = await this.entityManager.findOne(ReservationEntity, {
-      id: query.reservationId,
-      member: query.memberId,
-    }, {
-      populate: [
-        'screening.movie.images',
-        'screening.screen.theater',
-        'reservationSeats.seat',
-      ],
-    });
+    const reservation = await this.entityManager.findOne(
+      ReservationEntity,
+      {
+        id: query.reservationId,
+        member: query.memberId,
+      },
+      {
+        populate: ['screening.movie.images', 'screening.screen.theater', 'reservationSeats.seat'],
+      },
+    );
 
     if (reservation === null) {
       return undefined;
     }
 
-    const payment = await this.entityManager.findOne(PaymentEntity, {
-      member: query.memberId,
-      reservation: query.reservationId,
-    }, { orderBy: { createdAt: 'DESC', id: 'DESC' } });
+    const payment = await this.entityManager.findOne(
+      PaymentEntity,
+      {
+        member: query.memberId,
+        reservation: query.reservationId,
+      },
+      { orderBy: { createdAt: 'DESC', id: 'DESC' } },
+    );
 
     return this.toDetailDto({ reservation, payment: payment ?? undefined });
   }
@@ -71,25 +75,32 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
   }
 
   @NoLog
-  private async findRows(query: ListMyReservationsQuery, cursor?: ReservationCursor): Promise<ReservationListItem[]> {
-    const reservations = await this.entityManager.find(ReservationEntity, this.buildWhere(query, cursor), {
-      populate: [
-        'screening.movie.images',
-        'screening.screen.theater',
-        'reservationSeats.seat',
-      ],
-      orderBy: { createdAt: 'DESC', id: 'DESC' },
-      limit: query.limit + 1,
-    });
+  private async findRows(
+    query: ListMyReservationsQuery,
+    cursor?: ReservationCursor,
+  ): Promise<ReservationListItem[]> {
+    const reservations = await this.entityManager.find(
+      ReservationEntity,
+      this.buildWhere(query, cursor),
+      {
+        populate: ['screening.movie.images', 'screening.screen.theater', 'reservationSeats.seat'],
+        orderBy: { createdAt: 'DESC', id: 'DESC' },
+        limit: query.limit + 1,
+      },
+    );
 
     if (reservations.length === 0) {
       return [];
     }
 
-    const payments = await this.entityManager.find(PaymentEntity, {
-      member: query.memberId,
-      reservation: { $in: reservations.map((reservation) => reservation.id) },
-    }, { orderBy: { createdAt: 'DESC', id: 'DESC' } });
+    const payments = await this.entityManager.find(
+      PaymentEntity,
+      {
+        member: query.memberId,
+        reservation: { $in: reservations.map((reservation) => reservation.id) },
+      },
+      { orderBy: { createdAt: 'DESC', id: 'DESC' } },
+    );
     const paymentsByReservationId = new Map<string, PaymentEntity>();
 
     for (const payment of payments) {
@@ -159,24 +170,27 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
           address: theater.address,
         }),
       }),
-      seats: reservation.reservationSeats.getItems().map((reservationSeat) => reservationSeat.seat)
+      seats: reservation.reservationSeats
+        .getItems()
+        .map((reservationSeat) => reservationSeat.seat)
         .sort((left, right) => this.compareSeat(left, right))
         .map((seat) =>
-        ReservationSeatSummaryDto.of({
-          id: seat.id,
-          row: seat.seatRow,
-          col: seat.seatCol,
-          type: seat.seatType ?? 'NORMAL',
-        }),
-      ),
-      payment: payment === undefined
-        ? undefined
-        : ReservationPaymentSummaryDto.of({
-            id: payment.id,
-            status: payment.status as PaymentStatusType,
-            amount: payment.amount,
-            providerPaymentId: payment.providerPaymentId,
+          ReservationSeatSummaryDto.of({
+            id: seat.id,
+            row: seat.seatRow,
+            col: seat.seatCol,
+            type: seat.seatType ?? 'NORMAL',
           }),
+        ),
+      payment:
+        payment === undefined
+          ? undefined
+          : ReservationPaymentSummaryDto.of({
+              id: payment.id,
+              status: payment.status as PaymentStatusType,
+              amount: payment.amount,
+              providerPaymentId: payment.providerPaymentId,
+            }),
     });
   }
 
@@ -213,24 +227,27 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
           address: theater.address,
         }),
       }),
-      seats: reservation.reservationSeats.getItems().map((reservationSeat) => reservationSeat.seat)
+      seats: reservation.reservationSeats
+        .getItems()
+        .map((reservationSeat) => reservationSeat.seat)
         .sort((left, right) => this.compareSeat(left, right))
         .map((seat) =>
-        ReservationSeatSummaryDto.of({
-          id: seat.id,
-          row: seat.seatRow,
-          col: seat.seatCol,
-          type: seat.seatType ?? 'NORMAL',
-        }),
-      ),
-      payment: payment === undefined
-        ? undefined
-        : ReservationPaymentSummaryDto.of({
-            id: payment.id,
-            status: payment.status as PaymentStatusType,
-            amount: payment.amount,
-            providerPaymentId: payment.providerPaymentId,
+          ReservationSeatSummaryDto.of({
+            id: seat.id,
+            row: seat.seatRow,
+            col: seat.seatCol,
+            type: seat.seatType ?? 'NORMAL',
           }),
+        ),
+      payment:
+        payment === undefined
+          ? undefined
+          : ReservationPaymentSummaryDto.of({
+              id: payment.id,
+              status: payment.status as PaymentStatusType,
+              amount: payment.amount,
+              providerPaymentId: payment.providerPaymentId,
+            }),
     });
   }
 
@@ -256,7 +273,9 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     }
 
     try {
-      const decoded = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Partial<ReservationCursor>;
+      const decoded = JSON.parse(
+        Buffer.from(cursor, 'base64url').toString('utf8'),
+      ) as Partial<ReservationCursor>;
 
       if (
         typeof decoded.createdAt !== 'string' ||
@@ -280,14 +299,20 @@ export class MikroOrmReservationQueryRepository implements ReservationQueryPort 
     const poster = movie.images
       .getItems()
       .filter((image) => image.imageType === 'POSTER')
-      .sort((left, right) => left.sortOrder - right.sortOrder || Number(left.id) - Number(right.id))[0];
+      .sort(
+        (left, right) => left.sortOrder - right.sortOrder || Number(left.id) - Number(right.id),
+      )[0];
 
     return poster?.url ?? movie.posterUrl;
   }
 
   @NoLog
   private compareSeat(left: SeatEntity, right: SeatEntity): number {
-    return left.seatRow.localeCompare(right.seatRow) || left.seatCol - right.seatCol || Number(left.id) - Number(right.id);
+    return (
+      left.seatRow.localeCompare(right.seatRow) ||
+      left.seatCol - right.seatCol ||
+      Number(left.id) - Number(right.id)
+    );
   }
 
   @NoLog

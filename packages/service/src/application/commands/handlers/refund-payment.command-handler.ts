@@ -38,7 +38,10 @@ export class RefundPaymentCommandHandler {
     });
     const resultPayment = refundResult.refunded
       ? refunding.completeRefund({ now: this.clock.now() })
-      : refunding.failRefund({ reason: refundResult.reason ?? 'PAYMENT_REFUND_FAILED', now: this.clock.now() });
+      : refunding.failRefund({
+          reason: refundResult.reason ?? 'PAYMENT_REFUND_FAILED',
+          now: this.clock.now(),
+        });
 
     await this.paymentRepository.save(resultPayment);
     await this.paymentEventLogRepository.save(

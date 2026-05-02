@@ -23,7 +23,10 @@ describe('Transactional decorator', () => {
     const handler = new TestHandler();
     const result = await handler.execute('payment');
 
-    expect(transactionManager.runInTransaction).toHaveBeenCalledWith(expect.any(Function), 'REQUIRED');
+    expect(transactionManager.runInTransaction).toHaveBeenCalledWith(
+      expect.any(Function),
+      'REQUIRED',
+    );
     expect(result).toBe('handled-payment');
   });
 

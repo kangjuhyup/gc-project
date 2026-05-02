@@ -7,7 +7,10 @@ export interface ReservationEventPersistenceProps {
   readonly description?: string;
 }
 
-export class ReservationEventModel extends PersistenceModel<string, ReservationEventPersistenceProps> {
+export class ReservationEventModel extends PersistenceModel<
+  string,
+  ReservationEventPersistenceProps
+> {
   private constructor(props: ReservationEventPersistenceProps, id?: string) {
     super(props, id);
   }

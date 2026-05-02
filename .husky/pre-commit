@@ -1,0 +1,8 @@
+export COREPACK_DEFAULT_TO_LATEST=0
+
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+  nvm use --silent >/dev/null
+fi
+
+pnpm lint-staged

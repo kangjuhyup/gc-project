@@ -1,6 +1,12 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ListTheaterScheduleQuery, ListTheatersQuery, QueryBus, TheaterListResultDto, TheaterScheduleResultDto } from '@application';
+import {
+  ListTheaterScheduleQuery,
+  ListTheatersQuery,
+  QueryBus,
+  TheaterListResultDto,
+  TheaterScheduleResultDto,
+} from '@application';
 import {
   ListTheaterScheduleParamRequestDto,
   ListTheaterScheduleRequestDto,

@@ -6,7 +6,10 @@ export interface ReservationSeatPersistenceProps {
   readonly seatId: string;
 }
 
-export class ReservationSeatModel extends PersistenceModel<string, ReservationSeatPersistenceProps> {
+export class ReservationSeatModel extends PersistenceModel<
+  string,
+  ReservationSeatPersistenceProps
+> {
   private constructor(props: ReservationSeatPersistenceProps, id?: string) {
     super(props, id);
   }

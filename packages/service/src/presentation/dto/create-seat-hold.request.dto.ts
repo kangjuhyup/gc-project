@@ -21,20 +21,14 @@ export class CreateSeatHoldRequestDto {
   @MaxLength(20, { each: true })
   readonly seatIds!: string[];
 
-  private constructor(params?: {
-    screeningId: string;
-    seatIds: string[];
-  }) {
+  private constructor(params?: { screeningId: string; seatIds: string[] }) {
     if (params !== undefined) {
       this.screeningId = params.screeningId;
       this.seatIds = params.seatIds;
     }
   }
 
-  static of(params: {
-    screeningId: string;
-    seatIds: string[];
-  }): CreateSeatHoldRequestDto {
+  static of(params: { screeningId: string; seatIds: string[] }): CreateSeatHoldRequestDto {
     return new CreateSeatHoldRequestDto(params);
   }
 }

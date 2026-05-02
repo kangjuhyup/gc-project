@@ -13,8 +13,7 @@ export function PasswordChangePage() {
       <div className="seat-page-header">
         <Button asChild variant="ghost">
           <Link to="/profile" viewTransition>
-            <ArrowLeft size={17} aria-hidden="true" />
-            내 프로필
+            <ArrowLeft size={17} aria-hidden="true" />내 프로필
           </Link>
         </Button>
         <div>

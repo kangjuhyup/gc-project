@@ -11,8 +11,5 @@ export interface SeatHoldRepositoryPort extends RepositoryPort<SeatHoldModel> {
     seatIds: string[];
     now: Date;
   }): Promise<string[]>;
-  findSeatIdsInScreening(params: {
-    screeningId: string;
-    seatIds: string[];
-  }): Promise<string[]>;
+  findSeatIdsInScreening(params: { screeningId: string; seatIds: string[] }): Promise<string[]>;
 }

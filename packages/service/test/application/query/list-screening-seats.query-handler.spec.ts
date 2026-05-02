@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ListScreeningSeatsQuery, ScreeningSeatListResultDto, ScreeningSeatSummaryDto } from '@application/query/dto';
+import {
+  ListScreeningSeatsQuery,
+  ScreeningSeatListResultDto,
+  ScreeningSeatSummaryDto,
+} from '@application/query/dto';
 import { ListScreeningSeatsQueryHandler } from '@application/query/handlers';
 import type { SeatQueryPort } from '@application/query/ports';
 

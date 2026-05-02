@@ -6,7 +6,8 @@ describe('MikroOrmReservationQueryRepository', () => {
   it('내 예매 상세를 예매번호, 영화, 상영시간, 좌석, 결제금액, 상태로 매핑한다', async () => {
     const reservation = reservationRow({ id: '5001' });
     const entityManager = {
-      findOne: vi.fn()
+      findOne: vi
+        .fn()
         .mockResolvedValueOnce(reservation)
         .mockResolvedValueOnce(paymentRow({ reservation })),
       find: vi.fn(),
@@ -17,20 +18,26 @@ describe('MikroOrmReservationQueryRepository', () => {
       GetMyReservationQuery.of({ memberId: '1', reservationId: '5001' }),
     );
 
-    expect(entityManager.findOne).toHaveBeenNthCalledWith(1, expect.any(Function), {
-      id: '5001',
-      member: '1',
-    }, {
-      populate: [
-        'screening.movie.images',
-        'screening.screen.theater',
-        'reservationSeats.seat',
-      ],
-    });
-    expect(entityManager.findOne).toHaveBeenNthCalledWith(2, expect.any(Function), {
-      member: '1',
-      reservation: '5001',
-    }, { orderBy: { createdAt: 'DESC', id: 'DESC' } });
+    expect(entityManager.findOne).toHaveBeenNthCalledWith(
+      1,
+      expect.any(Function),
+      {
+        id: '5001',
+        member: '1',
+      },
+      {
+        populate: ['screening.movie.images', 'screening.screen.theater', 'reservationSeats.seat'],
+      },
+    );
+    expect(entityManager.findOne).toHaveBeenNthCalledWith(
+      2,
+      expect.any(Function),
+      {
+        member: '1',
+        reservation: '5001',
+      },
+      { orderBy: { createdAt: 'DESC', id: 'DESC' } },
+    );
     expect(result).toMatchObject({
       id: '5001',
       reservationNumber: 'R00000000000005003',
@@ -83,23 +90,27 @@ describe('MikroOrmReservationQueryRepository', () => {
       reservationRow({ id: '5001', createdAt: new Date('2026-04-30T10:01:00.000Z') }),
     ];
     const entityManager = {
-      find: vi.fn()
+      find: vi
+        .fn()
         .mockResolvedValueOnce(reservations)
         .mockResolvedValueOnce([paymentRow({ reservation: reservations[0] })]),
     };
     const repository = new MikroOrmReservationQueryRepository(entityManager as never);
 
-    const result = await repository.listMyReservations(ListMyReservationsQuery.of({ memberId: '1', limit: 2 }));
+    const result = await repository.listMyReservations(
+      ListMyReservationsQuery.of({ memberId: '1', limit: 2 }),
+    );
 
-    expect(entityManager.find).toHaveBeenNthCalledWith(1, expect.any(Function), { member: '1' }, {
-      populate: [
-        'screening.movie.images',
-        'screening.screen.theater',
-        'reservationSeats.seat',
-      ],
-      orderBy: { createdAt: 'DESC', id: 'DESC' },
-      limit: 3,
-    });
+    expect(entityManager.find).toHaveBeenNthCalledWith(
+      1,
+      expect.any(Function),
+      { member: '1' },
+      {
+        populate: ['screening.movie.images', 'screening.screen.theater', 'reservationSeats.seat'],
+        orderBy: { createdAt: 'DESC', id: 'DESC' },
+        limit: 3,
+      },
+    );
     expect(result.items).toHaveLength(2);
     expect(result.items[0]).toMatchObject({
       id: '5003',
@@ -149,22 +160,30 @@ describe('MikroOrmReservationQueryRepository', () => {
     };
     const repository = new MikroOrmReservationQueryRepository(entityManager as never);
 
-    await repository.listMyReservations(ListMyReservationsQuery.of({ memberId: '1', limit: 10, cursor }));
+    await repository.listMyReservations(
+      ListMyReservationsQuery.of({ memberId: '1', limit: 10, cursor }),
+    );
 
-    expect(entityManager.find).toHaveBeenCalledWith(expect.any(Function), {
-      member: '1',
-      $or: [
-        { createdAt: { $lt: new Date('2026-04-30T10:02:00.000Z') } },
-        { createdAt: new Date('2026-04-30T10:02:00.000Z'), id: { $lt: '5002' } },
-      ],
-    }, expect.objectContaining({ limit: 11 }));
+    expect(entityManager.find).toHaveBeenCalledWith(
+      expect.any(Function),
+      {
+        member: '1',
+        $or: [
+          { createdAt: { $lt: new Date('2026-04-30T10:02:00.000Z') } },
+          { createdAt: new Date('2026-04-30T10:02:00.000Z'), id: { $lt: '5002' } },
+        ],
+      },
+      expect.objectContaining({ limit: 11 }),
+    );
   });
 
   it('잘못된 커서가 들어오면 예매 커서 오류를 던진다', async () => {
     const repository = new MikroOrmReservationQueryRepository({ find: vi.fn() } as never);
 
     await expect(
-      repository.listMyReservations(ListMyReservationsQuery.of({ memberId: '1', cursor: 'invalid' })),
+      repository.listMyReservations(
+        ListMyReservationsQuery.of({ memberId: '1', cursor: 'invalid' }),
+      ),
     ).rejects.toThrow('INVALID_RESERVATION_CURSOR');
   });
 });

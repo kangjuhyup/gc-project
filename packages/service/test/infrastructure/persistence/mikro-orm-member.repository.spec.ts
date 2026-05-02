@@ -101,7 +101,11 @@ describe('MikroOrmMemberRepository', () => {
   });
 
   it('같은 아이디의 탈퇴 회원과 활성 회원이 있으면 활성 회원을 먼저 조회한다', async () => {
-    const activeMember = memberEntity({ id: '2', userId: 'member_01', status: MemberStatus.ACTIVE });
+    const activeMember = memberEntity({
+      id: '2',
+      userId: 'member_01',
+      status: MemberStatus.ACTIVE,
+    });
     const entityManager = {
       findOne: vi.fn().mockResolvedValueOnce(activeMember),
     };
@@ -118,7 +122,11 @@ describe('MikroOrmMemberRepository', () => {
   });
 
   it('활성 회원이 없고 탈퇴 회원만 있으면 탈퇴 회원을 반환해 로그인 거부 사유를 유지한다', async () => {
-    const withdrawnMember = memberEntity({ id: '1', userId: 'member_01', status: MemberStatus.WITHDRAWN });
+    const withdrawnMember = memberEntity({
+      id: '1',
+      userId: 'member_01',
+      status: MemberStatus.WITHDRAWN,
+    });
     const entityManager = {
       findOne: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(withdrawnMember),
     };

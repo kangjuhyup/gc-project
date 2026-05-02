@@ -10,7 +10,13 @@ export class ListAdminMoviesRequestDto {
   @Min(1)
   readonly currentPage?: number;
 
-  @ApiPropertyOptional({ example: 20, minimum: 1, maximum: 100, default: 20, description: '페이지당 결과 수' })
+  @ApiPropertyOptional({
+    example: 20,
+    minimum: 1,
+    maximum: 100,
+    default: 20,
+    description: '페이지당 결과 수',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -18,17 +24,17 @@ export class ListAdminMoviesRequestDto {
   @Max(100)
   readonly countPerPage?: number;
 
-  @ApiPropertyOptional({ example: '파묘', maxLength: 80, description: '영화 제목/감독/장르/등급/설명 검색어' })
+  @ApiPropertyOptional({
+    example: '파묘',
+    maxLength: 80,
+    description: '영화 제목/감독/장르/등급/설명 검색어',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(80)
   readonly keyword?: string;
 
-  private constructor(params: {
-    currentPage?: number;
-    countPerPage?: number;
-    keyword?: string;
-  }) {
+  private constructor(params: { currentPage?: number; countPerPage?: number; keyword?: string }) {
     Object.assign(this, params);
   }
 

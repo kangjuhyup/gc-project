@@ -3,7 +3,11 @@ import { Injectable } from '@nestjs/common';
 import { AuthenticatedUserDto } from '@application/query/dto';
 import { MemberStatus } from '@domain';
 import type { AuthorizationVerifierPort } from '@application/query/ports';
-import { TokenType, type MemberRepositoryPort, type TokenRepositoryPort } from '@application/commands/ports';
+import {
+  TokenType,
+  type MemberRepositoryPort,
+  type TokenRepositoryPort,
+} from '@application/commands/ports';
 
 @Injectable()
 @Logging

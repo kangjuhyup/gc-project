@@ -48,7 +48,9 @@ describe('AdminPiiMaskInterceptor', () => {
     const commandBus = { execute: vi.fn() };
     const interceptor = new AdminPiiMaskInterceptor(commandBus as never);
 
-    const result = await lastValueFrom(interceptor.intercept(context() as never, next(memberList()) as never));
+    const result = await lastValueFrom(
+      interceptor.intercept(context() as never, next(memberList()) as never),
+    );
 
     expect(result).toMatchObject({
       items: [
@@ -99,10 +101,10 @@ describe('AdminPiiMaskInterceptor', () => {
     const interceptor = new AdminPiiMaskInterceptor(commandBus as never);
 
     expect(() =>
-        interceptor.intercept(
-          context({ 'x-admin-unmask-pii': 'true' }) as never,
-          next(memberList()) as never,
-        ),
+      interceptor.intercept(
+        context({ 'x-admin-unmask-pii': 'true' }) as never,
+        next(memberList()) as never,
+      ),
     ).toThrow(BadRequestException);
   });
 });

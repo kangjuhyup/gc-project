@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CancelReservationCommand, GetMyReservationQuery, ListMyReservationsQuery } from '@application';
+import {
+  CancelReservationCommand,
+  GetMyReservationQuery,
+  ListMyReservationsQuery,
+} from '@application';
 import { AuthenticatedUserDto } from '@application/query/dto';
 import { ReservationController } from '@presentation/http';
 

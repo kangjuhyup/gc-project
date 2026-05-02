@@ -24,9 +24,10 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
 
   async save(model: MemberModel): Promise<MemberModel> {
     const entity = this.encryptEntity(PersistenceMapper.memberToEntity(model));
-    const existing = model.id === undefined
-      ? undefined
-      : await this.entityManager.findOne(MemberEntity, { id: model.id });
+    const existing =
+      model.id === undefined
+        ? undefined
+        : await this.entityManager.findOne(MemberEntity, { id: model.id });
 
     if (existing === undefined || existing === null) {
       entity.id = String(await this.entityManager.insert(MemberEntity, entity));
@@ -44,14 +45,17 @@ export class MikroOrmMemberRepository implements MemberRepositoryPort, MemberQue
 
   async findByUserId(userId: string): Promise<MemberModel | undefined> {
     const entity =
-      await this.findActiveByUserId(userId) ??
-      await this.entityManager.findOne(MemberEntity, { userId });
+      (await this.findActiveByUserId(userId)) ??
+      (await this.entityManager.findOne(MemberEntity, { userId }));
 
     return entity ? this.toDomain(entity) : undefined;
   }
 
   async findByPhoneNumber(phoneNumber: string): Promise<MemberModel | undefined> {
-    const entity = await this.entityManager.findOne(MemberEntity, this.activePhoneNumberFilter(phoneNumber));
+    const entity = await this.entityManager.findOne(
+      MemberEntity,
+      this.activePhoneNumberFilter(phoneNumber),
+    );
     return entity ? this.toDomain(entity) : undefined;
   }
 
