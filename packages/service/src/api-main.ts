@@ -3,8 +3,7 @@ import { type INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
-import { ENV_KEY } from '@infrastructure/config';
-import { buildCorsOptions } from '@infrastructure/config/cors.config';
+import { applySecurityHeaders, buildCorsOptions, ENV_KEY } from '@infrastructure/config';
 import { ApplicationErrorInterceptor } from '@presentation';
 import {
   buildSwaggerConfig,
@@ -22,6 +21,7 @@ export async function bootstrapApi(): Promise<INestApplication> {
     app.enableCors(corsOptions);
   }
 
+  applySecurityHeaders(app);
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

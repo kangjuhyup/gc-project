@@ -5,6 +5,20 @@ describe('buildCorsOptions', () => {
   it('development 모드에서는 UI 개발 서버 origin만 CORS로 허용한다', () => {
     expect(buildCorsOptions('development')).toEqual({
       origin: 'http://localhost:5173',
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: [
+        'Authorization',
+        'Content-Type',
+        'Accept',
+        'Origin',
+        'X-Requested-With',
+        'X-Correlation-Id',
+        'x-correlation-id',
+      ],
+      exposedHeaders: ['X-Correlation-Id', 'x-correlation-id'],
+      credentials: true,
+      maxAge: 600,
+      optionsSuccessStatus: 204,
     });
   });
 
