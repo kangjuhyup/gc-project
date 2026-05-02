@@ -41,6 +41,8 @@ export const apiEnvSpec = {
   ADMIN_USER_ID: { joi: Joi.string().trim().required() },
   ADMIN_PASSWORD: { joi: Joi.string().required() },
   ADMIN_ACCESS_TOKEN_TTL_SECONDS: { joi: Joi.number().integer().positive().required() },
+  RATE_LIMIT_TTL_MILLISECONDS: { joi: Joi.number().integer().positive().default(60_000) },
+  RATE_LIMIT_LIMIT: { joi: Joi.number().integer().positive().default(100) },
 } as const satisfies EnvSpec;
 
 export const workerEnvSpec = {

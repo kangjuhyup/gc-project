@@ -41,6 +41,8 @@ API와 worker가 함께 사용하는 값입니다.
 | `LOCAL_PAYMENT_CALLBACK_URL` | 예 | `http://localhost:3000/payments/callback` | 로컬 결제 어댑터가 callback을 보낼 URL입니다. |
 | `LOCAL_PAYMENT_CALLBACK_DELAY_SECONDS` | 예 | `3` | 로컬 결제 callback 지연 시간입니다. 초 단위이며 `0` 이상이어야 합니다. |
 | `MIGRATIONS_RUN_ON_STARTUP` | 아니오 | `false` | API 시작 시 migration 실행 여부입니다. 기본값은 `false`입니다. |
+| `RATE_LIMIT_TTL_MILLISECONDS` | 아니오 | `60000` | NestJS throttler rate limit 윈도우입니다. 밀리초 단위 양의 정수이며 기본값은 `60000`입니다. |
+| `RATE_LIMIT_LIMIT` | 아니오 | `100` | rate limit 윈도우 안에서 허용할 요청 수입니다. 양의 정수이며 기본값은 `100`입니다. |
 
 ## API 전용 환경 변수
 

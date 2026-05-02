@@ -43,6 +43,10 @@ export type E2eSeat = {
 };
 
 type E2eSeatRow = Omit<E2eSeat, 'status'>;
+type ServiceE2eOptions = {
+  rateLimitLimit?: string;
+  rateLimitTtlMilliseconds?: string;
+};
 
 let userSequence = 0;
 
@@ -54,7 +58,7 @@ export class ServiceE2eContext {
     readonly baseUrl: string,
   ) {}
 
-  static async create(): Promise<ServiceE2eContext> {
+  static async create(options: ServiceE2eOptions = {}): Promise<ServiceE2eContext> {
     process.env.NODE_ENV = 'test';
     process.env.LOG_LEVEL = 'ERROR';
     process.env.PORT = '3000';
@@ -73,6 +77,8 @@ export class ServiceE2eContext {
     process.env.ADMIN_USER_ID = 'admin';
     process.env.ADMIN_PASSWORD = 'admin-password123!';
     process.env.ADMIN_ACCESS_TOKEN_TTL_SECONDS = '900';
+    process.env.RATE_LIMIT_TTL_MILLISECONDS = options.rateLimitTtlMilliseconds ?? '60000';
+    process.env.RATE_LIMIT_LIMIT = options.rateLimitLimit ?? '100';
 
     faker.seed(20260429);
 

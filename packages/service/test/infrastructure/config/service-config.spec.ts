@@ -34,6 +34,27 @@ describe('service config validation', () => {
     expect(config.LOG_LEVEL).toBe('INFO');
     expect(config.DB_HOST).toBe('localhost');
     expect(config.DB_PORT).toBe(5432);
+    expect(config.RATE_LIMIT_TTL_MILLISECONDS).toBe(60000);
+    expect(config.RATE_LIMIT_LIMIT).toBe(100);
+  });
+
+  it('API rate limit config는 양수 값만 허용한다', () => {
+    const config = validateApiConfig({
+      ...baseConfig,
+      PORT: '3000',
+      RATE_LIMIT_TTL_MILLISECONDS: '30000',
+      RATE_LIMIT_LIMIT: '50',
+    });
+
+    expect(config.RATE_LIMIT_TTL_MILLISECONDS).toBe(30000);
+    expect(config.RATE_LIMIT_LIMIT).toBe(50);
+    expect(() =>
+      validateApiConfig({
+        ...baseConfig,
+        PORT: '3000',
+        RATE_LIMIT_LIMIT: '0',
+      }),
+    ).toThrow(/RATE_LIMIT_LIMIT/);
   });
 
   it('로그 레벨은 허용된 값만 사용할 수 있다', () => {
@@ -106,6 +127,7 @@ describe('service config validation', () => {
   it('ENV_KEY 상수는 envSpec 기준으로 config key 오타 없이 사용할 수 있게 한다', () => {
     expect(ENV_KEY.DB_HOST).toBe('DB_HOST');
     expect(ENV_KEY.ADMIN_ACCESS_TOKEN_TTL_SECONDS).toBe('ADMIN_ACCESS_TOKEN_TTL_SECONDS');
+    expect(ENV_KEY.RATE_LIMIT_LIMIT).toBe('RATE_LIMIT_LIMIT');
     expect(ENV_KEY.PAYMENT_OUTBOX_WORKER_INTERVAL_MS).toBe(
       'PAYMENT_OUTBOX_WORKER_INTERVAL_MS',
     );
