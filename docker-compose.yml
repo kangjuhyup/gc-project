@@ -1,6 +1,6 @@
 services:
   postgres-master:
-    image: bitnamilegacy/postgresql:17.6.0-debian-12-r4
+    image: soldevelo/postgresql:17.6.0-debian-12-r0
     container_name: gc-postgres-master
     environment:
       POSTGRESQL_REPLICATION_MODE: master
@@ -28,7 +28,7 @@ services:
       - gc-network
 
   postgres-replica:
-    image: bitnamilegacy/postgresql:17.6.0-debian-12-r4
+    image: soldevelo/postgresql:17.6.0-debian-12-r0
     container_name: gc-postgres-replica
     depends_on:
       postgres-master:
